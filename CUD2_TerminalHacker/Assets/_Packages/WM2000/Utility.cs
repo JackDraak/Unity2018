@@ -18,12 +18,12 @@
         int numberOfCharacters = characters.Length;
         while (numberOfCharacters > 1)
         {
-            numberOfCharacters--;
-            int index = randomRange.Next(numberOfCharacters + 1);
-            var value = characters[index];
-            characters[index] = characters[numberOfCharacters];
-            characters[numberOfCharacters] = value;
-        }
+            numberOfCharacters--;                                 // decrement 'end position', repeat through all chars in string:
+            int index = randomRange.Next(numberOfCharacters + 1); // select any char in string before the 'end'
+            var value = characters[index];                        // store that char (temporary)
+            characters[index] = characters[numberOfCharacters];   // store the 'end char' in-place of the char pulled for shuffle
+            characters[numberOfCharacters] = value;               // drop selected char into the 'end position'
+      }
         return new string(characters);
     }
 }

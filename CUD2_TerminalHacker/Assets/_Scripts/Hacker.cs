@@ -13,9 +13,6 @@ using System.Collections;                         // Required for IEnumerator co
 using UnityEngine;                                // Unity requirement
 
 public class Hacker : MonoBehaviour {
-   [SerializeField] AudioClip[] keyStrokeSounds;
-   AudioSource audioSource;
-
    // Game-Data:
    const int unlockFee_3 = 15;                    // TOA cost to unlock level 3
    const int unlockFee_4 = 20;                    // TOA cost to unlock level 4
@@ -49,7 +46,10 @@ public class Hacker : MonoBehaviour {
    string scrambleWord;                            // Placeholder for scramble-word
    int tokens = 10;                                // Game currency
 
-    // Obligatory Unity 'Start()' function; 'OnUserInput()' is the primary game controller.
+   [SerializeField] AudioClip[] keyStrokeSounds;
+   AudioSource audioSource;
+
+      // Obligatory Unity 'Start()' function; 'OnUserInput()' is the primary game controller.
    void Start ()
    {
       audioSource = GetComponent<AudioSource>();
@@ -213,7 +213,7 @@ public class Hacker : MonoBehaviour {
    IEnumerator ShowLoad() // Coroutine to simulate computer booting-up.
    {
       currentScreen = Screen.Login;
-      keyboard.SetActive(false);    // disable user input during 'boot-up sequence'.
+      //keyboard.SetActive(false);    // disable user input during 'boot-up sequence'.
       Terminal.ShowCursor(false);   // ...and hide the cursor, because...
       Terminal.ClearScreen();
       //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
@@ -225,25 +225,36 @@ public class Hacker : MonoBehaviour {
       yield return new WaitForSeconds(1.3f);
       Terminal.WriteLine("");
       Terminal.WriteLine("READY.");
-      Terminal.ShowCursor(true); // add sounds for 'typing'.
-      yield return new WaitForSeconds(.8f);
-      Terminal.WriteLine("LOAD \"GTHDB.PRG\",8,1");
+      Terminal.ShowCursor(true); // add sounds for 'typing' ???
+      yield return new WaitForSeconds(0.4f);
+      StartCoroutine(SendFauxInput("LOAD \"GTHDB.PRG\",8,1"));
+      yield return new WaitForSeconds(5.0f); // long enough for SFI coroutine
       Terminal.WriteLine("");
-      yield return new WaitForSeconds(.7f);
       Terminal.WriteLine("SEARCHING FOR GTHDB.PRG");
-      yield return new WaitForSeconds(.3f);
+      yield return new WaitForSeconds(0.3f);
       Terminal.WriteLine("LOADING");
       Terminal.ShowCursor(false);
-      yield return new WaitForSeconds(.6f);
+      yield return new WaitForSeconds(0.6f);
       Terminal.WriteLine(".");
-      yield return new WaitForSeconds(.8f);
+      yield return new WaitForSeconds(0.8f);
       Terminal.WriteLine(".");
-      yield return new WaitForSeconds(1);
+      yield return new WaitForSeconds(1.0f);
       Terminal.WriteLine(".");
       yield return new WaitForSeconds(1.2f);
       Terminal.WriteLine(".");
       yield return new WaitForSeconds(1.4f);
       StartCoroutine(ShowLogin());
+   }
+
+   IEnumerator SendFauxInput(string input)
+   {
+      foreach (char c in input)
+      {
+         Terminal.ReceiveFauxInput(c.ToString());
+         PlayRandomSound();
+         yield return new WaitForSeconds(Random.Range(0.075f, 0.35f));
+      }
+      Terminal.ReceiveFauxEndOfLine();
    }
 
    IEnumerator ShowLogin() // Coroutine to simulate automatic computer login.
@@ -256,9 +267,11 @@ public class Hacker : MonoBehaviour {
       yield return new WaitForSeconds(1.2f);
       Terminal.ShowCursor(true);
       Terminal.WriteLine("LOGIN (guest):");
+      StartCoroutine(SendFauxInput(" "));
       yield return new WaitForSeconds(1.4f);
       Terminal.WriteLine("PASSWORD:");
-      Terminal.WriteLine("");
+      StartCoroutine(SendFauxInput(" "));
+      //Terminal.WriteLine("");
       yield return new WaitForSeconds(1.6f);
       keyboard.SetActive(true); // Reactivate the keyboard!
       ShowMenu(); // The Light-Show is over, start the game now.
@@ -491,18 +504,9 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("Scramble Level " + level + ": " + SelectScramble(level));
    }
 
-   private void FakeType(string thingToType)
-   {
-      foreach (char c in thingToType)
-      {
-         PlayRandomSound();
-
-      }
-   }
-
    private void PlayRandomSound()
    {
-      int randomIndex = UnityEngine.Random.Range(0, keyStrokeSounds.Length);
+      int randomIndex = Random.Range(0, keyStrokeSounds.Length);
       audioSource.clip = keyStrokeSounds[randomIndex];
       audioSource.Play();
    }

@@ -2,8 +2,8 @@
 
 public class Keyboard : MonoBehaviour
 {
-    [SerializeField] AudioClip[] keyStrokeSounds;
     [SerializeField] Terminal connectedToTerminal;
+    [SerializeField] AudioClip[] keyStrokeSounds;
 
     AudioSource audioSource;
 
@@ -36,7 +36,7 @@ public class Keyboard : MonoBehaviour
         }
     }
 
-    private void PlayRandomSound()
+    public void PlayRandomSound()
     {
         int randomIndex = UnityEngine.Random.Range(0, keyStrokeSounds.Length);
         audioSource.clip = keyStrokeSounds[randomIndex];

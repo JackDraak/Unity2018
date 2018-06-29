@@ -22,6 +22,14 @@
         }
     }
 
+   public void ReceiveFauxInput(string input)
+   {
+      foreach (char c in input)
+      {
+         UpdateCurrentInputLine(c);
+      }
+   }
+
     public string GetCurrentInputLine()
     {
         return currentInputLine;

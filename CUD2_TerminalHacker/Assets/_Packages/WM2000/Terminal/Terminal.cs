@@ -26,7 +26,17 @@ public class Terminal : MonoBehaviour
       primaryTerminal.displayBuffer.ShowCursor(condition);
    }
 
-    public void ReceiveFrameInput(string input)
+   public static void ReceiveFauxInput(string input)
+   {
+      primaryTerminal.inputBuffer.ReceiveFauxInput(input);
+   }
+
+   public static void ReceiveFauxEndOfLine()
+   {
+      primaryTerminal.inputBuffer.ReceiveFauxInput("\n");
+   }
+
+   public void ReceiveFrameInput(string input)
     {
         inputBuffer.ReceiveFrameInput(input);
     }
