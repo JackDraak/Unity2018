@@ -31,7 +31,12 @@ public class Terminal : MonoBehaviour
       primaryTerminal.inputBuffer.ReceiveFauxInput(input);
    }
 
-   public static void ReceiveFauxEndOfLine()
+   public static void SetPrompt(string input)
+   {
+      primaryTerminal.inputBuffer.SetPrompt(input);
+   }
+
+   public static void ReceiveFauxEndOfLine() // not really needed....
    {
       primaryTerminal.inputBuffer.ReceiveFauxInput("\n");
    }

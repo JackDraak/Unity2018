@@ -213,7 +213,7 @@ public class Hacker : MonoBehaviour {
    IEnumerator ShowLoad() // Coroutine to simulate computer booting-up.
    {
       currentScreen = Screen.Login;
-      //keyboard.SetActive(false);    // disable user input during 'boot-up sequence'.
+      keyboard.SetActive(false);    // disable user input during 'boot-up sequence'.
       Terminal.ShowCursor(false);   // ...and hide the cursor, because...
       Terminal.ClearScreen();
       //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
@@ -225,8 +225,9 @@ public class Hacker : MonoBehaviour {
       yield return new WaitForSeconds(1.3f);
       Terminal.WriteLine("");
       Terminal.WriteLine("READY.");
-      Terminal.ShowCursor(true); // add sounds for 'typing' ???
-      yield return new WaitForSeconds(0.4f);
+      Terminal.ShowCursor(true);
+      //Terminal.SetPrompt("#> ");
+      yield return new WaitForSeconds(1.4f);
       StartCoroutine(SendFauxInput("LOAD \"GTHDB.PRG\",8,1"));
       yield return new WaitForSeconds(5.0f); // long enough for SFI coroutine
       Terminal.WriteLine("");
@@ -252,7 +253,7 @@ public class Hacker : MonoBehaviour {
       {
          Terminal.ReceiveFauxInput(c.ToString());
          PlayRandomSound();
-         yield return new WaitForSeconds(Random.Range(0.075f, 0.35f));
+         yield return new WaitForSeconds(Random.Range(0.066f, 0.33f));
       }
       Terminal.ReceiveFauxEndOfLine();
    }
@@ -266,11 +267,16 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("Kernel 2.6.5-21.EL on VIC-64");
       yield return new WaitForSeconds(1.2f);
       Terminal.ShowCursor(true);
-      Terminal.WriteLine("LOGIN (guest):");
-      StartCoroutine(SendFauxInput(" "));
-      yield return new WaitForSeconds(1.4f);
-      Terminal.WriteLine("PASSWORD:");
-      StartCoroutine(SendFauxInput(" "));
+      Terminal.SetPrompt("LOGIN (guest): ");
+      yield return new WaitForSeconds(0.6f);
+      Terminal.ReceiveFauxInput("\n");
+      PlayRandomSound();
+      yield return new WaitForSeconds(0.3f);
+      Terminal.SetPrompt("PASSWORD: ");
+      yield return new WaitForSeconds(0.6f);
+      Terminal.ReceiveFauxInput("\n");
+      PlayRandomSound();
+      //StartCoroutine(SendFauxInput(" "));
       //Terminal.WriteLine("");
       yield return new WaitForSeconds(1.6f);
       keyboard.SetActive(true); // Reactivate the keyboard!

@@ -11,10 +11,11 @@
         {
             if (c == '\b') // backspace
             {
+               // solve the "greedy backspace key" issue:
                if (currentInputLine.Length > 0)
                {
                   currentInputLine = currentInputLine.Remove(currentInputLine.Length - 1);
-                  break;
+                  break;  
                }
                // else 'beep' for backspace on blank line ???
          }
@@ -23,6 +24,14 @@
     }
 
    public void ReceiveFauxInput(string input)
+   {
+      foreach (char c in input)
+      {
+         UpdateCurrentInputLine(c);
+      }
+   }
+
+   public void SetPrompt(string input)
    {
       foreach (char c in input)
       {
