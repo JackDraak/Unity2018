@@ -99,14 +99,23 @@ public class DisplayBuffer
         if (!showCursor || time % (3 * FLASH_INTERVAL) <= FLASH_INTERVAL)
         {
             return ' ';
-        }
-        else
+      }
+      else
         {
-            return '▓';
-        }
-    }
+            return '░';
+         // return '_';
+         // return '░';
+         // return '▓';
+      }
+      // return ' ';
+      // return '▀';
+      // return '▄';
+      // return '_';
+      // return '░';
+      // return '▓';
+   }
 
-    void OnCommand(string command)
+   void OnCommand(string command)
     {
         logLines.Add(command);
     }

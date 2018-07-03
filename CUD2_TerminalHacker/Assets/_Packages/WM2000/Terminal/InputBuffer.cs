@@ -1,27 +1,36 @@
-﻿public class InputBuffer
+﻿using UnityEngine;
+
+public class InputBuffer
 {
-    string currentInputLine; // todo private
+   string currentInputLine; // todo private
+   AudioSource audioSource;
 
-    public delegate void OnCommandSentHandler(string command);
-    public event OnCommandSentHandler onCommandSent;
+   public delegate void OnCommandSentHandler(string command);
+   public event OnCommandSentHandler onCommandSent;
+   public event OnCommandSentHandler onBadKeySent;
 
-    public void ReceiveFrameInput(string input)
-    {
-        foreach (char c in input)
-        {
-            if (c == '\b') // backspace
+   public void ReceiveFrameInput(string input)
+   {
+      foreach (char c in input)
+      {
+         if (c == '\b') // backspace
+         {
+            if (currentInputLine.Length > 0) // TODO > length of prompt
             {
-               // solve the "greedy backspace key" issue:
-               if (currentInputLine.Length > 0)
-               {
-                  currentInputLine = currentInputLine.Remove(currentInputLine.Length - 1);
-                  break;  
-               }
-               // else 'beep' for backspace on blank line ???
-         }
-         UpdateCurrentInputLine(c);
-        }
-    }
+               currentInputLine = currentInputLine.Remove(currentInputLine.Length - 1);
+               break;  // ...solved the "greedy backspace key" issue.
+            }
+            // else 'beep' for backspace on "blank line" ??? How to beep?
+            else if (currentInputLine.Length == 0) // TODO length of prompt
+            {
+               SendBadKey();
+               SendCommand(currentInputLine);
+               break;
+            }
+      }
+      UpdateCurrentInputLine(c);
+      }
+   }
 
    public void ReceiveFauxInput(string input)
    {
@@ -39,7 +48,7 @@
       }
    }
 
-    public string GetCurrentInputLine()
+    public string GetCurrentInputLine() // TODO complete code or depreciate properly
     {
         return currentInputLine;
         // unless password
@@ -61,5 +70,10 @@
     {
         onCommandSent(command);
         currentInputLine = "";
-    } 
+    }
+
+   private void SendBadKey()
+   {
+      onBadKeySent("");
+   }
 }

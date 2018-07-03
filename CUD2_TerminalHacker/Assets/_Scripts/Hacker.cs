@@ -47,6 +47,7 @@ public class Hacker : MonoBehaviour {
    int tokens = 10;                                // Game currency
 
    [SerializeField] AudioClip[] keyStrokeSounds;
+   [SerializeField] AudioClip[] badKeySound;
    AudioSource audioSource;
 
       // Obligatory Unity 'Start()' function; 'OnUserInput()' is the primary game controller.
@@ -311,7 +312,8 @@ public class Hacker : MonoBehaviour {
         Terminal.WriteLine("Please enter '?' any time for help, otherwise, please");
         Terminal.WriteLine("select a security question to descramble their answers.");
         Terminal.WriteLine("");
-        Terminal.WriteLine("[TOA: " + tokens + "]");
+        Terminal.WriteLine("[TOA: " + tokens + "] ");
+      // TODO add a promt here? (and elsewhere?)_ ...would need to stop backspace from eating prompt, as well as cut prompt from 'command' string
     }
 
     void ShowReward(int level) // Display ASCII-art rewards for de-scrambles.
@@ -481,10 +483,11 @@ public class Hacker : MonoBehaviour {
    // Select (as member-variable 'scrambleWord') a random word from a specific level.
    string SelectScramble(int level)
    {
-      if (level == 1) scrambleWord = wordsOne[Random.Range(0, wordsOne.Length)];
-      else if (level == 2) scrambleWord = wordsTwo[Random.Range(0, wordsTwo.Length)];
-      else if (level == 3) scrambleWord = wordsThree[Random.Range(0, wordsThree.Length)];
-      else if (level == 4) scrambleWord = wordsFour[Random.Range(0, wordsFour.Length)];
+      System.Random randomRange = new System.Random();
+      if (level == 1) scrambleWord = wordsOne[randomRange.Next(wordsOne.Length)];
+      else if (level == 2) scrambleWord = wordsTwo[randomRange.Next(wordsTwo.Length)];
+      else if (level == 3) scrambleWord = wordsThree[randomRange.Next(wordsThree.Length)];
+      else if (level == 4) scrambleWord = wordsFour[randomRange.Next(wordsFour.Length)];
       return scrambleWord.Anagram(); // Give the word a scramble!  
    }
 
@@ -512,8 +515,22 @@ public class Hacker : MonoBehaviour {
 
    private void PlayRandomSound()
    {
-      int randomIndex = Random.Range(0, keyStrokeSounds.Length);
-      audioSource.clip = keyStrokeSounds[randomIndex];
+      // The old way I was doing this.....
+      //int randomIndex = Random.Range(0, keyStrokeSounds.Length);
+      //audioSource.clip = keyStrokeSounds[randomIndex];
+      //audioSource.Play();
+      
+      // The new way
+      System.Random randomRange = new System.Random();
+      int index = randomRange.Next(keyStrokeSounds.Length);
+      audioSource.clip = keyStrokeSounds[index];
+      audioSource.Play();
+   }
+
+   private void BadUserInput(string parameters)
+   {
+      audioSource.clip = badKeySound[0];
+      audioSource.volume = 0.2f;
       audioSource.Play();
    }
 }
