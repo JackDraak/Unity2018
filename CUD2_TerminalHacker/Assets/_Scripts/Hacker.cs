@@ -49,11 +49,13 @@ public class Hacker : MonoBehaviour {
    [SerializeField] AudioClip[] keyStrokeSounds;
    [SerializeField] AudioClip[] badKeySound;
    AudioSource audioSource;
+   string prompt = "unset> "; // TODO should this be expunged?
 
       // Obligatory Unity 'Start()' function; 'OnUserInput()' is the primary game controller.
    void Start ()
    {
       audioSource = GetComponent<AudioSource>();
+      Terminal.SetPromptLength();
       StartCoroutine(ShowLoad());   // begin the light show.
    }
 
@@ -268,12 +270,12 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("Kernel 2.6.5-21.EL on VIC-64");
       yield return new WaitForSeconds(1.2f);
       Terminal.ShowCursor(true);
-      Terminal.SetPrompt("LOGIN (guest): ");
+      Terminal.PrintFakePrompt("LOGIN (guest): ");
       yield return new WaitForSeconds(0.6f);
       Terminal.ReceiveFauxInput("\n");
       PlayRandomSound();
       yield return new WaitForSeconds(0.3f);
-      Terminal.SetPrompt("PASSWORD: ");
+      Terminal.PrintFakePrompt("PASSWORD: ");
       yield return new WaitForSeconds(0.6f);
       Terminal.ReceiveFauxInput("\n");
       PlayRandomSound();
@@ -284,37 +286,39 @@ public class Hacker : MonoBehaviour {
       ShowMenu(); // The Light-Show is over, start the game now.
    }
 
-    void ShowMenu() // Primary game interface.
-    {
-        currentScreen = Screen.Menu;
-        Terminal.ClearScreen();
-        Terminal.WriteLine("                    GTHDB: Main Menu");
-        Terminal.WriteLine("          [access at anytime by entering 'menu']");
-        Terminal.WriteLine("");
-        Terminal.WriteLine("Earn tokens of appreciation (TOA) as rewards for your");
-        //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
-        Terminal.WriteLine("success. Please work dilligently however, as failures");
-        Terminal.WriteLine("will not be accommodated.");
-        Terminal.WriteLine("");
-        Terminal.WriteLine("  1) What is your favourite colour?");
-        Terminal.WriteLine("  2) What is the name of your first pet?");
-        if (levelThree == Access.Locked)
-        {
-            Terminal.WriteLine("  3) Unlock with " + unlockFee_3 + " TOA.");
-        }
-        else Terminal.WriteLine("  3) Who is your favourite SciFi author?");
-        if (levelFour == Access.Locked)
-        {
-            Terminal.WriteLine("  4) Unlock with " + unlockFee_4 + " TOA.");
-        }
-        else Terminal.WriteLine("  4) What is the name of the street you grew up on?");
-        Terminal.WriteLine("");
-        Terminal.WriteLine("Please enter '?' any time for help, otherwise, please");
-        Terminal.WriteLine("select a security question to descramble their answers.");
-        Terminal.WriteLine("");
-        Terminal.WriteLine("[TOA: " + tokens + "] ");
-      // TODO add a promt here? (and elsewhere?)_ ...would need to stop backspace from eating prompt, as well as cut prompt from 'command' string
-    }
+   void ShowMenu() // Primary game interface.
+   {
+      currentScreen = Screen.Menu;
+      Terminal.ClearScreen();
+      Terminal.WriteLine("                    GTHDB: Main Menu");
+      Terminal.WriteLine("          [access at anytime by entering 'menu']");
+      Terminal.WriteLine("");
+      Terminal.WriteLine("Earn tokens of appreciation (TOA) as rewards for your");
+      //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
+      Terminal.WriteLine("success. Please work dilligently however, as failures");
+      Terminal.WriteLine("will not be accommodated.");
+      Terminal.WriteLine("");
+      Terminal.WriteLine("  1) What is your favourite colour?");
+      Terminal.WriteLine("  2) What is the name of your first pet?");
+      if (levelThree == Access.Locked)
+      {
+         Terminal.WriteLine("  3) Unlock with " + unlockFee_3 + " TOA.");
+      }
+      else Terminal.WriteLine("  3) Who is your favourite SciFi author?");
+      if (levelFour == Access.Locked)
+      {
+         Terminal.WriteLine("  4) Unlock with " + unlockFee_4 + " TOA.");
+      }
+      else Terminal.WriteLine("  4) What is the name of the street you grew up on?");
+      Terminal.WriteLine("");
+      Terminal.WriteLine("Please enter '?' any time for help, otherwise, please");
+      Terminal.WriteLine("select a security question to descramble their answers.");
+      Terminal.WriteLine("");
+      Terminal.WriteLine("[TOA: " + tokens + "] ");
+      // TODO add a prompt here? (and elsewhere?)_ ...would need to stop backspace from eating prompt, as well as cut prompt from 'command' string
+      SetPrompt("prompt> ");
+      //Terminal.PrintPrompt();
+   }
 
     void ShowReward(int level) // Display ASCII-art rewards for de-scrambles.
     {
@@ -532,5 +536,11 @@ public class Hacker : MonoBehaviour {
       audioSource.clip = badKeySound[0];
       audioSource.volume = 0.2f;
       audioSource.Play();
+   }
+
+   private void SetPrompt(string prompt)
+   {
+      Terminal.SetPrompt(prompt);
+      //Terminal.SetPromptLength(prompt.Length);
    }
 }

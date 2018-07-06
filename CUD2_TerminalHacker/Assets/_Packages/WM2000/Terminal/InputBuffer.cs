@@ -2,33 +2,26 @@
 
 public class InputBuffer
 {
-   string currentInputLine; // todo private
-   AudioSource audioSource;
+   string currentInputLine;
+   string localPrompt = "";
+   int promptLength = 0;
+   int logLine = 0;
 
    public delegate void OnCommandSentHandler(string command);
    public event OnCommandSentHandler onCommandSent;
    public event OnCommandSentHandler onBadKeySent;
 
-   public void ReceiveFrameInput(string input)
+   public string GetCurrentInputLine() // TODO complete code or depreciate properly
    {
-      foreach (char c in input)
+      return currentInputLine;
+      // unless password
+   }
+
+   public void PrintPrompt()
+   {
+      foreach (char c in localPrompt)
       {
-         if (c == '\b') // backspace
-         {
-            if (currentInputLine.Length > 0) // TODO > length of prompt
-            {
-               currentInputLine = currentInputLine.Remove(currentInputLine.Length - 1);
-               break;  // ...solved the "greedy backspace key" issue.
-            }
-            // else 'beep' for backspace on "blank line" ??? How to beep?
-            else if (currentInputLine.Length == 0) // TODO length of prompt
-            {
-               SendBadKey();
-               SendCommand(currentInputLine);
-               break;
-            }
-      }
-      UpdateCurrentInputLine(c);
+         UpdateCurrentInputLine(c);
       }
    }
 
@@ -40,40 +33,95 @@ public class InputBuffer
       }
    }
 
-   public void SetPrompt(string input)
+   public void ReceiveFrameInput(string input)
    {
+      if (input.Length > 0)
+      {
+         logLine++;
+         Debug.Log("InputBuffer:ReceiveFrameInput_" + logLine.ToString() + "_" + input + " PL:" + promptLength.ToString());
+      }
       foreach (char c in input)
+      {
+         if (c == '\b') // <-- backspace
+         {
+            if (currentInputLine.Length > (0 + promptLength))
+            {
+               currentInputLine = currentInputLine.Remove(currentInputLine.Length - 1);
+               break;  // ...solved the "greedy backspace key" issue.
+            }
+            // 'beep' for backspace on "blank line"
+            else if (currentInputLine.Length == (0 + promptLength))
+            {
+               SendBadKey();
+               SendCommand(currentInputLine);
+               if (promptLength > 0) PrintLocalPrompt();
+               break;
+            }
+         }
+         UpdateCurrentInputLine(c);
+      }
+   }
+
+   private void SendBadKey()
+   {
+      onBadKeySent("");
+   }
+
+   private void SendCommand(string command)
+   {
+      if (promptLength > 0) onCommandSent(command.Substring(promptLength));
+      else
+      {
+         onCommandSent(command);
+      }
+      currentInputLine = "";
+      if (promptLength > 0) PrintLocalPrompt();
+   }
+
+   public void PrintFakePrompt(string input)
+   {
+      foreach (char c in input) // TODO why was this localPrompt ??
       {
          UpdateCurrentInputLine(c);
       }
    }
 
-    public string GetCurrentInputLine() // TODO complete code or depreciate properly
-    {
-        return currentInputLine;
-        // unless password
-    }
-
-    private void UpdateCurrentInputLine(char c)
-    {
-        if (c == '\n' || c == '\r')
-        {
-            SendCommand(currentInputLine); 
-        }
-        else
-        {
-            currentInputLine += c;
-        }
-    }
-
-    private void SendCommand(string command)
-    {
-        onCommandSent(command);
-        currentInputLine = "";
-    }
-
-   private void SendBadKey()
+   public void PrintLocalPrompt()
    {
-      onBadKeySent("");
+      foreach (char c in localPrompt) 
+      {
+         UpdateCurrentInputLine(c);
+      }
+   }
+
+   public void SetPrompt(string input)
+   {
+      localPrompt = input;
+      SetPromptLength(true);
+   }
+
+   public void SetPromptLength()
+   {
+      promptLength = 0;
+   }
+
+   public void SetPromptLength(int length)
+   {
+      promptLength = length;
+   }
+
+   public void SetPromptLength(bool torf)
+   {
+      promptLength = localPrompt.Length;
+   }
+
+   private void UpdateCurrentInputLine(char c)
+   {
+      if (c == '\n' || c == '\r')
+      {
+         SendCommand(currentInputLine);
+      //   if (promptLength > 0) PrintLocalPrompt();
+      }
+      else currentInputLine += c;
    }
 }

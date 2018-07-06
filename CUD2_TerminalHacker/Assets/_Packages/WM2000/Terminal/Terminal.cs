@@ -3,10 +3,11 @@ using System.Reflection;
 
 public class Terminal : MonoBehaviour
 {
-    DisplayBuffer displayBuffer;
-    InputBuffer inputBuffer;
+   DisplayBuffer displayBuffer;
+   InputBuffer inputBuffer;
+   int promptLength = 0;
 
-    static Terminal primaryTerminal;
+   static Terminal primaryTerminal;
 
    private void Awake()
    {
@@ -32,11 +33,6 @@ public class Terminal : MonoBehaviour
       primaryTerminal.inputBuffer.ReceiveFauxInput(input);
    }
 
-   public static void SetPrompt(string input)
-   {
-      primaryTerminal.inputBuffer.SetPrompt(input);
-   }
-
    public static void ReceiveFauxEndOfLine() // not really needed....
    {
       primaryTerminal.inputBuffer.ReceiveFauxInput("\n");
@@ -47,10 +43,10 @@ public class Terminal : MonoBehaviour
       inputBuffer.ReceiveFrameInput(input);
    }
 
-    public static void ClearScreen()
-    {
-       primaryTerminal.displayBuffer.Clear();
-    }
+   public static void ClearScreen()
+   {
+      primaryTerminal.displayBuffer.Clear();
+   }
 
    public static void WriteChar(char c) // TODO finish or depreciate this code
    {
@@ -78,13 +74,13 @@ public class Terminal : MonoBehaviour
       }
    }
 
+   // hacking in a way to get beep-directives from inputBuffer:
    public void NotifyBadKeyHandlers(string input)
    {
       var allGameObjects = FindObjectsOfType<MonoBehaviour>();
       foreach (MonoBehaviour mb in allGameObjects)
       {
          var flags = BindingFlags.NonPublic | BindingFlags.Instance;
-         // hacking in a way to get beep-directives from inputBuffer
          var targetMethod = mb.GetType().GetMethod("BadUserInput", flags);
          if (targetMethod != null)
          {
@@ -93,5 +89,35 @@ public class Terminal : MonoBehaviour
             targetMethod.Invoke(mb, parameters);
          }
       }
+   }
+
+   public static void SetPrompt(string input)
+   {
+      primaryTerminal.inputBuffer.SetPrompt(input);
+   }
+
+   public static void PrintFakePrompt(string input)
+   {
+      primaryTerminal.inputBuffer.PrintFakePrompt(input);
+   }
+
+   public static void SetPromptLength()
+   {
+      primaryTerminal.inputBuffer.SetPromptLength();
+   }
+
+   public static void SetPromptLength(int length)
+   {
+      primaryTerminal.inputBuffer.SetPromptLength(length);
+   }
+
+   public static void SetPromptLength(bool torf)
+   {
+      primaryTerminal.inputBuffer.SetPromptLength(torf);
+   }
+
+   public static void PrintPrompt()
+   {
+      primaryTerminal.inputBuffer.PrintLocalPrompt();
    }
 }
