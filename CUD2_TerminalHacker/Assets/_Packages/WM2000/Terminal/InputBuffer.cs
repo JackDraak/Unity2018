@@ -17,6 +17,22 @@ public class InputBuffer
       // unless password
    }
 
+   public void PrintFakePrompt(string input)
+   {
+      foreach (char c in input)
+      {
+         UpdateCurrentInputLine(c);
+      }
+   }
+
+   public void PrintLocalPrompt()
+   {
+      foreach (char c in localPrompt)
+      {
+         UpdateCurrentInputLine(c);
+      }
+   }
+
    public void PrintPrompt()
    {
       foreach (char c in localPrompt)
@@ -42,14 +58,15 @@ public class InputBuffer
       }
       foreach (char c in input)
       {
-         if (c == '\b') // <-- backspace
+         if (c == '\b')
          {
             if (currentInputLine.Length > (0 + promptLength))
             {
                currentInputLine = currentInputLine.Remove(currentInputLine.Length - 1);
-               break;  // ...solved the "greedy backspace key" issue.
+               // fix the 'greedy backspace key' issue with this break:
+               break;
             }
-            // 'beep' for backspace on "blank line"
+            // 'beep' for backspace keypresses on "blank lines" (don't backspace over any prompt).
             else if (currentInputLine.Length == (0 + promptLength))
             {
                SendBadKey();
@@ -78,22 +95,6 @@ public class InputBuffer
       if (promptLength > 0) PrintLocalPrompt();
    }
 
-   public void PrintFakePrompt(string input)
-   {
-      foreach (char c in input)
-      {
-         UpdateCurrentInputLine(c);
-      }
-   }
-
-   public void PrintLocalPrompt()
-   {
-      foreach (char c in localPrompt) 
-      {
-         UpdateCurrentInputLine(c);
-      }
-   }
-
    public void SetPrompt(string input)
    {
       localPrompt = input;
@@ -106,14 +107,14 @@ public class InputBuffer
       promptLength = 0;
    }
 
-   public void SetPromptLength(int length)
-   {
-      promptLength = length;
-   }
-
    public void SetPromptLength(bool torf)
    {
       promptLength = localPrompt.Length;
+   }
+
+   public void SetPromptLength(int length)
+   {
+      promptLength = length;
    }
 
    private void UpdateCurrentInputLine(char c)

@@ -18,60 +18,14 @@ public class Terminal : MonoBehaviour
       inputBuffer.onBadKeySent += NotifyBadKeyHandlers;
    }
 
-   public string GetDisplayBuffer(int width, int height)
-   {
-      return displayBuffer.GetDisplayBuffer(Time.time, width, height);
-   }
-
-   public static void ShowCursor(bool condition)
-   {
-      primaryTerminal.displayBuffer.ShowCursor(condition);
-   }
-
-   public static void ReceiveFauxInput(string input)
-   {
-      primaryTerminal.inputBuffer.ReceiveFauxInput(input);
-   }
-
-   public static void ReceiveFauxEndOfLine() // not really needed....
-   {
-      primaryTerminal.inputBuffer.ReceiveFauxInput("\n");
-   }
-
-   public void ReceiveFrameInput(string input)
-   {
-      inputBuffer.ReceiveFrameInput(input);
-   }
-
    public static void ClearScreen()
    {
       primaryTerminal.displayBuffer.Clear();
    }
 
-   public static void WriteChar(char c) // TODO finish or depreciate this code
+   public string GetDisplayBuffer(int width, int height)
    {
-      // make a way to print single character to buffer....
-   }
-
-   public static void WriteLine(string line)
-   {
-      primaryTerminal.displayBuffer.WriteLine(line);
-   }
-
-   public void NotifyCommandHandlers(string input)
-   {
-      var allGameObjects = FindObjectsOfType<MonoBehaviour>();
-      foreach (MonoBehaviour mb in allGameObjects)
-      {
-         var flags = BindingFlags.NonPublic | BindingFlags.Instance; 
-         var targetMethod = mb.GetType().GetMethod("OnUserInput", flags);
-         if (targetMethod != null)
-         {
-            object[] parameters = new object[1];
-            parameters[0] = input;
-            targetMethod.Invoke(mb, parameters);
-         }
-      }
+      return displayBuffer.GetDisplayBuffer(Time.time, width, height);
    }
 
    // hacking in a way to get beep-directives from inputBuffer:
@@ -91,9 +45,20 @@ public class Terminal : MonoBehaviour
       }
    }
 
-   public static void SetPrompt(string input)
+   public void NotifyCommandHandlers(string input)
    {
-      primaryTerminal.inputBuffer.SetPrompt(input);
+      var allGameObjects = FindObjectsOfType<MonoBehaviour>();
+      foreach (MonoBehaviour mb in allGameObjects)
+      {
+         var flags = BindingFlags.NonPublic | BindingFlags.Instance; 
+         var targetMethod = mb.GetType().GetMethod("OnUserInput", flags);
+         if (targetMethod != null)
+         {
+            object[] parameters = new object[1];
+            parameters[0] = input;
+            targetMethod.Invoke(mb, parameters);
+         }
+      }
    }
 
    public static void PrintFakePrompt(string input)
@@ -101,14 +66,34 @@ public class Terminal : MonoBehaviour
       primaryTerminal.inputBuffer.PrintFakePrompt(input);
    }
 
+   public static void PrintPrompt()
+   {
+      primaryTerminal.inputBuffer.PrintLocalPrompt();
+   }
+
+   //   public static void ReceiveFauxEndOfLine() // not really needed....
+   //   {
+   //      primaryTerminal.inputBuffer.ReceiveFauxInput("\n");
+   //   }
+
+   public static void ReceiveFauxInput(string input)
+   {
+      primaryTerminal.inputBuffer.ReceiveFauxInput(input);
+   }
+
+   public void ReceiveFrameInput(string input)
+   {
+      inputBuffer.ReceiveFrameInput(input);
+   }
+
+   public static void SetPrompt(string input)
+   {
+      primaryTerminal.inputBuffer.SetPrompt(input);
+   }
+
    public static void SetPromptLength()
    {
       primaryTerminal.inputBuffer.SetPromptLength();
-   }
-
-   public static void SetPromptLength(int length)
-   {
-      primaryTerminal.inputBuffer.SetPromptLength(length);
    }
 
    public static void SetPromptLength(bool torf)
@@ -116,8 +101,23 @@ public class Terminal : MonoBehaviour
       primaryTerminal.inputBuffer.SetPromptLength(torf);
    }
 
-   public static void PrintPrompt()
+   public static void SetPromptLength(int length)
    {
-      primaryTerminal.inputBuffer.PrintLocalPrompt();
+      primaryTerminal.inputBuffer.SetPromptLength(length);
+   }
+
+   public static void ShowCursor(bool condition)
+   {
+      primaryTerminal.displayBuffer.ShowCursor(condition);
+   }
+
+   //   public static void WriteChar(char c) // TODO finish or depreciate this code
+   //   {
+   //      // make a way to print single character to buffer....
+   //   }
+
+   public static void WriteLine(string line)
+   {
+      primaryTerminal.displayBuffer.WriteLine(line);
    }
 }
