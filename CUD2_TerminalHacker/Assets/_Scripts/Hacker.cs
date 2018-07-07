@@ -86,8 +86,9 @@ public class Hacker : MonoBehaviour {
       else if (int.TryParse(input, out g)) // If input is a #, apply to tokens.
       {
          tokens += int.Parse(input);
-         //Terminal.WriteLine("[TOA: " + tokens + "]");
          Terminal.WriteLine("ENTER COMMAND:");
+         SetPrompt("[TOA: " + tokens + "] ");
+         //Terminal.WriteLine("[TOA: " + tokens + "]");
       }
       else ShowSyntaxError(input); // Otherwise, fail gracefully.
    }
@@ -180,7 +181,7 @@ public class Hacker : MonoBehaviour {
       else
       {
          tokens -= currentLevel;
-         SetPrompt("[TOA: " + tokens + "] "); // TODO WIP
+         SetPrompt("[TOA: " + tokens + "] ");
          //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|                                                                                             |
          Terminal.WriteLine("Yikes! You've lost " + currentLevel + " TOA!");
          Terminal.WriteLine("...be sure to not lose them all!");
@@ -376,6 +377,7 @@ public class Hacker : MonoBehaviour {
 
    IEnumerator ShowEasterEgg() // The 'backdoor'. Needed by players with no TOA.
    {
+      SetPrompt("");
       currentScreen = Screen.Egg;
       keyboard.SetActive(false);
       Terminal.ClearScreen();

@@ -54,7 +54,7 @@ public class InputBuffer
       if (input.Length > 0)
       {
          logLine++;
-         Debug.Log("InputBuffer:ReceiveFrameInput_" + logLine.ToString() + "_" + input + " PL:" + promptLength.ToString());
+         //Debug.Log("InputBuffer:ReceiveFrameInput_" + logLine.ToString() + "_" + input + " PL:" + promptLength.ToString());
       }
       foreach (char c in input)
       {
