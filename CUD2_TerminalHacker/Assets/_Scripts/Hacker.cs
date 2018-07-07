@@ -194,8 +194,8 @@ public class Hacker : MonoBehaviour {
    {
       Terminal.WriteLine("\nYou solved the active scramble. Directive unkown: " + ReformatInput(input));
       Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
-                         "Otherwise use the menu, then enter a selection '#'.\n\n" +
-                         "[T.O.A.: " + tokens + "]");
+                         "Otherwise use the menu, then enter a selection '#'.\n\n");
+                         //"[T.O.A.: " + tokens + "]");
    }
 
    void HandleHelpInput(string input) // Process user input in helpmode.
@@ -231,10 +231,9 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("");
       Terminal.WriteLine("READY.");
       Terminal.ShowCursor(true);
-      //Terminal.SetPrompt("#> ");
       yield return new WaitForSeconds(1.4f);
       StartCoroutine(SendFauxInput("LOAD \"GTHDB.PRG\",8,1"));
-      yield return new WaitForSeconds(5.0f); // long enough for SFI coroutine
+      yield return new WaitForSeconds(5.0f); // needs to be long enough for SendFauxInput() coroutine
       Terminal.WriteLine("");
       Terminal.WriteLine("SEARCHING FOR GTHDB.PRG");
       yield return new WaitForSeconds(0.3f);
@@ -260,7 +259,6 @@ public class Hacker : MonoBehaviour {
          PlayRandomSound();
          yield return new WaitForSeconds(Random.Range(0.066f, 0.33f));
       }
-      //Terminal.ReceiveFauxEndOfLine();
       Terminal.ReceiveFauxInput("\n");
    }
 
@@ -282,8 +280,6 @@ public class Hacker : MonoBehaviour {
       yield return new WaitForSeconds(0.6f);
       Terminal.ReceiveFauxInput("\n");
       PlayRandomSound();
-      //StartCoroutine(SendFauxInput(" "));
-      //Terminal.WriteLine("");
       yield return new WaitForSeconds(1.6f);
       keyboard.SetActive(true); // Reactivate the keyboard!
       ShowMenu(); // The Light-Show is over, start the game now.
@@ -422,7 +418,7 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("menu at any time by entering 'exit', otherwise, gimme a"); 
       Terminal.WriteLine("number, already!");
       Terminal.WriteLine("");
-      Terminal.WriteLine("[Current TOA: " + tokens + "]");
+      //Terminal.WriteLine("[Current TOA: " + tokens + "]");
       Terminal.WriteLine("ENTER COMMAND:");
    }
 
@@ -506,7 +502,7 @@ public class Hacker : MonoBehaviour {
       if (tokens < currentLevel)
       {
          ShowMenu();
-         Terminal.WriteLine("You lack the tokens to make any guesses at that level.");
+         Terminal.WriteLine("You lack the tokens to make any guesses at level " + level.ToString() + ".");
          return;
       }
       currentScreen = Screen.Guess;
