@@ -45,6 +45,8 @@ public class Hacker : MonoBehaviour {
    string scrambleWord;                            // Placeholder for scramble-word
    int tokens = 10;                                // Game currency
 
+   string userLogin, userCredential;
+
    [SerializeField] AudioClip[] keyStrokeSounds;
    [SerializeField] AudioClip[] badKeySound;
    AudioSource audioSource;
@@ -78,6 +80,13 @@ public class Hacker : MonoBehaviour {
       else if (currentScreen == Screen.Fail) HandleFailInput(input);
    }
 
+   private void BadUserInput(string parameters)
+   {
+      audioSource.clip = badKeySound[0];
+      audioSource.volume = 0.2f;
+      audioSource.Play();
+   }
+
    void HandleEggInput(string input) // Process user input from backdoor screen(s).
    {
       int g;
@@ -90,6 +99,17 @@ public class Hacker : MonoBehaviour {
          UpdatePrompt();
       }
       else ShowSyntaxError(input); // Otherwise, fail gracefully.
+   }
+
+   void HandleExitInput(string input) // Do nothing after exit (backdoor still avail.)
+   {
+      return;
+   }
+
+   void HandleFailInput(string input) // Process user input in failmode.
+   {
+      ShowFail();
+      ShowSyntaxError(input);
    }
 
    void HandleGuessInput(string input) // Process user guesses or directive input.
@@ -125,28 +145,10 @@ public class Hacker : MonoBehaviour {
       }
    }
 
-   void HandlePassInput(string input) // Process user input after challenge-win.
-   {
-      Terminal.WriteLine("\nYou solved the active scramble. Directive unkown: " + ReformatInput(input));
-      Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
-                         "Otherwise use the menu, then enter a selection '#'.\n\n");
-   }
-
    void HandleHelpInput(string input) // Process user input in helpmode.
    {
       ShowHelp();
       ShowSyntaxError(input);
-   }
-
-   void HandleFailInput(string input) // Process user input in failmode.
-   {
-      ShowFail();
-      ShowSyntaxError(input);
-   }
-
-   void HandleExitInput(string input) // Do nothing after exit (backdoor still avail.)
-   {
-      return;
    }
 
    void HandleMenuInput(string input) // Process user menu selection.
@@ -209,6 +211,79 @@ public class Hacker : MonoBehaviour {
       }
    }
 
+   void HandlePassInput(string input) // Process user input after challenge-win.
+   {
+      Terminal.WriteLine("\nYou solved the active scramble. Directive unkown: " + ReformatInput(input));
+      Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
+                         "Otherwise use the menu, then enter a selection '#'.\n\n");
+   }
+
+   void Level(int level) // Display challenge or explain error (lack of TOA).
+   {
+      currentLevel = level;
+      if (tokens < currentLevel)
+      {
+         ShowMenu();
+         Terminal.WriteLine("You lack the tokens to make any guesses at level " + level.ToString() + ".");
+         return;
+      }
+      currentScreen = Screen.Guess;
+      Terminal.ClearScreen();
+      Terminal.WriteLine("GTHDB Level " + currentLevel + " | TOA: " + tokens);
+      Terminal.WriteLine("This group is worth " + currentLevel + " TOA for each guess.");
+      Terminal.WriteLine("Unscramble the answer to the security question:");
+      Terminal.WriteLine("");
+      if (currentLevel == 1) Terminal.WriteLine("What is your favourite colour?");
+      else if (currentLevel == 2) Terminal.WriteLine("What is the name of your first pet?");
+      else if (currentLevel == 3) Terminal.WriteLine("Who is your favourite SciFi author?");
+      else if (currentLevel == 4) Terminal.WriteLine("What is the name of the street you grew up on?");
+      Terminal.WriteLine("Scramble Level " + level + ": " + SelectScramble(level));
+   }
+
+   private void PlayRandomSound()
+   {
+      // The old way I was doing this.....
+      //int randomIndex = Random.Range(0, keyStrokeSounds.Length);
+      //audioSource.clip = keyStrokeSounds[randomIndex];
+      //audioSource.Play();
+
+      // The new way
+      System.Random randomRange = new System.Random();
+      int index = randomRange.Next(keyStrokeSounds.Length);
+      audioSource.clip = keyStrokeSounds[index];
+      audioSource.Play();
+   }
+
+   string ReformatInput(string input) // Replace <space> with '_' for user-feedback.
+   {
+      string s = "";
+      int l = input.Length;
+      if (l > 0)
+      {
+         for (int i = 0; i < l; i++)
+         {
+            char c = input[i];
+            if (c == ' ')
+            {
+               s = string.Concat(s, '_');
+            }
+            else s = string.Concat(s, input[i]);
+         }
+      }
+      return s;
+   }
+
+   // Select (as member-variable 'scrambleWord') a random word from a specific level.
+   string SelectScramble(int level)
+   {
+      System.Random randomRange = new System.Random();
+      if (level == 1) scrambleWord = wordsOne[randomRange.Next(wordsOne.Length)];
+      else if (level == 2) scrambleWord = wordsTwo[randomRange.Next(wordsTwo.Length)];
+      else if (level == 3) scrambleWord = wordsThree[randomRange.Next(wordsThree.Length)];
+      else if (level == 4) scrambleWord = wordsFour[randomRange.Next(wordsFour.Length)];
+      return scrambleWord.Anagram(); // Give the word a scramble!  
+   }
+
    IEnumerator SendFauxInput(string input)
    {
       foreach (char c in input)
@@ -218,6 +293,97 @@ public class Hacker : MonoBehaviour {
          yield return new WaitForSeconds(Random.Range(0.066f, 0.33f));
       }
       Terminal.ReceiveFauxInput("\n");
+   }
+
+   private void SetPrompt(string prompt)
+   {
+      Terminal.SetPrompt(prompt);
+   }
+
+   IEnumerator ShowEasterEgg() // The 'backdoor'. Needed by players with no TOA.
+   {
+      SetPrompt("");
+      currentScreen = Screen.Egg;
+      keyboard.SetActive(false);
+      Terminal.ClearScreen();
+      yield return new WaitForSeconds(.3f);
+      Terminal.WriteLine("LOAD \"*\",8,1");
+      yield return new WaitForSeconds(1.4f);
+      Terminal.WriteLine("");
+      yield return new WaitForSeconds(.7f);
+      Terminal.WriteLine("SEARCHING FOR *");
+      yield return new WaitForSeconds(.8f);
+      Terminal.WriteLine("LOADING");
+      Terminal.ShowCursor(false);
+      yield return new WaitForSeconds(.6f);
+      Terminal.WriteLine(".");
+      yield return new WaitForSeconds(1.4f);
+      Terminal.WriteLine(".");
+      yield return new WaitForSeconds(1.4f);
+      Terminal.WriteLine(".");
+      yield return new WaitForSeconds(1.4f);
+      Terminal.ClearScreen();
+      //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
+      Terminal.WriteLine("        Distributed Social Hacking Tool v3.95f02");
+      Terminal.WriteLine("          [enter 'help' or 'exit' at any time]");
+      Terminal.WriteLine("");
+      Terminal.WriteLine("");
+      UpdatePrompt();
+      Terminal.WriteLine("ENTER COMMAND:");
+      Terminal.ShowCursor(true);
+      keyboard.SetActive(true);
+   }
+
+   void ShowEggHelp() // Display 'Help' page for inside the backdoor.
+   {
+      Terminal.ClearScreen();
+      Terminal.WriteLine("        Distributed Social Hacking Tool v3.95f02");
+      Terminal.WriteLine("");
+      Terminal.WriteLine("Did you forget what you put me for here, boss?");
+      Terminal.WriteLine("Okay, okay, I'll give you a hint... Do you have enough");
+      Terminal.WriteLine("TOA? If you forgot, you can always get back to the main");
+      //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
+      Terminal.WriteLine("menu at any time by entering 'exit', otherwise, gimme a");
+      Terminal.WriteLine("number, already!");
+      Terminal.WriteLine("");
+      Terminal.WriteLine("ENTER COMMAND:");
+   }
+
+   void ShowExit() // Display 'Quit' info, or just quit.
+   {
+      currentScreen = Screen.Exit;
+      Terminal.ClearScreen();
+      Application.Quit(); // Can't close a user browser, so explain:
+      Terminal.WriteLine("Thank you for playing! You may now close your browser");
+      Terminal.WriteLine("tab.");
+   }
+
+   void ShowFail() // Display failtext for broke users.
+   {
+      Terminal.WriteLine("\nIt seems you have run out of TOA. If I were in\n" +
+                         "your shoes, I'd be making myself well, scarce...\n" +
+                         "now!\n\n");
+   }
+
+   void ShowHelp() // Display 'Help' page for primary interface.
+   {
+      currentScreen = Screen.Help;
+      Terminal.ClearScreen();
+      Terminal.WriteLine("New user assistance:");
+      Terminal.WriteLine("This terminal can be controlled by entering --");
+      Terminal.WriteLine("");
+      Terminal.WriteLine("   ? - will display the user help.");
+      Terminal.WriteLine("   menu - will display the Main Menu.");
+      Terminal.WriteLine("   quit - will end the simulation.");
+      Terminal.WriteLine("   {#} - select menu options for further options.");
+      Terminal.WriteLine("");
+      Terminal.WriteLine(" * While descrambling security question answers it costs");
+      //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
+      Terminal.WriteLine("   specific TOA to make a guess, but if you are correct,");
+      Terminal.WriteLine("   then you will double your TOA! Note: If you manage to");
+      Terminal.WriteLine("   deplete your cache of TOA, you will be erased.");
+      Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
+                         "Otherwise use the menu then make a selection '#'.\n\n");
    }
 
    IEnumerator ShowLoad() // Coroutine to simulate computer booting-up.
@@ -362,173 +528,9 @@ public class Hacker : MonoBehaviour {
       }
    }
 
-   IEnumerator ShowEasterEgg() // The 'backdoor'. Needed by players with no TOA.
-   {
-      SetPrompt("");
-      currentScreen = Screen.Egg;
-      keyboard.SetActive(false);
-      Terminal.ClearScreen();
-      yield return new WaitForSeconds(.3f);
-      Terminal.WriteLine("LOAD \"*\",8,1");
-      yield return new WaitForSeconds(1.4f);
-      Terminal.WriteLine("");
-      yield return new WaitForSeconds(.7f);
-      Terminal.WriteLine("SEARCHING FOR *");
-      yield return new WaitForSeconds(.8f);
-      Terminal.WriteLine("LOADING");
-      Terminal.ShowCursor(false);
-      yield return new WaitForSeconds(.6f);
-      Terminal.WriteLine(".");
-      yield return new WaitForSeconds(1.4f);
-      Terminal.WriteLine(".");
-      yield return new WaitForSeconds(1.4f);
-      Terminal.WriteLine(".");
-      yield return new WaitForSeconds(1.4f);
-      Terminal.ClearScreen();
-      //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
-      Terminal.WriteLine("        Distributed Social Hacking Tool v3.95f02");
-      Terminal.WriteLine("          [enter 'help' or 'exit' at any time]");
-      Terminal.WriteLine("");
-      Terminal.WriteLine("");
-      UpdatePrompt();
-      Terminal.WriteLine("ENTER COMMAND:");
-      Terminal.ShowCursor(true);
-      keyboard.SetActive(true);
-   }
-
-   void ShowEggHelp() // Display 'Help' page for inside the backdoor.
-   {
-      Terminal.ClearScreen();
-      Terminal.WriteLine("        Distributed Social Hacking Tool v3.95f02");
-      Terminal.WriteLine("");
-      Terminal.WriteLine("Did you forget what you put me for here, boss?");
-      Terminal.WriteLine("Okay, okay, I'll give you a hint... Do you have enough");
-      Terminal.WriteLine("TOA? If you forgot, you can always get back to the main");
-      //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
-      Terminal.WriteLine("menu at any time by entering 'exit', otherwise, gimme a"); 
-      Terminal.WriteLine("number, already!");
-      Terminal.WriteLine("");
-      Terminal.WriteLine("ENTER COMMAND:");
-   }
-
-   void ShowExit() // Display 'Quit' info, or just quit.
-   {
-      currentScreen = Screen.Exit;
-      Terminal.ClearScreen();
-      Application.Quit(); // Can't close a user browser, so explain:
-      Terminal.WriteLine("Thank you for playing! You may now close your browser");
-      Terminal.WriteLine("tab.");
-   }
-
-      void ShowHelp() // Display 'Help' page for primary interface.
-   {
-      currentScreen = Screen.Help;
-      Terminal.ClearScreen();
-      Terminal.WriteLine("New user assistance:");
-      Terminal.WriteLine("This terminal can be controlled by entering --");
-      Terminal.WriteLine("");
-      Terminal.WriteLine("   ? - will display the user help.");
-      Terminal.WriteLine("   menu - will display the Main Menu.");
-      Terminal.WriteLine("   quit - will end the simulation.");
-      Terminal.WriteLine("   {#} - select menu options for further options.");
-      Terminal.WriteLine("");
-      Terminal.WriteLine(" * While descrambling security question answers it costs");
-      //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
-      Terminal.WriteLine("   specific TOA to make a guess, but if you are correct,");
-      Terminal.WriteLine("   then you will double your TOA! Note: If you manage to");
-      Terminal.WriteLine("   deplete your cache of TOA, you will be erased.");
-      Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
-                         "Otherwise use the menu then make a selection '#'.\n\n");
-   }
-
-   void ShowFail() // Display failtext for broke users.
-   {
-      Terminal.WriteLine("\nIt seems you have run out of TOA. If I were in\n" +
-                         "your shoes, I'd be making myself well, scarce...\n" +
-                         "now!\n\n");
-   }
-
    void ShowSyntaxError(string input) // Help user by highlighting spaces in input.
    {
       Terminal.WriteLine("Syntax Error: " + ReformatInput(input));
-   }
-
-   string ReformatInput(string input) // Replace <space> with '_' for user-feedback.
-   {
-      string s = "";
-      int l = input.Length;
-      if (l > 0)
-      {
-         for (int i = 0; i < l; i++)
-         {
-            char c = input[i];
-            if (c == ' ')
-            {
-               s = string.Concat(s, '_');
-            }
-            else s = string.Concat(s, input[i]);
-         }
-      }
-      return s;
-   }
-
-   // Select (as member-variable 'scrambleWord') a random word from a specific level.
-   string SelectScramble(int level)
-   {
-      System.Random randomRange = new System.Random();
-      if (level == 1) scrambleWord = wordsOne[randomRange.Next(wordsOne.Length)];
-      else if (level == 2) scrambleWord = wordsTwo[randomRange.Next(wordsTwo.Length)];
-      else if (level == 3) scrambleWord = wordsThree[randomRange.Next(wordsThree.Length)];
-      else if (level == 4) scrambleWord = wordsFour[randomRange.Next(wordsFour.Length)];
-      return scrambleWord.Anagram(); // Give the word a scramble!  
-   }
-
-   void Level(int level) // Display challenge or explain error (lack of TOA).
-   {
-      currentLevel = level;
-      if (tokens < currentLevel)
-      {
-         ShowMenu();
-         Terminal.WriteLine("You lack the tokens to make any guesses at level " + level.ToString() + ".");
-         return;
-      }
-      currentScreen = Screen.Guess;
-      Terminal.ClearScreen();
-      Terminal.WriteLine("GTHDB Level " + currentLevel + " | TOA: " + tokens);
-      Terminal.WriteLine("This group is worth " + currentLevel + " TOA for each guess.");
-      Terminal.WriteLine("Unscramble the answer to the security question:");
-      Terminal.WriteLine("");
-      if (currentLevel == 1) Terminal.WriteLine("What is your favourite colour?");
-      else if (currentLevel == 2) Terminal.WriteLine("What is the name of your first pet?");
-      else if (currentLevel == 3) Terminal.WriteLine("Who is your favourite SciFi author?");
-      else if (currentLevel == 4) Terminal.WriteLine("What is the name of the street you grew up on?");
-      Terminal.WriteLine("Scramble Level " + level + ": " + SelectScramble(level));
-   }
-
-   private void PlayRandomSound()
-   {
-      // The old way I was doing this.....
-      //int randomIndex = Random.Range(0, keyStrokeSounds.Length);
-      //audioSource.clip = keyStrokeSounds[randomIndex];
-      //audioSource.Play();
-      
-      // The new way
-      System.Random randomRange = new System.Random();
-      int index = randomRange.Next(keyStrokeSounds.Length);
-      audioSource.clip = keyStrokeSounds[index];
-      audioSource.Play();
-   }
-
-   private void BadUserInput(string parameters)
-   {
-      audioSource.clip = badKeySound[0];
-      audioSource.volume = 0.2f;
-      audioSource.Play();
-   }
-
-   private void SetPrompt(string prompt)
-   {
-      Terminal.SetPrompt(prompt);
    }
 
    private void UpdatePrompt()

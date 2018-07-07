@@ -8,33 +8,34 @@ public class DisplayBuffer
    const float FLASH_INTERVAL = .4f;
    bool showCursor = true;
 
-   public void ShowCursor(bool condition)
+   public void Clear()
    {
-      showCursor = condition;
+      logLines = new List<string>();
+   }
+
+   private string CutViewport(int height, string lines)
+   {
+      string output = "";
+      int rowCount = 1;
+      for (int i = lines.Length - 1; i >= 0; i--)
+      {
+         if (rowCount > height)
+         {
+            return output;
+         }
+         if (lines[i] == '\n')
+         {
+            rowCount++;
+         }
+         output = lines[i] + output;
+      }
+      return output;
    }
 
    public DisplayBuffer(InputBuffer inputBuffer)
    {
       this.inputBuffer = inputBuffer;
       inputBuffer.onCommandSent += OnCommand;
-   }
-
-   public void WriteLine(string line)
-   {
-      logLines.Add(line);
-   }
-
-   public void Clear()
-   {
-      logLines = new List<string>();
-   }
-
-   public string GetDisplayBuffer(float time, int width, int height)
-   {
-      var lines = GetAllDisplayLines(time);
-      var wrappedLines = Wrap(width, lines);
-      var viewportLines = CutViewport(height, wrappedLines);
-      return viewportLines;
    }
 
    private string GetAllDisplayLines(float time)
@@ -47,6 +48,43 @@ public class DisplayBuffer
       output += inputBuffer.GetCurrentInputLine();
       output += GetFlashingCursor(time);
       return output;
+   }
+
+   public string GetDisplayBuffer(float time, int width, int height)
+   {
+      var lines = GetAllDisplayLines(time);
+      var wrappedLines = Wrap(width, lines);
+      var viewportLines = CutViewport(height, wrappedLines);
+      return viewportLines;
+   }
+
+   private char GetFlashingCursor(float time)
+   {
+      if (!showCursor || time % (3 * FLASH_INTERVAL) <= FLASH_INTERVAL)
+      {
+         return ' ';
+      }
+      else
+      {
+         return '░';
+      }
+      // return '░';
+      // return '_';
+      // return '░';
+      // return '▓';
+      // return ' ';
+      // return '▀';
+      // return '▄';
+   }
+
+   void OnCommand(string command)
+   {
+      logLines.Add(command);
+   }
+
+   public void ShowCursor(bool condition)
+   {
+      showCursor = condition;
    }
 
    private string Wrap(int width, string str)
@@ -75,46 +113,8 @@ public class DisplayBuffer
       return output;
    }
 
-   private string CutViewport(int height, string lines)
+   public void WriteLine(string line)
    {
-      string output = "";
-      int rowCount = 1;
-      for (int i = lines.Length - 1; i >= 0; i--)
-      {
-         if (rowCount > height)
-         {
-            return output;
-         }
-         if (lines[i] == '\n')
-         {
-            rowCount++;
-         }
-         output = lines[i] + output;
-      }
-      return output;
-   }
-
-   private char GetFlashingCursor(float time)
-   {
-      if (!showCursor || time % (3 * FLASH_INTERVAL) <= FLASH_INTERVAL)
-      {
-         return ' ';
-      }
-   else
-      {
-         return '░';
-      }
-   // return '░';
-   // return '_';
-   // return '░';
-   // return '▓';
-   // return ' ';
-   // return '▀';
-   // return '▄';
-   }
-
-   void OnCommand(string command)
-   {
-      logLines.Add(command);
+      logLines.Add(line);
    }
 }
