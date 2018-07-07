@@ -87,106 +87,41 @@ public class Hacker : MonoBehaviour {
       {
          tokens += int.Parse(input);
          Terminal.WriteLine("ENTER COMMAND:");
-         SetPrompt("[TOA: " + tokens + "] ");
-         //Terminal.WriteLine("[TOA: " + tokens + "]");
+         UpdatePrompt();
       }
       else ShowSyntaxError(input); // Otherwise, fail gracefully.
    }
 
-   void HandleMenuInput(string input) // Process user menu selection.
-   {
-      if (currentScreen == Screen.Fail) return;
-      else if (input == "1") Level(1);
-      else if (input == "2") Level(2);
-      else if (input == "3")
-      {
-         // Access-control here: if locked, try to unlock (Level 3).
-         if (levelThree == Access.Locked)
-         {
-               if (tokens == unlockFee_3)
-               {
-                  ShowMenu();
-                  Terminal.WriteLine("Unable to deplete TOA to zero.");
-               }
-               else if (tokens > unlockFee_3)
-               {
-                  tokens -= unlockFee_3;
-                  levelThree = Access.Unlocked;
-                  ShowMenu();
-               }
-               else
-               {
-                  ShowMenu();
-                  Terminal.WriteLine("Insufficient tokens.");
-               }
-         }
-         else Level(3); // if unlocked, proceed.
-      }
-      // Access-control here: if locked, try to unlock (Level 4).
-      else if (input == "4")
-      {
-         if (levelFour == Access.Locked)
-         {
-               if (tokens == unlockFee_4)
-               {
-                  ShowMenu();
-                  Terminal.WriteLine("Unable to deplete TOA to zero.");
-               }
-               else if (tokens > unlockFee_4)
-               {
-                  tokens -= unlockFee_4;
-                  levelFour = Access.Unlocked;
-                  ShowMenu();
-               }
-               else
-               {
-                  ShowMenu();
-                  Terminal.WriteLine("Insufficient tokens.");
-               }
-         }
-         else Level(4); // If unlocked, proceed.
-      }
-      else
-      {
-         ShowMenu();
-         ShowSyntaxError(input);
-      }
-   }
-    
    void HandleGuessInput(string input) // Process user guesses or directive input.
    {
       if (input == "")
       {
          Terminal.WriteLine("Please provide a valid input:");
-         //Terminal.WriteLine("[TOA: " + tokens + "]");
          return;
       }
       if (tokens < currentLevel)
       {
          Terminal.WriteLine("Insufficient tokens to guess in this category.");
-         //Terminal.WriteLine("[TOA: " + tokens + "]");
          return;
       }
       Terminal.WriteLine("Guess Input: " + ReformatInput(input));
       if (input.ToLower() == scrambleWord)
       {
          tokens += (currentLevel * 2);
-         SetPrompt("[TOA: " + tokens + "] ");
+         UpdatePrompt();
          currentScreen = Screen.Pass;
          ShowReward(currentLevel);
          Terminal.WriteLine("Congratulations! You've earned " + (currentLevel * 2) + " TOA.");
          Terminal.WriteLine("(reminder, you may enter 'menu' or '?' at any time)");
-         //Terminal.WriteLine("[TOA: " + tokens +"]");
       }
       else
       {
          tokens -= currentLevel;
-         SetPrompt("[TOA: " + tokens + "] ");
+         UpdatePrompt();
          //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|                                                                                             |
          Terminal.WriteLine("Yikes! You've lost " + currentLevel + " TOA!");
          Terminal.WriteLine("...be sure to not lose them all!");
          Terminal.WriteLine("(reminder, you may enter 'menu' or '?' at any time)");
-         //Terminal.WriteLine("[TOA: " + tokens + "]");
       }
    }
 
@@ -195,7 +130,6 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("\nYou solved the active scramble. Directive unkown: " + ReformatInput(input));
       Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
                          "Otherwise use the menu, then enter a selection '#'.\n\n");
-                         //"[T.O.A.: " + tokens + "]");
    }
 
    void HandleHelpInput(string input) // Process user input in helpmode.
@@ -215,6 +149,77 @@ public class Hacker : MonoBehaviour {
       return;
    }
 
+   void HandleMenuInput(string input) // Process user menu selection.
+   {
+      if (currentScreen == Screen.Fail) return;
+      else if (input == "1") Level(1);
+      else if (input == "2") Level(2);
+      else if (input == "3")
+      {
+         // Access-control here: if locked, try to unlock (Level 3).
+         if (levelThree == Access.Locked)
+         {
+            if (tokens == unlockFee_3)
+            {
+               ShowMenu();
+               Terminal.WriteLine("Unable to deplete TOA to zero.");
+            }
+            else if (tokens > unlockFee_3)
+            {
+               tokens -= unlockFee_3;
+               levelThree = Access.Unlocked;
+               ShowMenu();
+            }
+            else
+            {
+               ShowMenu();
+               Terminal.WriteLine("Insufficient tokens, " + unlockFee_3.ToString() + " required.");
+            }
+         }
+         else Level(3); // if unlocked, proceed.
+      }
+      // Access-control here: if locked, try to unlock (Level 4).
+      else if (input == "4")
+      {
+         if (levelFour == Access.Locked)
+         {
+            if (tokens == unlockFee_4)
+            {
+               ShowMenu();
+               Terminal.WriteLine("Unable to deplete TOA to zero.");
+            }
+            else if (tokens > unlockFee_4)
+            {
+               tokens -= unlockFee_4;
+               levelFour = Access.Unlocked;
+               ShowMenu();
+            }
+            else
+            {
+               ShowMenu();
+               Terminal.WriteLine("Insufficient tokens, " + unlockFee_4.ToString() + " required.");
+            }
+         }
+         else Level(4); // If unlocked, proceed.
+      }
+      else
+      {
+         ShowMenu();
+         ShowSyntaxError(input);
+      }
+   }
+
+   IEnumerator SendFauxInput(string input)
+   {
+      foreach (char c in input)
+      {
+         Terminal.ReceiveFauxInput(c.ToString());
+         PlayRandomSound();
+         yield return new WaitForSeconds(Random.Range(0.066f, 0.33f));
+      }
+      Terminal.ReceiveFauxInput("\n");
+   }
+
    IEnumerator ShowLoad() // Coroutine to simulate computer booting-up.
    {
       currentScreen = Screen.Login;
@@ -224,7 +229,7 @@ public class Hacker : MonoBehaviour {
       //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
       yield return new WaitForSeconds(.2f);
       Terminal.WriteLine("           **** COMMODORE 64 BASIC v4.20 ****");
-      yield return new WaitForSeconds(1.8f); 
+      yield return new WaitForSeconds(1.8f);
       Terminal.WriteLine("");
       Terminal.WriteLine("         64K RAM SYSTEM  33710 BASIC BYTES FREE");
       yield return new WaitForSeconds(1.3f);
@@ -251,24 +256,13 @@ public class Hacker : MonoBehaviour {
       StartCoroutine(ShowLogin());
    }
 
-   IEnumerator SendFauxInput(string input)
-   {
-      foreach (char c in input)
-      {
-         Terminal.ReceiveFauxInput(c.ToString());
-         PlayRandomSound();
-         yield return new WaitForSeconds(Random.Range(0.066f, 0.33f));
-      }
-      Terminal.ReceiveFauxInput("\n");
-   }
-
    IEnumerator ShowLogin() // Coroutine to simulate automatic computer login.
    {
       currentScreen = Screen.Login;
       Terminal.ClearScreen();
       //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
-      Terminal.WriteLine("GTHDB release 13.2.7 (GrubbyPaws Update 3)");
-      Terminal.WriteLine("Kernel 2.6.5-21.EL on VIC-64");
+      Terminal.WriteLine("GTHDB release 13.2.7 (GrubbyPaws Update 3r)");
+      Terminal.WriteLine("Kernel 2.6.5-21.EL compiled on VIC-20");
       yield return new WaitForSeconds(1.2f);
       Terminal.ShowCursor(true);
       Terminal.PrintFakePrompt("LOGIN (guest): ");
@@ -313,10 +307,7 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("Please enter '?' any time for help, otherwise, please");
       Terminal.WriteLine("select a security question to descramble their answers.");
       Terminal.WriteLine("");
-      //Terminal.WriteLine("[TOA: " + tokens + "] ");
-      SetPrompt("[TOA: " + tokens + "] "); // TODO WIP
-      //SetPrompt("prompt> "); // TODO: make this dynamic and contextual; turn it off as needed.
-      //Terminal.PrintPrompt();
+      UpdatePrompt();
    }
 
    void ShowReward(int level) // Display ASCII-art rewards for de-scrambles.
@@ -399,8 +390,7 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("          [enter 'help' or 'exit' at any time]");
       Terminal.WriteLine("");
       Terminal.WriteLine("");
-      //Terminal.WriteLine("[TOA: " + tokens + "]");
-      SetPrompt("[TOA: " + tokens + "] ");
+      UpdatePrompt();
       Terminal.WriteLine("ENTER COMMAND:");
       Terminal.ShowCursor(true);
       keyboard.SetActive(true);
@@ -418,7 +408,6 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("menu at any time by entering 'exit', otherwise, gimme a"); 
       Terminal.WriteLine("number, already!");
       Terminal.WriteLine("");
-      //Terminal.WriteLine("[Current TOA: " + tokens + "]");
       Terminal.WriteLine("ENTER COMMAND:");
    }
 
@@ -450,7 +439,6 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("   deplete your cache of TOA, you will be erased.");
       Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
                          "Otherwise use the menu then make a selection '#'.\n\n");
-                         //"[TOA: " + tokens + "]");
    }
 
    void ShowFail() // Display failtext for broke users.
@@ -458,7 +446,6 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("\nIt seems you have run out of TOA. If I were in\n" +
                          "your shoes, I'd be making myself well, scarce...\n" +
                          "now!\n\n");
-                         //"[TOA: " + tokens + "]");
    }
 
    void ShowSyntaxError(string input) // Help user by highlighting spaces in input.
@@ -542,6 +529,10 @@ public class Hacker : MonoBehaviour {
    private void SetPrompt(string prompt)
    {
       Terminal.SetPrompt(prompt);
-      //Terminal.SetPromptLength(prompt.Length);
+   }
+
+   private void UpdatePrompt()
+   {
+      SetPrompt("[You have: " + tokens + " TOA] ");
    }
 }

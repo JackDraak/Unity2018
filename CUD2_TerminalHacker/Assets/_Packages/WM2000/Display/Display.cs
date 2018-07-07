@@ -17,7 +17,7 @@ public class Display : MonoBehaviour
       WarnIfTerminalNotConneced();
    }
 
-   // "Update: is akin to monitor refresh
+   // "Update" is akin to monitor refresh
    private void Update()
    {
       if (connectedToTerminal)
