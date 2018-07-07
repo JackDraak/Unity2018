@@ -53,7 +53,7 @@ public class InputBuffer
             else if (currentInputLine.Length == (0 + promptLength))
             {
                SendBadKey();
-               SendCommand(currentInputLine);
+               currentInputLine = "";
                if (promptLength > 0) PrintLocalPrompt();
                break;
             }
@@ -80,7 +80,7 @@ public class InputBuffer
 
    public void PrintFakePrompt(string input)
    {
-      foreach (char c in input) // TODO why was this localPrompt ??
+      foreach (char c in input)
       {
          UpdateCurrentInputLine(c);
       }
@@ -98,6 +98,7 @@ public class InputBuffer
    {
       localPrompt = input;
       SetPromptLength(true);
+      currentInputLine = localPrompt + currentInputLine;
    }
 
    public void SetPromptLength()
