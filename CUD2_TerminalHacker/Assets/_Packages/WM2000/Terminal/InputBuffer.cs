@@ -5,9 +5,9 @@ public class InputBuffer
    string currentInputLine;
    string localPrompt = "";
    int promptLength = 0;
-   int logLine = 0;
 
    public delegate void OnCommandSentHandler(string command);
+
    public event OnCommandSentHandler onCommandSent;
    public event OnCommandSentHandler onBadKeySent;
 
@@ -25,13 +25,13 @@ public class InputBuffer
       }
    }
 
-   public void PrintLocalPrompt()
+ /*  public void PrintLocalPrompt()
    {
       foreach (char c in localPrompt)
       {
          UpdateCurrentInputLine(c);
       }
-   }
+   } */
 
    public void PrintPrompt()
    {
@@ -51,11 +51,6 @@ public class InputBuffer
 
    public void ReceiveFrameInput(string input)
    {
-      if (input.Length > 0)
-      {
-         logLine++;
-         //Debug.Log("InputBuffer:ReceiveFrameInput_" + logLine.ToString() + "_" + input + " PL:" + promptLength.ToString());
-      }
       foreach (char c in input)
       {
          if (c == '\b')
@@ -66,12 +61,13 @@ public class InputBuffer
                // fix the 'greedy backspace key' issue with this break:
                break;
             }
-            // 'beep' for backspace keypresses on "blank lines" (don't backspace over any prompt).
+            // 'beep' for backspace keypresses on "blank lines" (don't backspace over any prompt, either).
             else if (currentInputLine.Length == (0 + promptLength))
             {
                SendBadKey();
                currentInputLine = "";
-               if (promptLength > 0) PrintLocalPrompt();
+               if (promptLength > 0) PrintPrompt();
+               //if (promptLength > 0) PrintLocalPrompt();
                break;
             }
          }
@@ -92,7 +88,8 @@ public class InputBuffer
          onCommandSent(command);
       }
       currentInputLine = "";
-      if (promptLength > 0) PrintLocalPrompt();
+      if (promptLength > 0) PrintPrompt();
+      //if (promptLength > 0) PrintLocalPrompt();
    }
 
    public void SetPrompt(string input)
@@ -122,7 +119,6 @@ public class InputBuffer
       if (c == '\n' || c == '\r')
       {
          SendCommand(currentInputLine);
-      //   if (promptLength > 0) PrintLocalPrompt();
       }
       else currentInputLine += c;
    }
