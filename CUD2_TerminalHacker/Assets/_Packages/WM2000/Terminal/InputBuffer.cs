@@ -25,14 +25,6 @@ public class InputBuffer
       }
    }
 
- /*  public void PrintLocalPrompt()
-   {
-      foreach (char c in localPrompt)
-      {
-         UpdateCurrentInputLine(c);
-      }
-   } */
-
    public void PrintPrompt()
    {
       foreach (char c in localPrompt)
@@ -67,7 +59,6 @@ public class InputBuffer
                SendBadKey();
                currentInputLine = "";
                if (promptLength > 0) PrintPrompt();
-               //if (promptLength > 0) PrintLocalPrompt();
                break;
             }
          }
@@ -89,7 +80,6 @@ public class InputBuffer
       }
       currentInputLine = "";
       if (promptLength > 0) PrintPrompt();
-      //if (promptLength > 0) PrintLocalPrompt();
    }
 
    public void SetPrompt(string input)

@@ -50,7 +50,6 @@ public class Hacker : MonoBehaviour {
    [SerializeField] AudioClip[] keyStrokeSounds;
    [SerializeField] AudioClip[] badKeySound;
    AudioSource audioSource;
-   //string prompt = "";
 
    // Obligatory Unity 'Start()' function; 'OnUserInput()' is the primary game controller.
    void Start ()
@@ -87,7 +86,7 @@ public class Hacker : MonoBehaviour {
       audioSource.Play();
    }
 
-   void HandleEggInput(string input) // Process user input from backdoor screen(s).
+   void HandleEggInput(string input)
    {
       int g;
       if (input.ToLower() == "help") ShowEggHelp();
@@ -98,7 +97,7 @@ public class Hacker : MonoBehaviour {
          Terminal.WriteLine("ENTER COMMAND:");
          UpdatePrompt();
       }
-      else ShowSyntaxError(input); // Otherwise, fail gracefully.
+      else ShowSyntaxError(input);
    }
 
    void HandleExitInput(string input) // Do nothing after exit (backdoor still avail.)
@@ -106,13 +105,13 @@ public class Hacker : MonoBehaviour {
       return;
    }
 
-   void HandleFailInput(string input) // Process user input in failmode.
+   void HandleFailInput(string input)
    {
       ShowFail();
       ShowSyntaxError(input);
    }
 
-   void HandleGuessInput(string input) // Process user guesses or directive input.
+   void HandleGuessInput(string input)
    {
       if (input == "")
       {
@@ -145,13 +144,13 @@ public class Hacker : MonoBehaviour {
       }
    }
 
-   void HandleHelpInput(string input) // Process user input in helpmode.
+   void HandleHelpInput(string input)
    {
       ShowHelp();
       ShowSyntaxError(input);
    }
 
-   void HandleMenuInput(string input) // Process user menu selection.
+   void HandleMenuInput(string input)
    {
       if (currentScreen == Screen.Fail) return;
       else if (input == "1") Level(1);
@@ -211,7 +210,7 @@ public class Hacker : MonoBehaviour {
       }
    }
 
-   void HandlePassInput(string input) // Process user input after challenge-win.
+   void HandlePassInput(string input)
    {
       Terminal.WriteLine("\nYou solved the active scramble. Directive unkown: " + ReformatInput(input));
       Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
@@ -242,12 +241,6 @@ public class Hacker : MonoBehaviour {
 
    private void PlayRandomSound()
    {
-      // The old way I was doing this.....
-      //int randomIndex = Random.Range(0, keyStrokeSounds.Length);
-      //audioSource.clip = keyStrokeSounds[randomIndex];
-      //audioSource.Play();
-
-      // The new way
       System.Random randomRange = new System.Random();
       int index = randomRange.Next(keyStrokeSounds.Length);
       audioSource.clip = keyStrokeSounds[index];
@@ -300,7 +293,7 @@ public class Hacker : MonoBehaviour {
       Terminal.SetPrompt(prompt);
    }
 
-   IEnumerator ShowEasterEgg() // The 'backdoor'. Needed by players with zero TOA.
+   IEnumerator ShowEasterEgg()
    {
       SetPrompt("");
       currentScreen = Screen.Egg;
@@ -334,7 +327,7 @@ public class Hacker : MonoBehaviour {
       keyboard.SetActive(true);
    }
 
-   void ShowEggHelp() // Display 'Help' page for inside the backdoor.
+   void ShowEggHelp()
    {
       Terminal.ClearScreen();
       Terminal.WriteLine("        Distributed Social Hacking Tool v3.95f02");
@@ -349,7 +342,7 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("ENTER COMMAND:");
    }
 
-   void ShowExit() // Display 'Quit' info, or just quit.
+   void ShowExit()
    {
       currentScreen = Screen.Exit;
       Terminal.ClearScreen();
@@ -358,14 +351,14 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("tab.");
    }
 
-   void ShowFail() // Display failtext for broke users.
+   void ShowFail()
    {
       Terminal.WriteLine("\nIt seems you have run out of TOA. If I were in\n" +
                          "your shoes, I'd be making myself well, scarce...\n" +
                          "now!\n\n");
    }
 
-   void ShowHelp() // Display 'Help' page for primary interface.
+   void ShowHelp()
    {
       currentScreen = Screen.Help;
       Terminal.ClearScreen();
@@ -386,7 +379,7 @@ public class Hacker : MonoBehaviour {
                          "enter 'menu' then select a category by number, '#'.\n\n");
    }
 
-   IEnumerator ShowLoad() // Coroutine to simulate computer booting-up.
+   IEnumerator ShowLoad()
    {
       currentScreen = Screen.Login;
       keyboard.SetActive(false);    // disable user input during 'boot-up sequence'.
@@ -422,7 +415,7 @@ public class Hacker : MonoBehaviour {
       StartCoroutine(ShowLogin());
    }
 
-   IEnumerator ShowLogin() // Coroutine to simulate automatic computer login.
+   IEnumerator ShowLogin()
    {
       currentScreen = Screen.Login;
       Terminal.ClearScreen();
@@ -445,7 +438,7 @@ public class Hacker : MonoBehaviour {
       ShowMenu(); // The Light-Show is over, start the game now.
    }
 
-   void ShowMenu() // Primary game interface.
+   void ShowMenu()
    {
       currentScreen = Screen.Menu;
       Terminal.ClearScreen();
@@ -476,7 +469,7 @@ public class Hacker : MonoBehaviour {
       UpdatePrompt();
    }
 
-   void ShowReward(int level) // Display ASCII-art rewards for de-scrambles.
+   void ShowReward(int level)
    {
       switch (level)
       {
@@ -528,7 +521,7 @@ public class Hacker : MonoBehaviour {
       }
    }
 
-   void ShowSyntaxError(string input) // Help user by highlighting spaces in input.
+   void ShowSyntaxError(string input)
    {
       Terminal.WriteLine("Syntax Error: " + ReformatInput(input));
    }
