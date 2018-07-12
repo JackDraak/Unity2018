@@ -50,7 +50,7 @@ public class Hacker : MonoBehaviour {
    [SerializeField] AudioClip[] keyStrokeSounds;
    [SerializeField] AudioClip[] badKeySound;
    AudioSource audioSource;
-   string prompt = "";
+   //string prompt = "";
 
    // Obligatory Unity 'Start()' function; 'OnUserInput()' is the primary game controller.
    void Start ()
@@ -300,7 +300,7 @@ public class Hacker : MonoBehaviour {
       Terminal.SetPrompt(prompt);
    }
 
-   IEnumerator ShowEasterEgg() // The 'backdoor'. Needed by players with no TOA.
+   IEnumerator ShowEasterEgg() // The 'backdoor'. Needed by players with zero TOA.
    {
       SetPrompt("");
       currentScreen = Screen.Egg;
@@ -372,18 +372,18 @@ public class Hacker : MonoBehaviour {
       Terminal.WriteLine("New user assistance:");
       Terminal.WriteLine("This terminal can be controlled by entering --");
       Terminal.WriteLine("");
-      Terminal.WriteLine("   ? - will display the user help.");
+      Terminal.WriteLine("   ?    - will display this user help.");
       Terminal.WriteLine("   menu - will display the Main Menu.");
       Terminal.WriteLine("   quit - will end the simulation.");
-      Terminal.WriteLine("   {#} - select menu options for further options.");
+      Terminal.WriteLine("   {#}  - select from displayed menu options.");
       Terminal.WriteLine("");
       Terminal.WriteLine(" * While descrambling security question answers it costs");
       //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
       Terminal.WriteLine("   specific TOA to make a guess, but if you are correct,");
       Terminal.WriteLine("   then you will double your TOA! Note: If you manage to");
       Terminal.WriteLine("   deplete your cache of TOA, you will be erased.");
-      Terminal.WriteLine("\nPlease enter 'menu' at any time, or '?' for help.\n" +
-                         "Otherwise use the menu then make a selection '#'.\n\n");
+      Terminal.WriteLine("\nPlease enter '?' at any time to review this help, or\n" +
+                         "enter 'menu' then select a category by number, '#'.\n\n");
    }
 
    IEnumerator ShowLoad() // Coroutine to simulate computer booting-up.
@@ -535,6 +535,6 @@ public class Hacker : MonoBehaviour {
 
    private void UpdatePrompt()
    {
-      SetPrompt("[You have: " + tokens + " TOA] ");
+      SetPrompt("[Earnings: " + tokens + " TOA] ");
    }
 }
