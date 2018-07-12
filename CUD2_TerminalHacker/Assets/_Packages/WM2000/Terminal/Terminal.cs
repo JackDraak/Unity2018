@@ -5,6 +5,7 @@ public class Terminal : MonoBehaviour
 {
    DisplayBuffer displayBuffer;
    InputBuffer inputBuffer;
+   int promptLength = 0;
 
    static Terminal primaryTerminal;
 
@@ -67,8 +68,13 @@ public class Terminal : MonoBehaviour
 
    public static void PrintPrompt()
    {
-      primaryTerminal.inputBuffer.PrintPrompt();
+      primaryTerminal.inputBuffer.PrintLocalPrompt();
    }
+
+   //   public static void ReceiveFauxEndOfLine() // not really needed....
+   //   {
+   //      primaryTerminal.inputBuffer.ReceiveFauxInput("\n");
+   //   }
 
    public static void ReceiveFauxInput(string input)
    {
@@ -105,10 +111,10 @@ public class Terminal : MonoBehaviour
       primaryTerminal.displayBuffer.ShowCursor(condition);
    }
 
-   public static void WriteChar(char c) // TODO finish or depreciate this code
-   {
-      // make a way to print single character to buffer....
-   }
+   //   public static void WriteChar(char c) // TODO finish or depreciate this code
+   //   {
+   //      // make a way to print single character to buffer....
+   //   }
 
    public static void WriteLine(string line)
    {

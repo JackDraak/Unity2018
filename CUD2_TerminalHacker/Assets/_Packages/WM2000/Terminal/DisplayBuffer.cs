@@ -66,8 +66,15 @@ public class DisplayBuffer
       }
       else
       {
-         return '▒'; //  ░ ▒ ▓ ▀ ▄ █ ▌ ▐ ◄ ▼ ▲ ►
+         return '░';
       }
+      // return '░';
+      // return '_';
+      // return '░';
+      // return '▓';
+      // return ' ';
+      // return '▀';
+      // return '▄';
    }
 
    void OnCommand(string command)
