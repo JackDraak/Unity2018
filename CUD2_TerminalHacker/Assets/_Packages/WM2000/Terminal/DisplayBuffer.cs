@@ -66,7 +66,7 @@ public class DisplayBuffer
       }
       else
       {
-         return '▒'; //  ░ ▒ ▓ ▀ ▄ █ ▌ ▐ ◄ ▼ ▲ ►
+         return '▓'; //  ░ ▒ ▓ ▀ ▄ █ ▌ ▐ ◄ ▼ ▲ ► ▞ ▚
       }
    }
 

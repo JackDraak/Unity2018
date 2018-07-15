@@ -182,7 +182,7 @@ public class Hacker : MonoBehaviour {
       // Access-control here: if locked, try to unlock (Level 4).
       else if (input == "4")
       {
-         if (levelFour == Access.Locked)
+         if (levelFour == Access.Locked) 
          {
             if (tokens == unlockFee_4)
             {
