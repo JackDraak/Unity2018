@@ -374,7 +374,8 @@ public class Hacker : MonoBehaviour {
       //                 |<<<----  ----  -- MAXIMUM COULMN WIDTH --  ----  ---->>>|
       Terminal.WriteLine("   specific TOA to make a guess, but if you are correct,");
       Terminal.WriteLine("   then you will double your TOA! Note: If you manage to");
-      Terminal.WriteLine("   deplete your cache of TOA, you will be erased.");
+      Terminal.WriteLine("   deplete your cache of TOA, you will be flagged for");
+      Terminal.WriteLine("   de-resolution.");
       Terminal.WriteLine("\nPlease enter '?' at any time to review this help, or\n" +
                          "enter 'menu' then select a category by number, '#'.\n\n");
    }
