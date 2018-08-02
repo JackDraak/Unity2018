@@ -7,13 +7,15 @@ public class Player : MonoBehaviour {
 
    [SerializeField] float masterVolume = 1.0f;  // TODO move this to a more apropriate place (i.e. file).
    [SerializeField] float thrustVolume = 0.42f; // TODO move this to a more apropriate place (i.e. file).
-   [SerializeField] int rotationFactor = 300;   // - rotational agility, tuneable from inspector.
-   [SerializeField] int thrustFactor = 10;      // - nominal thruster power level, tuneable from inspector.
-   [SerializeField] AudioClip thrustSound;      // TODO if clip runs to the end, there is a momentary silence before it reques. 
-   [SerializeField] GameObject tutorialText;    // - temporary(?) user hint text.
+   [SerializeField] int rotationFactor = 300;
+   [SerializeField] int thrustFactor = 10;
+   [SerializeField] AudioClip thrustSound;
+   [SerializeField] GameObject tutorialText;
 
    private bool debugMode, deRotating, invulnerable, tutorialVisible;
    private float deRotationTime;
+   private float thrustAudioLength;
+   private float thrustAudioTimer;
    private float thrustEmissionRate = 113f;
    private float thrustNonEmissionRate = 13f;
    private float thrustSliderMax = 120f;
@@ -44,6 +46,8 @@ public class Player : MonoBehaviour {
          RigidbodyConstraints.FreezePositionZ;
       rigidbodyConstraints = thisRigidbody.constraints;
 
+      thrustAudioLength = thrustSound.length;
+      thrustAudioTimer -= thrustAudioLength;
       deRotating = false;
       invulnerable = false;
       tutorialVisible = true;
@@ -113,6 +117,7 @@ public class Player : MonoBehaviour {
       {
          case "BadObject_01":
             if (!invulnerable) Debug.Log("collision: BO-01");
+            else Debug.Log("invulnerable: BO-01");
             break;
          case "BadObject_02":
             //Debug.Log("collision: BO-02");
@@ -140,7 +145,7 @@ public class Player : MonoBehaviour {
       Rect labelRect = new Rect(r_x, r_y + r_h, r_w * 3, r_h);
 
       thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, thrustSliderMin, thrustSliderMax);
-      GUI.Label(labelRect, "<color=\"black\"><i>Thruster Power Control</i> (Up/Down Keys)</color>");
+      GUI.Label(labelRect, "<color=\"black\"><b><i>Thruster Power Control</i></b> (Up/Down Keys)</color>");
    }
 
    private void PlayerControlPoll()
@@ -200,6 +205,12 @@ public class Player : MonoBehaviour {
    private void Thrust(float force)
    {
       thisRigidbody.AddRelativeForce(Vector3.up * thrustSliderValue * thrustFactor * Time.deltaTime * force);
-      if (!audioSource.isPlaying) audioSource.PlayOneShot(thrustSound, thrustVolume * masterVolume);
+      // if the audio clip is in the final half second, re-que it
+      if (thrustAudioTimer + thrustAudioLength - 0.5f < Time.time)
+      {
+         audioSource.Stop();
+         audioSource.PlayOneShot(thrustSound, thrustVolume * masterVolume);
+         thrustAudioTimer = Time.time;
+      }
    }
 }
