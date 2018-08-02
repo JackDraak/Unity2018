@@ -5,104 +5,123 @@ using UnityEngine;
 
 public class Player : MonoBehaviour {
 
-   [SerializeField] float masterVolume = 1.0f;
-   [SerializeField] int rotationFactor = 300;
-   [SerializeField] AudioClip thrustSound;
-   [SerializeField] float thrustVolume = 0.42f;
-   public float tSliderValue = 500.0f;
+   [SerializeField] float masterVolume = 1.0f;  // TODO move this to a more apropriate place (i.e. file).
+   [SerializeField] float thrustVolume = 0.42f; // TODO move this to a more apropriate place (i.e. file).
+   [SerializeField] int rotationFactor = 300;   // - rotational agility, tuneable from inspector.
+   [SerializeField] int thrustFactor = 10;      // - nominal thruster power level, tuneable from inspector.
+   [SerializeField] AudioClip thrustSound;      // TODO if clip runs to the end, there is a momentary silence before it reques. 
+   [SerializeField] GameObject tutorialText;    // - temporary(?) user hint text.
 
+   private bool debugMode, deRotating, invulnerable, tutorialVisible;
+   private float deRotationTime;
+   private float thrustEmissionRate = 113f;
+   private float thrustNonEmissionRate = 13f;
+   private float thrustSliderMax = 120f;
+   private float thrustSliderMin = 25f;
+   private float thrustSliderValue = 45f;
+   private Vector3 threeControlAxis = Vector3.zero;
+   private Vector3 localEulers = Vector3.zero;
    private AudioSource audioSource;
-   private bool derot;
-   private float derotTime;
-   private float tEmissionRate = 113.0f;
-   private float tNonEmissionRate = 13.0f;
-   private float tSliderMax = 800.0f;
-   private float tSliderMin = 200.0f;
-   private ParticleSystem thrustParticles;
-   private Rigidbody rigidbody;
-   private RigidbodyConstraints constraints;
-   private Vector3 controlAxis = Vector3.zero;
-   private Vector3 localEulers;
+   private ParticleSystem thrustParticleSystem;
+   private Rigidbody thisRigidbody;
+   private RigidbodyConstraints rigidbodyConstraints;
 
    void Start ()
    {
+      debugMode = Debug.isDebugBuild;
+
       audioSource = GetComponent<AudioSource>();
-      thrustParticles = GetComponent<ParticleSystem>();
-      rigidbody = GetComponent<Rigidbody>();
+      thisRigidbody = GetComponent<Rigidbody>();
+      thrustParticleSystem = GetComponent<ParticleSystem>();
 
-      derot = false;
-      var emission = thrustParticles.emission;
-      emission.rateOverTime = tNonEmissionRate;
+      var emission = thrustParticleSystem.emission;
+      emission.rateOverTime = thrustNonEmissionRate;
 
-      rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | 
+      thisRigidbody.constraints = 
          RigidbodyConstraints.FreezeRotationX | 
-         RigidbodyConstraints.FreezeRotationY |
-         RigidbodyConstraints.FreezeRotationZ;
+         RigidbodyConstraints.FreezeRotationY | 
+         RigidbodyConstraints.FreezeRotationZ |
+         RigidbodyConstraints.FreezePositionZ;
+      rigidbodyConstraints = thisRigidbody.constraints;
 
-      constraints = rigidbody.constraints;
+      deRotating = false;
+      invulnerable = false;
+      tutorialVisible = true;
    }
 
    void LateUpdate ()
    {
-		ProcessInput();
-	}
-
-   private void AdjustThrust(float delta)
-   {
-      if (delta + tSliderValue > tSliderMax)
-      {
-         tSliderValue = tSliderMax;
-      }
-      else if (delta + tSliderValue < tSliderMin)
-      {
-         tSliderValue = tSliderMin;
-      }
-      else tSliderValue += delta;
+      if (debugMode) DebugControlPoll();
+		PlayerControlPoll();
    }
 
-   private void CounterRotate()
+   private void AdjustThrusterPower(float delta)
    {
-      float speed = Mathf.Abs(Time.time - derotTime) / 3;
+      if (delta + thrustSliderValue > thrustSliderMax)
+      {
+         thrustSliderValue = thrustSliderMax;
+      }
+      else if (delta + thrustSliderValue < thrustSliderMin)
+      {
+         thrustSliderValue = thrustSliderMin;
+      }
+      else thrustSliderValue += delta;
+   }
+
+   private void AutoDeRotate()
+   {
+      float speed = Mathf.Abs(Time.time - deRotationTime) / 3;
       localEulers = transform.localRotation.eulerAngles;
-      var important = localEulers.z;
-      if (important >= 180 && important < 359)
+      float playerTilt = localEulers.z;
+      if (playerTilt >= 180 && playerTilt < 359)
       {
-         transform.Rotate(Vector3.forward * (important * speed) * Time.deltaTime);
+         transform.Rotate(Vector3.forward * (playerTilt * speed) * Time.deltaTime);
       }
-      else if (important < 180 && important > 1)
+      else if (playerTilt < 180 && playerTilt > 1)
       {
-         transform.Rotate(Vector3.back * ((important + 180) * speed) * Time.deltaTime);
+         transform.Rotate(Vector3.back * ((playerTilt + 180) * speed) * Time.deltaTime);
       }
+   }
+
+   private void DebugControlPoll()
+   {
+      if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
    }
 
    private void DeRotate()
    {
-      if (!derot)
+      if (!deRotating)
       {
-         derotTime = Time.time;
-         derot = true;
+         deRotationTime = Time.time;
+         deRotating = true;
       }
       else
       {
-         CounterRotate();
+         AutoDeRotate();
       }
+   }
+
+   private void HideTutorial()
+   {
+      tutorialVisible = false;
+      tutorialText.SetActive(false);
    }
 
    private void OnCollisionEnter(Collision collision)
    {
       switch (collision.gameObject.tag)
       {
+         case "BadObject_01":
+            if (!invulnerable) Debug.Log("collision: BO-01");
+            break;
+         case "BadObject_02":
+            //Debug.Log("collision: BO-02");
+            break;
          case "GoodObject_01":
             //Debug.Log("collision: GO-01");
             break;
          case "GoodObject_02":
             //Debug.Log("collision: GO-02");
-            break;
-         case "BadObject_01":
-            //Debug.Log("collision: BO-01");
-            break;
-         case "BadObject_02":
-            //Debug.Log("collision: BO-02");
             break;
          default:
             //Debug.Log("collision: default");
@@ -110,7 +129,7 @@ public class Player : MonoBehaviour {
       }
    }
 
-   void OnGUI()
+   private void OnGUI()
    {
       int r_x, r_y, r_w, r_h;
       r_x = 35;
@@ -120,64 +139,67 @@ public class Player : MonoBehaviour {
       Rect sliderRect = new Rect(r_x, r_y, r_w, r_h);
       Rect labelRect = new Rect(r_x, r_y + r_h, r_w * 3, r_h);
 
-      tSliderValue = GUI.HorizontalSlider(sliderRect, tSliderValue, tSliderMin, tSliderMax);
-      GUI.Label(labelRect, "Thruster Power Control (Up/Down Keys)");
+      thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, thrustSliderMin, thrustSliderMax);
+      GUI.Label(labelRect, "<color=\"black\"><i>Thruster Power Control</i> (Up/Down Keys)</color>");
    }
 
-   private void ProcessInput()
+   private void PlayerControlPoll()
    {
-      Pro_Horizontal();
-      Pro_Vertical();
-      Pro_Action();
+      PollAction();
+      PollHorizontal();
+      PollVertical();
    }
 
-   private void Pro_Action()
+   private void PollAction()
    {
-      var emission = thrustParticles.emission;
-      controlAxis.z = CrossPlatformInputManager.GetAxis("Jump");
-      if (controlAxis.z != 0)
+      var emission = thrustParticleSystem.emission;
+      threeControlAxis.z = CrossPlatformInputManager.GetAxis("Jump");
+      if (threeControlAxis.z != 0)
       {
-         Thrust(controlAxis.z);
-         emission.rateOverTime = tEmissionRate;
+         if (tutorialVisible) HideTutorial();
+         Thrust(threeControlAxis.z);
+         emission.rateOverTime = thrustEmissionRate;
       }
       else if (audioSource.isPlaying)
       {
          audioSource.Stop();
-         emission.rateOverTime = tNonEmissionRate;
+         emission.rateOverTime = thrustNonEmissionRate;
       }
    }
 
-   private void Pro_Horizontal()
+   private void PollHorizontal()
    {
-      controlAxis.x = CrossPlatformInputManager.GetAxis("Horizontal");
-      if (controlAxis.x != 0)
+      threeControlAxis.x = CrossPlatformInputManager.GetAxis("Horizontal");
+      if (threeControlAxis.x != 0)
       {
-         Rotate(controlAxis.x);
-         derot = false;
+         if (tutorialVisible) HideTutorial();
+         Rotate(threeControlAxis.x);
+         deRotating = false;
       }
       else DeRotate();
    }
 
-   private void Pro_Vertical()
+   private void PollVertical()
    {
-      controlAxis.y = CrossPlatformInputManager.GetAxis("Vertical");
-      if (controlAxis.y != 0)
+      threeControlAxis.y = CrossPlatformInputManager.GetAxis("Vertical");
+      if (threeControlAxis.y != 0)
       {
-         AdjustThrust(controlAxis.y);
+         if (tutorialVisible) HideTutorial();
+         AdjustThrusterPower(threeControlAxis.y);
       }
    }
 
    private void Rotate(float direction)
    {
-      rigidbody.angularVelocity = Vector3.zero;
-      rigidbody.constraints = RigidbodyConstraints.None;
+      thisRigidbody.angularVelocity = Vector3.zero;
+      thisRigidbody.constraints = RigidbodyConstraints.None;
       transform.Rotate(Vector3.back * rotationFactor * Time.fixedDeltaTime * direction);
-      rigidbody.constraints = constraints;
+      thisRigidbody.constraints = rigidbodyConstraints;
    }
 
    private void Thrust(float force)
    {
-      rigidbody.AddRelativeForce(Vector3.up * tSliderValue * Time.deltaTime * force);
+      thisRigidbody.AddRelativeForce(Vector3.up * thrustSliderValue * thrustFactor * Time.deltaTime * force);
       if (!audioSource.isPlaying) audioSource.PlayOneShot(thrustSound, thrustVolume * masterVolume);
    }
 }
