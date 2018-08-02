@@ -153,6 +153,7 @@ public class Player : MonoBehaviour {
       PollAction();
       PollHorizontal();
       PollVertical();
+      PollMisc();
    }
 
    private void PollAction()
@@ -168,6 +169,7 @@ public class Player : MonoBehaviour {
       else if (audioSource.isPlaying)
       {
          audioSource.Stop();
+         thrustAudioTimer -= thrustAudioLength;
          emission.rateOverTime = thrustNonEmissionRate;
       }
    }
@@ -182,6 +184,11 @@ public class Player : MonoBehaviour {
          deRotating = false;
       }
       else DeRotate();
+   }
+
+   private void PollMisc()
+   {
+      if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
    }
 
    private void PollVertical()
