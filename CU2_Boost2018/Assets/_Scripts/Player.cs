@@ -6,7 +6,7 @@ using UnityEngine;
 public class Player : MonoBehaviour {
 
    [SerializeField] float masterVolume = 1.0f;  // TODO move this to a more apropriate place (i.e. file).
-   [SerializeField] float thrustVolume = 0.42f; // TODO move this to a more apropriate place (i.e. file).
+   [SerializeField] float thrustVolume = 0.22f; // TODO move this to a more apropriate place (i.e. file).
    [SerializeField] int rotationFactor = 300;
    [SerializeField] int thrustFactor = 10;
    [SerializeField] AudioClip thrustSound;
@@ -16,15 +16,18 @@ public class Player : MonoBehaviour {
    private float deRotationTime;
    private float thrustAudioLength;
    private float thrustAudioTimer;
-   private float thrustEmissionRate = 113f;
-   private float thrustNonEmissionRate = 13f;
+   private float thrustEmissionRate = 60f;
+   private float thrustNonEmissionRate = 1.3f;
    private float thrustSliderMax = 120f;
    private float thrustSliderMin = 25f;
    private float thrustSliderValue = 45f;
+   private float thrustMax = 0;
    private Vector3 threeControlAxis = Vector3.zero;
+   private Vector3 thrustState = Vector3.zero;
    private Vector3 localEulers = Vector3.zero;
    private AudioSource audioSource;
    private ParticleSystem thrustParticleSystem;
+   private ParticleSystem.EmissionModule emission;
    private Rigidbody thisRigidbody;
    private RigidbodyConstraints rigidbodyConstraints;
 
@@ -36,8 +39,14 @@ public class Player : MonoBehaviour {
       thisRigidbody = GetComponent<Rigidbody>();
       thrustParticleSystem = GetComponent<ParticleSystem>();
 
-      var emission = thrustParticleSystem.emission;
+      emission = thrustParticleSystem.emission;
       emission.rateOverTime = thrustNonEmissionRate;
+      thrustAudioLength = thrustSound.length;
+      thrustAudioTimer -= thrustAudioLength;
+
+      deRotating = false;
+      invulnerable = false;
+      tutorialVisible = true;
 
       thisRigidbody.constraints = 
          RigidbodyConstraints.FreezeRotationX | 
@@ -45,15 +54,9 @@ public class Player : MonoBehaviour {
          RigidbodyConstraints.FreezeRotationZ |
          RigidbodyConstraints.FreezePositionZ;
       rigidbodyConstraints = thisRigidbody.constraints;
-
-      thrustAudioLength = thrustSound.length;
-      thrustAudioTimer -= thrustAudioLength;
-      deRotating = false;
-      invulnerable = false;
-      tutorialVisible = true;
    }
 
-   void LateUpdate ()
+   void FixedUpdate ()
    {
       if (debugMode) DebugControlPoll();
 		PlayerControlPoll();
@@ -74,14 +77,14 @@ public class Player : MonoBehaviour {
 
    private void AutoDeRotate()
    {
-      float speed = Mathf.Abs(Time.time - deRotationTime) / 3;
+      float speed = Mathf.Abs(Time.time - deRotationTime) * 0.2f;
       localEulers = transform.localRotation.eulerAngles;
       float playerTilt = localEulers.z;
-      if (playerTilt >= 180 && playerTilt < 359)
+      if (playerTilt >= 180 &&  playerTilt < 359.7f)
       {
          transform.Rotate(Vector3.forward * (playerTilt * speed) * Time.deltaTime);
       }
-      else if (playerTilt < 180 && playerTilt > 1)
+      else if (playerTilt < 180 && playerTilt > 0.3f)
       {
          transform.Rotate(Vector3.back * ((playerTilt + 180) * speed) * Time.deltaTime);
       }
@@ -90,6 +93,7 @@ public class Player : MonoBehaviour {
    private void DebugControlPoll()
    {
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
+      if (Input.GetKeyDown(KeyCode.R)) thrustMax = 0;
    }
 
    private void DeRotate()
@@ -143,9 +147,12 @@ public class Player : MonoBehaviour {
       r_h = 30;
       Rect sliderRect = new Rect(r_x, r_y, r_w, r_h);
       Rect labelRect = new Rect(r_x, r_y + r_h, r_w * 3, r_h);
+      Rect thrustRect = new Rect(r_x, r_y + r_h * 2 , r_w * 3, r_h);
 
       thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, thrustSliderMin, thrustSliderMax);
-      GUI.Label(labelRect, "<color=\"black\"><b><i>Thruster Power Control</i></b> (Up/Down Keys)</color>");
+      if (thrustState.y > thrustMax) thrustMax = thrustState.y;
+      GUI.Label(labelRect, "<color=\"#FF7070\"><b><i>Thruster Power Control</i></b> (Up/Down Keys)</color>");
+      GUI.Label(thrustRect, "<color=\"#FF7070\"><b>" + thrustState.y + "<p>" + thrustMax + "</b></color>");
    }
 
    private void PlayerControlPoll()
@@ -158,12 +165,14 @@ public class Player : MonoBehaviour {
 
    private void PollAction()
    {
-      var emission = thrustParticleSystem.emission;
-      threeControlAxis.z = CrossPlatformInputManager.GetAxis("Jump");
-      if (threeControlAxis.z != 0)
+      bool thrust = Input.GetKey(KeyCode.Space);
+      if (thrust)
+      //threeControlAxis.z = CrossPlatformInputManager.GetAxis("Jump");
+      //if (threeControlAxis.z != 0)
       {
          if (tutorialVisible) HideTutorial();
-         Thrust(threeControlAxis.z);
+         Thrust(1f);
+         //Thrust(threeControlAxis.z);
          emission.rateOverTime = thrustEmissionRate;
       }
       else if (audioSource.isPlaying)
@@ -171,6 +180,7 @@ public class Player : MonoBehaviour {
          audioSource.Stop();
          thrustAudioTimer -= thrustAudioLength;
          emission.rateOverTime = thrustNonEmissionRate;
+         thrustState = Vector3.zero;
       }
    }
 
@@ -203,7 +213,7 @@ public class Player : MonoBehaviour {
 
    private void Rotate(float direction)
    {
-      thisRigidbody.angularVelocity = Vector3.zero;
+      //thisRigidbody.angularVelocity = Vector3.zero;
       thisRigidbody.constraints = RigidbodyConstraints.None;
       transform.Rotate(Vector3.back * rotationFactor * Time.fixedDeltaTime * direction);
       thisRigidbody.constraints = rigidbodyConstraints;
@@ -211,7 +221,12 @@ public class Player : MonoBehaviour {
 
    private void Thrust(float force)
    {
-      thisRigidbody.AddRelativeForce(Vector3.up * thrustSliderValue * thrustFactor * Time.deltaTime * force);
+      thrustState = Vector3.up * thrustSliderValue * thrustFactor * Time.smoothDeltaTime * force;
+      if (thrustState.y > 4 * thrustSliderValue) thrustState.y = 4 * thrustSliderValue;
+      //TextEditor myText = tutorialText.GetComponent<TextEditor>();
+      //myText = thisValue.ToString();
+
+      thisRigidbody.AddRelativeForce(thrustState);
       // if the audio clip is in the final half second, re-que it
       if (thrustAudioTimer + thrustAudioLength - 0.5f < Time.time)
       {
