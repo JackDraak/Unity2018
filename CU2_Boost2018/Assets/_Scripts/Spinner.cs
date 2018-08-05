@@ -15,5 +15,4 @@ public class Spinner : MonoBehaviour {
       mySpin.y = Time.deltaTime * spinRate;
       transform.Rotate(mySpin, Space.World);
    }
-
 }
