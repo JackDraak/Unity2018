@@ -40,7 +40,7 @@ public class Player : MonoBehaviour {
    private float thrustSliderMin = 25f;
    private float thrustSliderValue = 45f;
    private float thrustMax = 0f;
-   private AudioSource audioSource;
+   private AudioSource[] audioSources;
    private ParticleSystem thrustParticleSystem;
    private ParticleSystem.EmissionModule thrustBubbles;
    private Rigidbody thisRigidbody;
@@ -51,7 +51,7 @@ public class Player : MonoBehaviour {
 
    void Start ()
    {
-      audioSource = GetComponent<AudioSource>();
+      audioSources = GetComponents<AudioSource>();
       thisRigidbody = GetComponent<Rigidbody>();
       thrustParticleSystem = GetComponent<ParticleSystem>();
 
@@ -111,7 +111,7 @@ public class Player : MonoBehaviour {
                fuelLevel -= DAMAGE_VALUE;
                if (fuelLevel < 0) fuelLevel = 0;
                GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-               audioSource.PlayOneShot(collisionSound, MASTER_VOLUME);
+               audioSources[1].PlayOneShot(collisionSound, MASTER_VOLUME);
                Destroy(leakDamage, KILL_TIMER);
             }
             else Debug.Log("invulnerable: BO-01");
@@ -138,7 +138,7 @@ public class Player : MonoBehaviour {
             break;
          case "GoodObject_01":
             other.gameObject.SetActive(false);
-            audioSource.PlayOneShot(bonusSound, 0.7f * MASTER_VOLUME);
+            audioSources[1].PlayOneShot(bonusSound, 0.7f * MASTER_VOLUME);
             fuelLevel += FUEL_PICKUP_VALUE;
             if (fuelLevel > fuelMax) fuelLevel = fuelMax;
             break;
@@ -207,7 +207,7 @@ public class Player : MonoBehaviour {
 
    private void EndExpulsion()
    {
-      audioSource.Stop();
+      audioSources[0].Stop();
       AdjustEmissionRate(thrustNonEmissionRate);
       thrustAudioTimer -= thrustAudioLength;
       thrustLight.SetActive(false);
@@ -263,7 +263,7 @@ public class Player : MonoBehaviour {
          else EndExpulsion();
          if (tutorialIsVisible) HideTutorial();
       }
-      else if (audioSource.isPlaying)
+      else if (audioSources[0].isPlaying)
       {
          EndExpulsion();
       }
@@ -319,8 +319,8 @@ public class Player : MonoBehaviour {
       thisRigidbody.AddRelativeForce(thrustState);
       if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {
-         audioSource.Stop();
-         audioSource.PlayOneShot(thrustSound, THRUST_VOLUME * MASTER_VOLUME);
+         audioSources[0].Stop();
+         audioSources[0].PlayOneShot(thrustSound, THRUST_VOLUME * MASTER_VOLUME);
          thrustAudioTimer = Time.time;
       }
    }
