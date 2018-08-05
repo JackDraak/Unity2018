@@ -10,10 +10,17 @@ public class Player : MonoBehaviour {
    [SerializeField] int thrustFactor = 10;
    [SerializeField] AudioClip thrustSound;
    [SerializeField] AudioClip bonusSound;
+   [SerializeField] AudioClip collisionSound;
    [SerializeField] GameObject thrustLight;
    [SerializeField] GameObject tutorialText;
    [SerializeField] Text FuelReadout;
    [SerializeField] GameObject collisionEffect;
+
+   private const float CLIP_TIME = 0.5f;
+   private const float FUEL_PICKUP_VALUE = 500f;
+   private const float DAMAGE_VALUE = 100f;
+   private const float KILL_TIMER = 4f;
+   private const string GUAGE_LABEL = "Gas Reserve: ";
 
    private bool debugMode, deRotating, invulnerable, tutorialVisible;
    private float deRotationTime;
@@ -37,20 +44,15 @@ public class Player : MonoBehaviour {
    private AudioSource audioSource;
    private ParticleSystem thrustParticleSystem;
    private ParticleSystem.EmissionModule emission;
-   private ParticleSystem collisionParticleSystem;
-   private ParticleSystem.EmissionModule colmission;
    private Rigidbody thisRigidbody;
    private RigidbodyConstraints rigidbodyConstraints;
 
    void Start ()
    {
-      thrustLight.SetActive(false);
       debugMode = Debug.isDebugBuild;
       audioSource = GetComponent<AudioSource>();
       thisRigidbody = GetComponent<Rigidbody>();
       thrustParticleSystem = GetComponent<ParticleSystem>();
-      collisionParticleSystem = collisionEffect.GetComponent<ParticleSystem>();
-      colmission = collisionParticleSystem.emission;
 
       emission = thrustParticleSystem.emission;
       currentEmissionRate = thrustNonEmissionRate;
@@ -58,7 +60,8 @@ public class Player : MonoBehaviour {
       thrustAudioLength = thrustSound.length;
       thrustAudioTimer -= thrustAudioLength;
 
-      FuelReadout.text = fuelLevel.ToString();
+      FuelReadout.text = GUAGE_LABEL + fuelLevel.ToString();
+      thrustLight.SetActive(false);
       deRotating = false;
       invulnerable = false;
       tutorialVisible = true;
@@ -71,10 +74,11 @@ public class Player : MonoBehaviour {
       rigidbodyConstraints = thisRigidbody.constraints;
    }
 
-   void FixedUpdate () // Previously, FixedUpdate didnt seem to address surigng issue; Now it's definately required for smooth 'flight'.
+   // FixedUpdate seems to be integral to smooth flight; very surge-y and chaotic under Update().
+   void FixedUpdate ()
    {
       GenerateFuel();
-      FuelReadout.text = fuelLevel.ToString();
+      FuelReadout.text = GUAGE_LABEL + fuelLevel.ToString();
       if (debugMode) DebugControlPoll();
 		PlayerControlPoll();
    }
@@ -126,6 +130,7 @@ public class Player : MonoBehaviour {
    {
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
       if (Input.GetKeyDown(KeyCode.R)) thrustMax = 0;
+      if (Input.GetKeyDown(KeyCode.F)) fuelLevel = fuelMax;
    }
 
    private void EndBurn()
@@ -147,9 +152,12 @@ public class Player : MonoBehaviour {
       }
       else
       {
-         currentEmissionRate = thrustNonEmissionRate;
-         emission.rateOverTime = currentEmissionRate;
          AutoDeRotate();
+         if (threeControlAxis.z == 0)
+         {
+            currentEmissionRate = thrustNonEmissionRate;
+            emission.rateOverTime = currentEmissionRate;
+         }
       }
    }
 
@@ -172,25 +180,22 @@ public class Player : MonoBehaviour {
          case "BadObject_01":
             if (!invulnerable)
             {
-               //Debug.Log("collision: BO-01");
-               fuelLevel -= 100;
+               fuelLevel -= DAMAGE_VALUE;
                if (fuelLevel < 0) fuelLevel = 0;
                GameObject newDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-               Destroy(newDamage, 1f);
+               audioSource.PlayOneShot(collisionSound, masterVolume);
+               Destroy(newDamage, KILL_TIMER);
             }
             else Debug.Log("invulnerable: BO-01");
             break;
          case "BadObject_02":
-            //Debug.Log("collision: BO-02");
             break;
          case "GoodObject_01":
             Debug.Log("Pickup Object");
             break;
          case "GoodObject_02":
-            //Debug.Log("collision: GO-02");
             break;
          default:
-            //Debug.Log("collision: default");
             break;
       }
    }
@@ -200,41 +205,35 @@ public class Player : MonoBehaviour {
       switch (other.gameObject.tag)
       {
          case "BadObject_01":
-            Debug.Log("trigger: BO-01");
             break;
          case "BadObject_02":
-            //Debug.Log("collision: BO-02");
             break;
          case "GoodObject_01":
             other.gameObject.SetActive(false);
-            audioSource.PlayOneShot(bonusSound, 0.5f * masterVolume);
-            fuelLevel += 500;
+            audioSource.PlayOneShot(bonusSound, 0.7f * masterVolume);
+            fuelLevel += FUEL_PICKUP_VALUE;
             if (fuelLevel > fuelMax) fuelLevel = fuelMax;
-            //Debug.Log("Pickup Object Trigger");
             break;
          case "GoodObject_02":
-            //Debug.Log("collision: GO-02");
             break;
          default:
-            //Debug.Log("collision: default");
             break;
       }
    }
 
    private void OnGUI()
    {
-      int r_x, r_y, r_w, r_h;
-      r_x = 35;
-      r_y = 45;
-      r_w = 100;
-      r_h = 30;
+      int r_x = 35;
+      int r_y = 45;
+      int r_w = 100;
+      int r_h = 30;
       Rect sliderRect = new Rect(r_x, r_y, r_w, r_h);
       Rect labelRect = new Rect(r_x, r_y + r_h, r_w * 3, r_h);
       Rect thrustRect = new Rect(r_x, r_y + r_h * 2 , r_w * 3, r_h *2);
 
       thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, thrustSliderMin, thrustSliderMax);
-      if (thrustState.y > thrustMax) thrustMax = thrustState.y;
       GUI.Label(labelRect, "<color=\"#FF7070\"><b><i>Thruster Power Control</i></b> (Up/Down Keys)</color>");
+      if (thrustState.y > thrustMax) thrustMax = thrustState.y; // for debug HUD info
       if (debugMode) GUI.Label(thrustRect, "<color=\"#FF7070\"><b>T-Power: current/peak\n" + thrustState.y + "\n" + thrustMax + "</b></color>");
    }
 
@@ -251,7 +250,6 @@ public class Player : MonoBehaviour {
       threeControlAxis.z = CrossPlatformInputManager.GetAxis("Jump");
       if (threeControlAxis.z != 0)
       {
-         if (tutorialVisible) HideTutorial();
          if (BurnGas())
          {
             Thrust(threeControlAxis.z);
@@ -260,6 +258,7 @@ public class Player : MonoBehaviour {
             thrustLight.SetActive(true);
          }
          else EndBurn();
+         if (tutorialVisible) HideTutorial();
       }
       else if (audioSource.isPlaying)
       {
@@ -299,7 +298,6 @@ public class Player : MonoBehaviour {
 
    private void Rotate(float direction)
    {
-      //thisRigidbody.angularVelocity = Vector3.zero;
       thisRigidbody.constraints = RigidbodyConstraints.None;
       transform.Rotate(Vector3.back * rotationFactor * Time.fixedDeltaTime * direction);
       thisRigidbody.constraints = rigidbodyConstraints;
@@ -312,12 +310,9 @@ public class Player : MonoBehaviour {
 
    private void Thrust(float force)
    {
-      thrustState = Vector3.up * thrustSliderValue * thrustFactor * Time.deltaTime * force; // weird.. smoothDeltaTime seemed to fix surging, but now it doesnt seem needed!?!?
-      //if (thrustState.y > 4 * thrustSliderValue) thrustState.y = 4 * thrustSliderValue;
-
+      thrustState = Vector3.up * thrustSliderValue * thrustFactor * Time.deltaTime * force; 
       thisRigidbody.AddRelativeForce(thrustState);
-      // if the audio clip is in the final half second, re-que it
-      if (thrustAudioTimer + thrustAudioLength - 0.5f < Time.time)
+      if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {
          audioSource.Stop();
          audioSource.PlayOneShot(thrustSound, thrustVolume * masterVolume);

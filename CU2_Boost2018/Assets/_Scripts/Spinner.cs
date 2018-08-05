@@ -1,14 +1,19 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Spinner : MonoBehaviour {
 
-   [SerializeField] float spinRate = 0.1f;
+   private float spinRate;
+
+   private void Start()
+   {
+      spinRate = Random.Range(10f, 100f);
+   }
 
    private void Update()
    {
-      transform.Rotate(0, Time.time * spinRate, 0, Space.World);
+      Vector3 mySpin = Vector3.zero;
+      mySpin.y = Time.deltaTime * spinRate;
+      transform.Rotate(mySpin, Space.World);
    }
 
 }

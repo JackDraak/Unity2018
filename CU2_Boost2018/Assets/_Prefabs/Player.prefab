@@ -157,7 +157,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1618071549343840}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.00050319, y: -14.912, z: 0}
+  m_LocalPosition: {x: -20.72, y: -14.912, z: 0}
   m_LocalScale: {x: 0.66456795, y: 0.26582718, z: 0.66456795}
   m_Children:
   - {fileID: 4624558406095884}
@@ -451,9 +451,9 @@ Rigidbody:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1618071549343840}
   serializedVersion: 2
-  m_Mass: 1
-  m_Drag: 10
-  m_AngularDrag: 1
+  m_Mass: 0.5
+  m_Drag: 2
+  m_AngularDrag: 0.3
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 1
@@ -628,12 +628,15 @@ MonoBehaviour:
   masterVolume: 1
   thrustVolume: 0.42
   rotationFactor: 300
-  thrustFactor: 25
+  thrustFactor: 10
   thrustSound: {fileID: 8300000, guid: 753e4f192d79cde43be17ae3e9a609b8, type: 3}
   bonusSound: {fileID: 8300000, guid: f3d92b57a6d5f704783406af798c64b3, type: 3}
+  collisionSound: {fileID: 8300000, guid: aa331bc0243a76b4c94933a82d5cf02b, type: 3}
   thrustLight: {fileID: 1097208908275734}
   tutorialText: {fileID: 0}
   FuelReadout: {fileID: 0}
+  collisionEffect: {fileID: 1292805141136094, guid: a485be336379146469ff4a716967c1d6,
+    type: 2}
 --- !u!135 &135368618066616150
 SphereCollider:
   m_ObjectHideFlags: 1

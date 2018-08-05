@@ -1,10 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class Camera : MonoBehaviour
+public class GlueCam : MonoBehaviour
 {
-
    [SerializeField] GameObject player;
 
    private Vector3 offset;
