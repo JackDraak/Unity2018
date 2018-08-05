@@ -13,8 +13,9 @@ public class Player : MonoBehaviour {
    [SerializeField] Text FuelReadout;
 
    private const float CLIP_TIME = 0.5f;
-   private const float DAMAGE_VALUE = 100f;
-   private const float FUEL_PICKUP_VALUE = 500f;
+   private const float DAMAGE_VALUE = 75f;
+   private const float DEROTATION_RATE = 0.2f;
+   private const float FUEL_PICKUP_VALUE = 420f;
    private const string GUAGE_LABEL = "Gas Reserve: ";
    private const string HUD_COLOUR = "\"#FF7070\"";
    private const float KILL_TIMER = 4f;
@@ -50,11 +51,11 @@ public class Player : MonoBehaviour {
 
    void Start ()
    {
-      debugMode = Debug.isDebugBuild;
       audioSource = GetComponent<AudioSource>();
       thisRigidbody = GetComponent<Rigidbody>();
       thrustParticleSystem = GetComponent<ParticleSystem>();
 
+      debugMode = Debug.isDebugBuild;
       thrustBubbles = thrustParticleSystem.emission;
       thrustAudioLength = thrustSound.length;
       thrustAudioTimer -= thrustAudioLength;
@@ -64,8 +65,8 @@ public class Player : MonoBehaviour {
       tutorialIsVisible = true;
 
       AdjustEmissionRate(thrustNonEmissionRate);
-      thrustLight.SetActive(false);
       RefreshFuelGuage();
+      thrustLight.SetActive(false);
 
       thisRigidbody.constraints = 
          RigidbodyConstraints.FreezeRotationX | 
@@ -96,7 +97,8 @@ public class Player : MonoBehaviour {
       thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, thrustSliderMin, thrustSliderMax);
       GUI.Label(labelRect, "<color=" + HUD_COLOUR + "><b><i>Thruster Power Control</i></b> (Up/Down Keys)</color>");
       if (thrustState.y > thrustMax) thrustMax = thrustState.y; // for debug HUD info
-      if (debugMode) GUI.Label(thrustRect, "<color=" + HUD_COLOUR + "><b>Live T-Power: current/peak\n" + thrustState.y + "\n" + thrustMax + "</b></color>");
+      if (debugMode) GUI.Label(thrustRect, 
+         "<color=" + HUD_COLOUR + "><b>Live T-Power: current/peak\n" + thrustState.y + "\n" + thrustMax + "</b></color>");
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -108,9 +110,9 @@ public class Player : MonoBehaviour {
             {
                fuelLevel -= DAMAGE_VALUE;
                if (fuelLevel < 0) fuelLevel = 0;
-               GameObject newDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
+               GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
                audioSource.PlayOneShot(collisionSound, MASTER_VOLUME);
-               Destroy(newDamage, KILL_TIMER);
+               Destroy(leakDamage, KILL_TIMER);
             }
             else Debug.Log("invulnerable: BO-01");
             break;
@@ -168,16 +170,16 @@ public class Player : MonoBehaviour {
 
    private void AutoDeRotate()
    {
-      float speed = Mathf.Abs(Time.time - deRotationTime) * 0.2f;
+      float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
       localEulers = transform.localRotation.eulerAngles;
       float playerTilt = localEulers.z;
       if (playerTilt >= 180 &&  playerTilt < 359.7f)
       {
-         transform.Rotate(Vector3.forward * (playerTilt * speed) * Time.deltaTime);
+         transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
       }
       else if (playerTilt < 180 && playerTilt > 0.3f)
       {
-         transform.Rotate(Vector3.back * ((playerTilt + 180) * speed) * Time.deltaTime);
+         transform.Rotate(Vector3.back * ((playerTilt + 180) * assertion) * Time.deltaTime);
       }
    }
 
@@ -201,6 +203,7 @@ public class Player : MonoBehaviour {
          if (threeControlAxis.z == 0) AdjustEmissionRate(thrustNonEmissionRate);
       }
    }
+   // TODO tidy from here
 
    private void EndExpulsion()
    {
