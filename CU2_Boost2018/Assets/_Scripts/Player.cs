@@ -13,13 +13,17 @@ public class Player : MonoBehaviour {
    [SerializeField] GameObject tutorialText;
 
    private const float CLIP_TIME = 0.5f;
+   private const float COLLISION_VOLUME = 0.4f;
    private const float DAMAGE_VALUE = 75f;
    private const float DEROTATION_RATE = 0.2f;
    private const float FUEL_PICKUP_VALUE = 420f;
    private const string GUAGE_LABEL = "Gas Reserve: ";
+   private const float HIGH_TILT_LIMIT = 359.7f;
    private const string HUD_COLOUR = "\"#FF7070\"";
    private const float KILL_TIMER = 4f;
+   private const float LOW_TILT_LIMIT = 0.3f;
    private const float MASTER_VOLUME = 1.0f;
+   private const float PICKUP_VOLUME = 0.7f;
    private const float ROTATE_EXPEL_RATE = 0.5f;
    private const float ROTATION_FACTOR = 270f;
    private const float THRUST_EXPEL_RATE = 1f;
@@ -47,7 +51,7 @@ public class Player : MonoBehaviour {
    private ParticleSystem.EmissionModule thrustBubbles;
    private ParticleSystem thrustParticleSystem;
    private Rigidbody thisRigidbody;
-   private RigidbodyConstraints thisRigidbodyConstraints;
+   //private RigidbodyConstraints thisRigidbodyConstraints;
    private Timekeeper timeKeeper;
 
    private Vector3 debugThrustState = Vector3.zero;
@@ -82,15 +86,15 @@ public class Player : MonoBehaviour {
          RigidbodyConstraints.FreezeRotationY | 
          RigidbodyConstraints.FreezeRotationZ |
          RigidbodyConstraints.FreezePositionZ;
-      thisRigidbodyConstraints = thisRigidbody.constraints;
+      //thisRigidbodyConstraints = thisRigidbody.constraints;
    }
 
    void FixedUpdate ()
    {
+      if (debugMode) DebugControlPoll();
       GenerateFuel();
       RefreshFuelGuage();
 		PlayerControlPoll();
-      if (debugMode) DebugControlPoll();
    }
 
    private void OnGUI()
@@ -105,7 +109,7 @@ public class Player : MonoBehaviour {
 
       thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, thrustSliderMin, thrustSliderMax);
       GUI.Label(labelRect, "<color=" + HUD_COLOUR + "><b><i>Thruster Power Control</i></b> (Up/Down Keys)</color>");
-      if (debugThrustState.y > thrustMax) thrustMax = debugThrustState.y; // for debug HUD info
+      if (debugThrustState.y > thrustMax) thrustMax = debugThrustState.y; // for debugMode HUD info
       if (debugMode) GUI.Label(thrustRect, 
          "<color=" + HUD_COLOUR + "><b>Live T-Power: current/peak\n" + debugThrustState.y + "\n" + thrustMax + "</b></color>");
    }
@@ -120,7 +124,7 @@ public class Player : MonoBehaviour {
                fuelLevel -= DAMAGE_VALUE;
                if (fuelLevel < 0) fuelLevel = 0;
                GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-               xAudio.PlayOneShot(collisionSound, MASTER_VOLUME);
+               xAudio.PlayOneShot(collisionSound, MASTER_VOLUME * COLLISION_VOLUME);
                Destroy(leakDamage, KILL_TIMER);
             }
             else Debug.Log("invulnerable: BO-01");
@@ -147,7 +151,7 @@ public class Player : MonoBehaviour {
             break;
          case "GoodObject_01":
             other.gameObject.SetActive(false);
-            xAudio.PlayOneShot(bonusSound, 0.7f * MASTER_VOLUME);
+            xAudio.PlayOneShot(bonusSound, MASTER_VOLUME * PICKUP_VOLUME);
             fuelLevel += FUEL_PICKUP_VALUE;
             if (fuelLevel > fuelMax) fuelLevel = fuelMax;
             break;
@@ -182,11 +186,11 @@ public class Player : MonoBehaviour {
       float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
       localEulers = transform.localRotation.eulerAngles;
       float playerTilt = localEulers.z;
-      if (playerTilt >= 180 &&  playerTilt < 359.7f)
+      if (playerTilt >= 180 &&  playerTilt < HIGH_TILT_LIMIT)
       {
          transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
       }
-      else if (playerTilt < 180 && playerTilt > 0.3f)
+      else if (playerTilt < 180 && playerTilt > LOW_TILT_LIMIT)
       {
          transform.Rotate(Vector3.back * ((playerTilt + 180) * assertion) * Time.deltaTime);
       }
@@ -316,9 +320,9 @@ public class Player : MonoBehaviour {
 
    private void Rotate(float direction)
    {
-      thisRigidbody.constraints = RigidbodyConstraints.None;
+      //thisRigidbody.constraints = RigidbodyConstraints.None;
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
-      thisRigidbody.constraints = thisRigidbodyConstraints;
+      //thisRigidbody.constraints = thisRigidbodyConstraints;
       if (currentEmissionRate < rotationEmissionRate) AdjustEmissionRate(rotationEmissionRate);
    }
 
@@ -329,7 +333,7 @@ public class Player : MonoBehaviour {
       if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {
          thrustAudio.Stop();
-         thrustAudio.PlayOneShot(thrustSound, THRUST_VOLUME * MASTER_VOLUME);
+         thrustAudio.PlayOneShot(thrustSound, MASTER_VOLUME * THRUST_VOLUME);
          thrustAudioTimer = Time.time;
       }
    }

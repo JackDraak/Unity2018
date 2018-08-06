@@ -2,13 +2,17 @@
 using UnityEngine;
 
 public class PickupTracker : MonoBehaviour {
-   GameObject[] pickups;
-   Text readout;
+   private GameObject[] pickups;
+   private Text readout;
+   private Timekeeper timeKeeper;
+   private bool complete;
 
    void Start ()
    {
+      timeKeeper = FindObjectOfType<Timekeeper>();
       pickups = GameObject.FindGameObjectsWithTag("GoodObject_01");
       readout = GetComponent<Text>();
+      complete = false;
    }
 	
 	void Update ()
@@ -19,5 +23,14 @@ public class PickupTracker : MonoBehaviour {
          if (pickup.activeSelf) count++;
       }
       readout.text = "Gas Canisters Remaining: " + count.ToString();
+
+      if (!complete)
+      {
+         if (count == 0)
+         {
+            complete = true;
+            timeKeeper.Cease();
+         }
+      }
 	}
 }
