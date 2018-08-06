@@ -1,16 +1,16 @@
-﻿using UnityStandardAssets.CrossPlatformInput;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityStandardAssets.CrossPlatformInput;
 
 public class Player : MonoBehaviour {
 
    [SerializeField] AudioClip bonusSound;
-   [SerializeField] AudioClip collisionSound;
-   [SerializeField] AudioClip thrustSound;
    [SerializeField] GameObject collisionEffect;
-   [SerializeField] GameObject thrustLight;
-   [SerializeField] GameObject tutorialText;
+   [SerializeField] AudioClip collisionSound;
    [SerializeField] Text FuelReadout;
+   [SerializeField] GameObject thrustLight;
+   [SerializeField] AudioClip thrustSound;
+   [SerializeField] GameObject tutorialText;
 
    private const float CLIP_TIME = 0.5f;
    private const float DAMAGE_VALUE = 75f;
@@ -28,31 +28,31 @@ public class Player : MonoBehaviour {
    private const float THRUST_VOLUME = 0.22f;
 
    private bool debugMode, deRotating, invulnerable, tutorialIsVisible;
-   private float currentEmissionRate;
-   private float deRotationTime;
+   private float currentEmissionRate, deRotationTime, thrustAudioLength, thrustAudioTimer;
+
    private float fuelGenRate = 50f;
    private float fuelLevel = 1000f;
    private float fuelMax = 1000f;
    private float fuelUseRate = 100f;
    private float rotationEmissionRate = 20f;
-   private float thrustAudioLength;
-   private float thrustAudioTimer;
    private float thrustEmissionRate = 60f;
+   private float thrustMax = 0f;
    private float thrustNonEmissionRate = 1.3f;
    private float thrustSliderMax = 60f;
    private float thrustSliderMin = 20f;
    private float thrustSliderValue = 42f;
-   private float thrustMax = 0f;
+
    private AudioSource[] audioSources;
-   private AudioSource otherAudio, thrustAudio;
-   private ParticleSystem thrustParticleSystem;
+   private AudioSource xAudio, thrustAudio;
    private ParticleSystem.EmissionModule thrustBubbles;
+   private ParticleSystem thrustParticleSystem;
    private Rigidbody thisRigidbody;
-   private RigidbodyConstraints rigidbodyConstraints;
+   private RigidbodyConstraints thisRigidbodyConstraints;
    private Timekeeper timeKeeper;
-   private Vector3 threeControlAxis = Vector3.zero;
+
    private Vector3 debugThrustState = Vector3.zero;
    private Vector3 localEulers = Vector3.zero;
+   private Vector3 threeControlAxis = Vector3.zero;
 
    void Start ()
    {
@@ -62,12 +62,12 @@ public class Player : MonoBehaviour {
       timeKeeper = FindObjectOfType<Timekeeper>();
 
       thrustAudio = audioSources[0];
-      otherAudio = audioSources[1];
+      xAudio = audioSources[1];
 
       debugMode = Debug.isDebugBuild;
-      thrustBubbles = thrustParticleSystem.emission;
       thrustAudioLength = thrustSound.length;
       thrustAudioTimer -= thrustAudioLength;
+      thrustBubbles = thrustParticleSystem.emission;
 
       deRotating = false;
       invulnerable = false;
@@ -82,7 +82,7 @@ public class Player : MonoBehaviour {
          RigidbodyConstraints.FreezeRotationY | 
          RigidbodyConstraints.FreezeRotationZ |
          RigidbodyConstraints.FreezePositionZ;
-      rigidbodyConstraints = thisRigidbody.constraints;
+      thisRigidbodyConstraints = thisRigidbody.constraints;
    }
 
    void FixedUpdate ()
@@ -120,7 +120,7 @@ public class Player : MonoBehaviour {
                fuelLevel -= DAMAGE_VALUE;
                if (fuelLevel < 0) fuelLevel = 0;
                GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-               otherAudio.PlayOneShot(collisionSound, MASTER_VOLUME);
+               xAudio.PlayOneShot(collisionSound, MASTER_VOLUME);
                Destroy(leakDamage, KILL_TIMER);
             }
             else Debug.Log("invulnerable: BO-01");
@@ -147,7 +147,7 @@ public class Player : MonoBehaviour {
             break;
          case "GoodObject_01":
             other.gameObject.SetActive(false);
-            otherAudio.PlayOneShot(bonusSound, 0.7f * MASTER_VOLUME);
+            xAudio.PlayOneShot(bonusSound, 0.7f * MASTER_VOLUME);
             fuelLevel += FUEL_PICKUP_VALUE;
             if (fuelLevel > fuelMax) fuelLevel = fuelMax;
             break;
@@ -310,15 +310,15 @@ public class Player : MonoBehaviour {
 
    private void RefreshFuelGuage()
    {
-      int meanLevel = Mathf.FloorToInt(fuelLevel);
-      FuelReadout.text = GUAGE_LABEL + meanLevel.ToString();
+      int approxLevel = Mathf.FloorToInt(fuelLevel);
+      FuelReadout.text = GUAGE_LABEL + approxLevel.ToString();
    }
 
    private void Rotate(float direction)
    {
       thisRigidbody.constraints = RigidbodyConstraints.None;
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
-      thisRigidbody.constraints = rigidbodyConstraints;
+      thisRigidbody.constraints = thisRigidbodyConstraints;
       if (currentEmissionRate < rotationEmissionRate) AdjustEmissionRate(rotationEmissionRate);
    }
 
