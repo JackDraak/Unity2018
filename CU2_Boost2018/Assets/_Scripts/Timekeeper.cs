@@ -44,4 +44,10 @@ public class Timekeeper : MonoBehaviour {
       endTime = Time.time;
       finished = true;
    }
+
+   public void Reset()
+   {
+      started = false;
+      finished = false;
+   }
 }

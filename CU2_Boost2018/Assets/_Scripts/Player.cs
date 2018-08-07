@@ -22,7 +22,6 @@ public class Player : MonoBehaviour {
    private const string HUD_COLOUR = "\"#FF7070\"";
    private const float KILL_TIMER = 4f;
    private const float LOW_TILT_LIMIT = 0.3f;
-   private const float MASTER_VOLUME = 1.0f;
    private const float PICKUP_VOLUME = 0.7f;
    private const float ROTATE_EXPEL_RATE = 0.5f;
    private const float ROTATION_FACTOR = 270f;
@@ -38,6 +37,7 @@ public class Player : MonoBehaviour {
    private float fuelLevel = 1000f;
    private float fuelMax = 1000f;
    private float fuelUseRate = 100f;
+   private float masterVolume = 1.0f;
    private float rotationEmissionRate = 20f;
    private float thrustEmissionRate = 60f;
    private float thrustMax = 0f;
@@ -51,7 +51,6 @@ public class Player : MonoBehaviour {
    private ParticleSystem.EmissionModule thrustBubbles;
    private ParticleSystem thrustParticleSystem;
    private Rigidbody thisRigidbody;
-   //private RigidbodyConstraints thisRigidbodyConstraints;
    private Timekeeper timeKeeper;
 
    private Vector3 debugThrustState = Vector3.zero;
@@ -86,7 +85,6 @@ public class Player : MonoBehaviour {
          RigidbodyConstraints.FreezeRotationY | 
          RigidbodyConstraints.FreezeRotationZ |
          RigidbodyConstraints.FreezePositionZ;
-      //thisRigidbodyConstraints = thisRigidbody.constraints;
    }
 
    void FixedUpdate ()
@@ -124,7 +122,7 @@ public class Player : MonoBehaviour {
                fuelLevel -= DAMAGE_VALUE;
                if (fuelLevel < 0) fuelLevel = 0;
                GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-               xAudio.PlayOneShot(collisionSound, MASTER_VOLUME * COLLISION_VOLUME);
+               xAudio.PlayOneShot(collisionSound, masterVolume * COLLISION_VOLUME);
                Destroy(leakDamage, KILL_TIMER);
             }
             else Debug.Log("invulnerable: BO-01");
@@ -151,7 +149,7 @@ public class Player : MonoBehaviour {
             break;
          case "GoodObject_01":
             other.gameObject.SetActive(false);
-            xAudio.PlayOneShot(bonusSound, MASTER_VOLUME * PICKUP_VOLUME);
+            xAudio.PlayOneShot(bonusSound, masterVolume * PICKUP_VOLUME);
             fuelLevel += FUEL_PICKUP_VALUE;
             if (fuelLevel > fuelMax) fuelLevel = fuelMax;
             break;
@@ -333,7 +331,7 @@ public class Player : MonoBehaviour {
       if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {
          thrustAudio.Stop();
-         thrustAudio.PlayOneShot(thrustSound, MASTER_VOLUME * THRUST_VOLUME);
+         thrustAudio.PlayOneShot(thrustSound, masterVolume * THRUST_VOLUME);
          thrustAudioTimer = Time.time;
       }
    }
