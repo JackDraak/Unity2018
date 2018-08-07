@@ -8,10 +8,7 @@ public class Spinner : MonoBehaviour {
    private void Start()
    {
       spinRate = Random.Range(10f, 100f);
-      if (FiftyFifty())
-      {
-         spinRate = -spinRate;
-      }
+      if (FiftyFifty()) spinRate = -spinRate;
    }
 
    private bool FiftyFifty()

@@ -50,27 +50,33 @@ public class Player : MonoBehaviour {
    private AudioSource xAudio, thrustAudio;
    private ParticleSystem.EmissionModule thrustBubbles;
    private ParticleSystem thrustParticleSystem;
+   private PickupTracker pickupTracker;
+   private Quaternion startRotation;
    private Rigidbody thisRigidbody;
    private Timekeeper timeKeeper;
 
    private Vector3 debugThrustState = Vector3.zero;
    private Vector3 localEulers = Vector3.zero;
+   private Vector3 startPosition = Vector3.zero;
    private Vector3 threeControlAxis = Vector3.zero;
 
    void Start ()
    {
       audioSources = GetComponents<AudioSource>();
+      pickupTracker = FindObjectOfType<PickupTracker>();
       thisRigidbody = GetComponent<Rigidbody>();
       thrustParticleSystem = GetComponent<ParticleSystem>();
       timeKeeper = FindObjectOfType<Timekeeper>();
 
-      thrustAudio = audioSources[0];
-      xAudio = audioSources[1];
-
       debugMode = Debug.isDebugBuild;
+      startPosition = transform.position;
+      startRotation = transform.rotation;
       thrustAudioLength = thrustSound.length;
       thrustAudioTimer -= thrustAudioLength;
       thrustBubbles = thrustParticleSystem.emission;
+
+      thrustAudio = audioSources[0];
+      xAudio = audioSources[1];
 
       deRotating = false;
       invulnerable = false;
@@ -198,7 +204,17 @@ public class Player : MonoBehaviour {
    {
       if (Input.GetKeyDown(KeyCode.F)) fuelLevel = fuelMax;
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
-      if (Input.GetKeyDown(KeyCode.R)) thrustMax = 0;
+      if (Input.GetKeyDown(KeyCode.M)) thrustMax = 0;
+      if (Input.GetKeyDown(KeyCode.R))
+      {
+         fuelLevel = fuelMax;
+         timeKeeper.Init();
+         tutorialIsVisible = true;
+         tutorialText.SetActive(true);
+         transform.position = startPosition;
+         transform.rotation = startRotation;
+         pickupTracker.Restart();
+      }
    }
 
    private void DeRotate()
@@ -318,9 +334,7 @@ public class Player : MonoBehaviour {
 
    private void Rotate(float direction)
    {
-      //thisRigidbody.constraints = RigidbodyConstraints.None;
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
-      //thisRigidbody.constraints = thisRigidbodyConstraints;
       if (currentEmissionRate < rotationEmissionRate) AdjustEmissionRate(rotationEmissionRate);
    }
 

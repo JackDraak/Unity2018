@@ -3,16 +3,16 @@ using UnityEngine;
 
 public class Timekeeper : MonoBehaviour {
 
-   private float endTime = 0f;
+   private float elapsed, endTime, startTime;
    private bool finished, started;
-   private float startTime = 0f;
    private Text readout;
+   private Records records;
 
    void Start()
    {
       readout = GetComponent<Text>();
-      finished = false;
-      started = false;
+      records = FindObjectOfType<Records>();
+      Init();
    }
 
    void Update()
@@ -28,7 +28,7 @@ public class Timekeeper : MonoBehaviour {
       }
       else if (finished)
       {
-         float elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
+         elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
          readout.text = "Collected in: " + elapsed.ToString() + " seconds";
       }
    }
@@ -39,15 +39,21 @@ public class Timekeeper : MonoBehaviour {
       started = true;
    }
 
-   public void Cease()
+   public void Cease(int count)
    {
       endTime = Time.time;
+      elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
       finished = true;
+      float ratio = (elapsed / count) * 100f;
+      ratio = Mathf.FloorToInt(ratio) / 100f;
+      records.Add(ratio);
    }
 
-   public void Reset()
+   public void Init()
    {
       started = false;
       finished = false;
+      endTime = 0f;
+      startTime = 0f;
    }
 }

@@ -2,10 +2,12 @@
 using UnityEngine;
 
 public class PickupTracker : MonoBehaviour {
+
+   private bool complete;
+   private int count = 0;
    private GameObject[] pickups;
    private Text readout;
    private Timekeeper timeKeeper;
-   private bool complete;
 
    void Start ()
    {
@@ -17,7 +19,7 @@ public class PickupTracker : MonoBehaviour {
 	
 	void Update ()
    {
-      int count = 0;
+      count = 0;
       foreach (GameObject pickup in pickups)
       {
          if (pickup.activeSelf) count++;
@@ -29,8 +31,19 @@ public class PickupTracker : MonoBehaviour {
          if (count == 0)
          {
             complete = true;
-            timeKeeper.Cease();
+            timeKeeper.Cease(pickups.Length);
          }
       }
 	}
+
+   public void Restart()
+   {
+      complete = false;
+      count = 0;
+      foreach (GameObject pickup in pickups)
+      {
+         count++;
+         pickup.SetActive(true);
+      }
+   }
 }
