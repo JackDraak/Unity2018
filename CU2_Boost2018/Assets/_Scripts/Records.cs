@@ -19,36 +19,41 @@ public class Records : MonoBehaviour {
    {
       if (record <= 1)
       {
-         records.Add(comOne[Mathf.FloorToInt(Random.Range(0, comOne.Length))] + record.ToString() + "\n");
+         records.Add(comOne[OneOf(comOne)] + record.ToString() + "\n");
       }
       else if (record > 1 && record <= 3)
       {
-         records.Add(comTwo[Mathf.FloorToInt(Random.Range(0, comTwo.Length))] + record.ToString() + "\n");
+         records.Add(comTwo[OneOf(comTwo)] + record.ToString() + "\n");
       }
       else if (record > 3 && record <= 4)
       {
-         records.Add(comThree[Mathf.FloorToInt(Random.Range(0, comThree.Length))] + record.ToString() + "\n");
+         records.Add(comThree[OneOf(comThree)] + record.ToString() + "\n");
       }
       else if (record > 4 && record <= 5)
       {
-         records.Add(comFour[Mathf.FloorToInt(Random.Range(0, comFour.Length))] + record.ToString() + "\n");
+         records.Add(comFour[OneOf(comFour)] + record.ToString() + "\n");
       }
       else if (record > 5 && record <= 6)
       {
-         records.Add(comFive[Mathf.FloorToInt(Random.Range(0, comFive.Length))] + record.ToString() + "\n");
+         records.Add(comFive[OneOf(comFive)] + record.ToString() + "\n");
       }
       else if (record > 6 && record <= 8)
       {
-         records.Add(comSix[Mathf.FloorToInt(Random.Range(0, comSix.Length))] + record.ToString() + "\n");
+         records.Add(comSix[OneOf(comSix)] + record.ToString() + "\n");
       }
       else if (record > 8 && record <= 10)
       {
-         records.Add(comSeven[Mathf.FloorToInt(Random.Range(0, comSeven.Length))] + record.ToString() + "\n");
+         records.Add(comSeven[OneOf(comSeven)] + record.ToString() + "\n");
       }
       else if (record > 10)
       {
-         records.Add(comEight[Mathf.FloorToInt(Random.Range(0, comEight.Length))] + record.ToString() + "\n");
+         records.Add(comEight[OneOf(comEight)] + record.ToString() + "\n");
       }
+   }
+
+   private int OneOf(string[] comment)
+   {
+      return Mathf.FloorToInt(Random.Range(0, comment.Length));
    }
 
    private void Start()
