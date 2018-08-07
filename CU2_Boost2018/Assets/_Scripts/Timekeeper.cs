@@ -43,7 +43,7 @@ public class Timekeeper : MonoBehaviour {
    {
       if (!started && !finished)
       {
-         readout.text = "Use Controls to Begin Timer";
+         readout.text = "Use Controls to Begin Timer: 0.0 seconds";
       }
       else if (started && !finished)
       {
@@ -53,7 +53,7 @@ public class Timekeeper : MonoBehaviour {
       else if (finished)
       {
          elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
-         readout.text = "Collected in: " + elapsed.ToString() + " seconds";
+         readout.text = "All Collected in: " + elapsed.ToString() + " seconds";
       }
    }
 }

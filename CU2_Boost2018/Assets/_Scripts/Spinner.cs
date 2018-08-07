@@ -2,8 +2,8 @@
 
 public class Spinner : MonoBehaviour {
 
-   private float spinRate;
    private Vector3 mySpin = Vector3.zero;
+   private float spinRate;
 
    private bool FiftyFifty()
    {
