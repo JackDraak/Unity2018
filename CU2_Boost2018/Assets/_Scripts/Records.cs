@@ -11,7 +11,7 @@ public class Records : MonoBehaviour {
    private string[] comThree = { "Remarkable: ", "Off the charts! ", "Better than me... ", "Fantastic: "};
    private string[] comFour = { "Pretty good: ", "Better than average: ", "Hanging in there: ", "Solid: " };
    private string[] comFive = { "Not bad: ", "Average: ", "Nominal: ", "Acceptable: " };
-   private string[] comSix = { "Keep practicing: ", "", "", "" };
+   private string[] comSix = { "Keep practicing: ", "You're getting there: ", "not bad, but not great: ", "Mediocre: " };
    private string[] comSeven = { "I bet you can do better: ", "Practice makes perfect: ", "Details, details... ", "This could be improved: " };
    private string[] comEight = { "Are you even trying? ", "SMH: ", "Seriously? ", "Yeup.... " };
 
