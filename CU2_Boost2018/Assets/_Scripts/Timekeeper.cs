@@ -8,6 +8,30 @@ public class Timekeeper : MonoBehaviour {
    private Text readout;
    private Records records;
 
+   public void Begin()
+   {
+      startTime = Time.time;
+      started = true;
+   }
+
+   public void Cease(int count)
+   {
+      endTime = Time.time;
+      elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
+      finished = true;
+      float ratio = (elapsed / count) * 100f;
+      ratio = Mathf.FloorToInt(ratio) / 100f;
+      records.Add(ratio);
+   }
+
+   public void Init()
+   {
+      started = false;
+      finished = false;
+      endTime = 0f;
+      startTime = 0f;
+   }
+
    void Start()
    {
       readout = GetComponent<Text>();
@@ -31,29 +55,5 @@ public class Timekeeper : MonoBehaviour {
          elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
          readout.text = "Collected in: " + elapsed.ToString() + " seconds";
       }
-   }
-
-   public void Begin()
-   {
-      startTime = Time.time;
-      started = true;
-   }
-
-   public void Cease(int count)
-   {
-      endTime = Time.time;
-      elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
-      finished = true;
-      float ratio = (elapsed / count) * 100f;
-      ratio = Mathf.FloorToInt(ratio) / 100f;
-      records.Add(ratio);
-   }
-
-   public void Init()
-   {
-      started = false;
-      finished = false;
-      endTime = 0f;
-      startTime = 0f;
    }
 }

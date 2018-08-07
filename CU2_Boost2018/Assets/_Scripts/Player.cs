@@ -14,9 +14,9 @@ public class Player : MonoBehaviour {
 
    private const float CLIP_TIME = 0.5f;
    private const float COLLISION_VOLUME = 0.4f;
-   private const float DAMAGE_VALUE = 75f;
+   private const float DAMAGE_VALUE = 50f;
    private const float DEROTATION_RATE = 0.2f;
-   private const float FUEL_PICKUP_VALUE = 420f;
+   private const float FUEL_PICKUP_VALUE = 300f;
    private const string GUAGE_LABEL = "Gas Reserve: ";
    private const float HIGH_TILT_LIMIT = 359.7f;
    private const string HUD_COLOUR = "\"#FF7070\"";
@@ -103,16 +103,13 @@ public class Player : MonoBehaviour {
 
    private void OnGUI()
    {
-      int r_x = 35;
-      int r_y = 45;
-      int r_w = 100;
-      int r_h = 30;
-      Rect sliderRect = new Rect(r_x, r_y, r_w, r_h);
-      Rect labelRect = new Rect(r_x, r_y + r_h, r_w * 3, r_h);
-      Rect thrustRect = new Rect(r_x, r_y + r_h * 2, r_w * 3, r_h * 2);
+      // Rect: x, y, w, h
+      Rect sliderRect = new Rect(10, 10, 100, 20);
+      Rect labelRect = new Rect(10, 25, 300, 40);
+      Rect thrustRect = new Rect(10, 60, 300, 60);
 
       thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, thrustSliderMin, thrustSliderMax);
-      GUI.Label(labelRect, "<color=" + HUD_COLOUR + "><b><i>Thruster Power Control</i></b> (Up/Down Keys)</color>");
+      GUI.Label(labelRect, "<color=" + HUD_COLOUR + "><b><i>Thruster Power Control</i></b>\n(Up/Down Keys)</color>");
       if (debugThrustState.y > thrustMax) thrustMax = debugThrustState.y; // for debugMode HUD info
       if (debugMode) GUI.Label(thrustRect, 
          "<color=" + HUD_COLOUR + "><b>Live T-Power: current/peak\n" + debugThrustState.y + "\n" + thrustMax + "</b></color>");
@@ -166,6 +163,12 @@ public class Player : MonoBehaviour {
       }
    }
 
+   private void AdjustEmissionRate(float newRate)
+   {
+      currentEmissionRate = newRate;
+      thrustBubbles.rateOverTime = currentEmissionRate;
+   }
+
    private void AdjustThrusterPower(float delta)
    {
       if (delta + thrustSliderValue > thrustSliderMax)
@@ -177,12 +180,6 @@ public class Player : MonoBehaviour {
          thrustSliderValue = thrustSliderMin;
       }
       else thrustSliderValue += delta;
-   }
-
-   private void AdjustEmissionRate(float newRate)
-   {
-      currentEmissionRate = newRate;
-      thrustBubbles.rateOverTime = currentEmissionRate;
    }
 
    private void AutoDeRotate()
@@ -205,16 +202,6 @@ public class Player : MonoBehaviour {
       if (Input.GetKeyDown(KeyCode.F)) fuelLevel = fuelMax;
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
       if (Input.GetKeyDown(KeyCode.M)) thrustMax = 0;
-      if (Input.GetKeyDown(KeyCode.R))
-      {
-         fuelLevel = fuelMax;
-         timeKeeper.Init();
-         tutorialIsVisible = true;
-         tutorialText.SetActive(true);
-         transform.position = startPosition;
-         transform.rotation = startRotation;
-         pickupTracker.Restart();
-      }
    }
 
    private void DeRotate()
@@ -314,6 +301,16 @@ public class Player : MonoBehaviour {
    private void PollMisc()
    {
       if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
+      if (Input.GetKeyDown(KeyCode.R))
+      {
+         fuelLevel = fuelMax;
+         timeKeeper.Init();
+         tutorialIsVisible = true;
+         tutorialText.SetActive(true);
+         transform.position = startPosition;
+         transform.rotation = startRotation;
+         pickupTracker.Restart();
+      }
    }
 
    private void PollVertical()

@@ -9,6 +9,17 @@ public class PickupTracker : MonoBehaviour {
    private Text readout;
    private Timekeeper timeKeeper;
 
+   public void Restart()
+   {
+      complete = false;
+      count = 0;
+      foreach (GameObject pickup in pickups)
+      {
+         count++;
+         pickup.SetActive(true);
+      }
+   }
+
    void Start ()
    {
       timeKeeper = FindObjectOfType<Timekeeper>();
@@ -35,15 +46,4 @@ public class PickupTracker : MonoBehaviour {
          }
       }
 	}
-
-   public void Restart()
-   {
-      complete = false;
-      count = 0;
-      foreach (GameObject pickup in pickups)
-      {
-         count++;
-         pickup.SetActive(true);
-      }
-   }
 }
