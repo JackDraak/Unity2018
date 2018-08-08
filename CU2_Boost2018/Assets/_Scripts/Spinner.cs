@@ -2,6 +2,9 @@
 
 public class Spinner : MonoBehaviour {
 
+   private const float SPINRATE_HIGH = 100f;
+   private const float SPINRATE_LOW = 10f;
+
    private Vector3 mySpin = Vector3.zero;
    private float spinRate;
 
@@ -13,7 +16,7 @@ public class Spinner : MonoBehaviour {
 
    private void Start()
    {
-      spinRate = Random.Range(10f, 100f);
+      spinRate = Random.Range(SPINRATE_LOW, SPINRATE_HIGH);
       if (FiftyFifty()) spinRate = -spinRate;
    }
 

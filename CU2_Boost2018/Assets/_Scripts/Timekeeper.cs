@@ -3,10 +3,13 @@ using UnityEngine.UI;
 
 public class Timekeeper : MonoBehaviour {
 
-   private float elapsed, endTime, startTime;
-   private bool finished, started;
+   private float elapsed;
+   private float endTime;
+   private bool finished;
    private Text readout;
    private Records records;
+   private bool started;
+   private float startTime;
 
    public void Begin()
    {
@@ -43,7 +46,7 @@ public class Timekeeper : MonoBehaviour {
    {
       if (!started && !finished)
       {
-         readout.text = "Use Controls to Begin Timer: 0.0 seconds";
+         readout.text = "Use Controls to Start Timer: 0.0 seconds";
       }
       else if (started && !finished)
       {
@@ -53,7 +56,7 @@ public class Timekeeper : MonoBehaviour {
       else if (finished)
       {
          elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
-         readout.text = "All Collected in: " + elapsed.ToString() + " seconds";
+         readout.text = "'R' to retry, last run took: " + elapsed.ToString() + " seconds";
       }
    }
 }

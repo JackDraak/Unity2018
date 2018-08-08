@@ -39,7 +39,7 @@ public class Player : MonoBehaviour {
    private const float THRUST_VOLUME = 0.22f;
 
    private bool debugMode, deRotating, invulnerable, tutorialIsVisible;
-   private float currentEmissionRate, deRotationTime, thrustAudioLength, thrustAudioTimer;
+   private float deRotationTime, thrustAudioLength, thrustAudioTimer;
 
    private float debugThrustMax = 0f;
    private float fuelLevel = 1000f;
@@ -95,17 +95,17 @@ public class Player : MonoBehaviour {
 
    void FixedUpdate ()
    {
-      if (debugMode) DebugControlPoll();
       GenerateFuel();
-      RefreshFuelGuage();
 		PlayerControlPoll();
+      RefreshFuelGuage();
+      if (debugMode) DebugControlPoll();
    }
 
    private void OnGUI()
    {
       // Rect: x, y, w, h
-      Rect sliderRect = new Rect(10, 10, 100, 20);
       Rect labelRect = new Rect(10, 25, 300, 40);
+      Rect sliderRect = new Rect(10, 10, 100, 20);
       Rect thrustRect = new Rect(10, 60, 300, 60);
 
       thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, THRUST_MIN, THRUST_MAX);
@@ -152,8 +152,7 @@ public class Player : MonoBehaviour {
 
    private void AdjustEmissionRate(float newRate)
    {
-      currentEmissionRate = newRate;
-      thrustBubbles.rateOverTime = currentEmissionRate;
+      thrustBubbles.rateOverTime = newRate;
    }
 
    private void AdjustThrusterPower(float delta)
@@ -319,7 +318,7 @@ public class Player : MonoBehaviour {
    private void Rotate(float direction)
    {
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
-      if (currentEmissionRate < EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_ROTATION);
+      if (thrustBubbles.rateOverTime.constant < EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_ROTATION);
    }
 
    private void Thrust(float force)
