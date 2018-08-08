@@ -16,7 +16,13 @@ public class Player : MonoBehaviour {
    private const float COLLISION_VOLUME = 0.4f;
    private const float DAMAGE_VALUE = 50f;
    private const float DEROTATION_RATE = 0.2f;
-   private const float FUEL_PICKUP_VALUE = 300f;
+   private const float EMISSION_RATE_INACTIVE = 1.3f;
+   private const float EMISSION_RATE_ROTATION = 20f;
+   private const float EMISSION_RATE_THRUST = 60f;
+   private const float FUEL_GEN_RATE = 50f;
+   private const float FUEL_MAX = 1000f;
+   private const float FUEL_PICKUP_VALUE = 250f;
+   private const float FUEL_USE_RATE = 100f;
    private const string GUAGE_LABEL = "Gas Reserve: ";
    private const float HIGH_TILT_LIMIT = 359.7f;
    private const string HUD_COLOUR = "\"#FF7070\"";
@@ -27,24 +33,18 @@ public class Player : MonoBehaviour {
    private const float ROTATION_FACTOR = 270f;
    private const float THRUST_EXPEL_RATE = 1f;
    private const float THRUST_FACTOR = 9.81f;
+   private const float THRUST_MAX = 60f;
+   private const float THRUST_MIN = 20f;
    private const float THRUST_POWER_FACTOR = 0.02f;
    private const float THRUST_VOLUME = 0.22f;
 
    private bool debugMode, deRotating, invulnerable, tutorialIsVisible;
    private float currentEmissionRate, deRotationTime, thrustAudioLength, thrustAudioTimer;
 
-   private float fuelGenRate = 50f;
+   private float debugThrustMax = 0f;
    private float fuelLevel = 1000f;
-   private float fuelMax = 1000f;
-   private float fuelUseRate = 100f;
    private float masterVolume = 1.0f;
-   private float rotationEmissionRate = 20f;
-   private float thrustEmissionRate = 60f;
-   private float thrustMax = 0f;
-   private float thrustNonEmissionRate = 1.3f;
-   private float thrustSliderMax = 60f;
-   private float thrustSliderMin = 20f;
-   private float thrustSliderValue = 42f;
+   private float thrustSliderValue = 40f;
 
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
@@ -82,7 +82,7 @@ public class Player : MonoBehaviour {
       invulnerable = false;
       tutorialIsVisible = true;
 
-      AdjustEmissionRate(thrustNonEmissionRate);
+      AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       RefreshFuelGuage();
       thrustLight.SetActive(false);
 
@@ -108,11 +108,11 @@ public class Player : MonoBehaviour {
       Rect labelRect = new Rect(10, 25, 300, 40);
       Rect thrustRect = new Rect(10, 60, 300, 60);
 
-      thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, thrustSliderMin, thrustSliderMax);
+      thrustSliderValue = GUI.HorizontalSlider(sliderRect, thrustSliderValue, THRUST_MIN, THRUST_MAX);
       GUI.Label(labelRect, "<color=" + HUD_COLOUR + "><b><i>Thruster Power Control</i></b>\n(Up/Down Keys)</color>");
-      if (debugThrustState.y > thrustMax) thrustMax = debugThrustState.y; // for debugMode HUD info
+      if (debugThrustState.y > debugThrustMax) debugThrustMax = debugThrustState.y; // for debugMode HUD info
       if (debugMode) GUI.Label(thrustRect, 
-         "<color=" + HUD_COLOUR + "><b>Live T-Power: current/peak\n" + debugThrustState.y + "\n" + thrustMax + "</b></color>");
+         "<color=" + HUD_COLOUR + "><b>Live T-Power: current/peak\n" + debugThrustState.y + "\n" + debugThrustMax + "</b></color>");
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -130,13 +130,6 @@ public class Player : MonoBehaviour {
             }
             else Debug.Log("invulnerable: BO-01");
             break;
-         case "BadObject_02":
-            break;
-         case "GoodObject_01":
-            Debug.Log("Pickup Object");
-            break;
-         case "GoodObject_02":
-            break;
          default:
             break;
       }
@@ -146,17 +139,11 @@ public class Player : MonoBehaviour {
    {
       switch (other.gameObject.tag)
       {
-         case "BadObject_01":
-            break;
-         case "BadObject_02":
-            break;
          case "GoodObject_01":
             other.gameObject.SetActive(false);
             xAudio.PlayOneShot(bonusSound, masterVolume * PICKUP_VOLUME);
             fuelLevel += FUEL_PICKUP_VALUE;
-            if (fuelLevel > fuelMax) fuelLevel = fuelMax;
-            break;
-         case "GoodObject_02":
+            if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
             break;
          default:
             break;
@@ -171,13 +158,13 @@ public class Player : MonoBehaviour {
 
    private void AdjustThrusterPower(float delta)
    {
-      if (delta + thrustSliderValue > thrustSliderMax)
+      if (delta + thrustSliderValue > THRUST_MAX)
       {
-         thrustSliderValue = thrustSliderMax;
+         thrustSliderValue = THRUST_MAX;
       }
-      else if (delta + thrustSliderValue < thrustSliderMin)
+      else if (delta + thrustSliderValue < THRUST_MIN)
       {
-         thrustSliderValue = thrustSliderMin;
+         thrustSliderValue = THRUST_MIN;
       }
       else thrustSliderValue += delta;
    }
@@ -199,9 +186,9 @@ public class Player : MonoBehaviour {
 
    private void DebugControlPoll()
    {
-      if (Input.GetKeyDown(KeyCode.F)) fuelLevel = fuelMax;
+      if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
-      if (Input.GetKeyDown(KeyCode.M)) thrustMax = 0;
+      if (Input.GetKeyDown(KeyCode.M)) debugThrustMax = 0;
    }
 
    private void DeRotate()
@@ -214,14 +201,14 @@ public class Player : MonoBehaviour {
       else
       {
          AutoDeRotate();
-         if (threeControlAxis.z == 0) AdjustEmissionRate(thrustNonEmissionRate);
+         if (threeControlAxis.z == 0) EndExpulsion();
       }
    }
 
    private void EndExpulsion()
    {
       thrustAudio.Stop();
-      AdjustEmissionRate(thrustNonEmissionRate);
+      AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       thrustAudioTimer -= thrustAudioLength;
       thrustLight.SetActive(false);
       debugThrustState = Vector3.zero;
@@ -229,7 +216,7 @@ public class Player : MonoBehaviour {
 
    private bool ExpelGas(float rate)
    {
-      float expulsionRate = rate * fuelUseRate * (thrustSliderValue * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
+      float expulsionRate = rate * FUEL_USE_RATE * (thrustSliderValue * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
       if (fuelLevel > expulsionRate)
       {
          fuelLevel -= expulsionRate;
@@ -244,8 +231,8 @@ public class Player : MonoBehaviour {
 
    private void GenerateFuel()
    {
-      fuelLevel += Time.fixedDeltaTime * fuelGenRate;
-      if (fuelLevel > fuelMax) fuelLevel = fuelMax;
+      fuelLevel += Time.fixedDeltaTime * FUEL_GEN_RATE;
+      if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
    }
 
    private void HideTutorial()
@@ -271,7 +258,7 @@ public class Player : MonoBehaviour {
          if (ExpelGas(THRUST_EXPEL_RATE))
          {
             Thrust(threeControlAxis.z);
-            AdjustEmissionRate(thrustEmissionRate);
+            AdjustEmissionRate(EMISSION_RATE_THRUST);
             thrustLight.SetActive(true);
          }
          else EndExpulsion();
@@ -303,7 +290,7 @@ public class Player : MonoBehaviour {
       if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
       if (Input.GetKeyDown(KeyCode.R))
       {
-         fuelLevel = fuelMax;
+         fuelLevel = FUEL_MAX;
          timeKeeper.Init();
          tutorialIsVisible = true;
          tutorialText.SetActive(true);
@@ -332,7 +319,7 @@ public class Player : MonoBehaviour {
    private void Rotate(float direction)
    {
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
-      if (currentEmissionRate < rotationEmissionRate) AdjustEmissionRate(rotationEmissionRate);
+      if (currentEmissionRate < EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_ROTATION);
    }
 
    private void Thrust(float force)

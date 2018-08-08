@@ -1,12 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class FishDrone : MonoBehaviour {
 
-   private Vector3 mySpin = Vector3.zero;
-   private float spinRate, speed;
    private Rigidbody thisRigidbody;
+   private Vector3 planes = Vector3.zero;
+   private float turnRate, speed;
+
+   private const float SPEED_MAX = 1.2f;
+   private const float SPEED_MIN = 0.4f;
+   private const float TURN_MAX = 9f;
+   private const float TURN_MIN = 3f;
 
    private bool FiftyFifty()
    {
@@ -14,17 +17,17 @@ public class FishDrone : MonoBehaviour {
       else return false;
    }
 
-   private void Start()
-   {
-      spinRate = Random.Range(1f, 6f);
-      speed = Random.Range(0.66f, 1.33f);
-      if (FiftyFifty()) spinRate = -spinRate;
-   }
-
    private void FixedUpdate()
    {
-      mySpin.y = Time.deltaTime * spinRate;
-      transform.Rotate(mySpin, Space.World);
+      planes.y = Time.deltaTime * turnRate;
+      transform.Rotate(planes, Space.World);
       transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed, Space.Self);
+   }
+
+   private void Start()
+   {
+      turnRate = Random.Range(TURN_MIN, TURN_MAX);
+      speed = Random.Range(SPEED_MIN, SPEED_MAX);
+      if (FiftyFifty()) turnRate = -turnRate;
    }
 }

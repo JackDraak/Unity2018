@@ -50,7 +50,7 @@ public class Records : MonoBehaviour {
          records.Add(comEight[OneOf(comEight)] + record.ToString() + "\n");
       }
    }
-
+    
    private int OneOf(string[] comment)
    {
       return Mathf.FloorToInt(Random.Range(0, comment.Length));
