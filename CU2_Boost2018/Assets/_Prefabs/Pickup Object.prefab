@@ -40,7 +40,7 @@ GameObject:
   - component: {fileID: 114017888510941786}
   m_Layer: 0
   m_Name: Pickup Object
-  m_TagString: GoodObject_01
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -46,7 +46,7 @@ public class Timekeeper : MonoBehaviour {
    {
       if (!started && !finished)
       {
-         readout.text = "Use Controls to Start Timer: 0.0 seconds";
+         readout.text = "Touching the Controls Will Start the Timer: 0.0 seconds";
       }
       else if (started && !finished)
       {
@@ -56,7 +56,7 @@ public class Timekeeper : MonoBehaviour {
       else if (finished)
       {
          elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
-         readout.text = "'R' to retry, last run took: " + elapsed.ToString() + " seconds";
+         readout.text = "tap 'R' to retry; your prior run took: " + elapsed.ToString() + " seconds";
       }
    }
 }
