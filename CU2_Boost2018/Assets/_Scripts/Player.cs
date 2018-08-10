@@ -13,20 +13,18 @@ public class Player : MonoBehaviour {
 
    private const float CLIP_TIME = 0.5f;
    private const float COLLISION_VOLUME = 0.4f;
-   private const float DAMAGE_VALUE = 50f;
+   private const float DAMAGE_VALUE = 35f;
    private const float DEROTATION_RATE = 0.2f;
    private const float EMISSION_RATE_INACTIVE = 1.3f;
    private const float EMISSION_RATE_ROTATION = 20f;
    private const float EMISSION_RATE_THRUST = 60f;
-   private const float FUEL_GEN_RATE = 50f;
+   private const float FUEL_GEN_RATE = 40f;
    private const float FUEL_MAX = 1000f;
-   private const float FUEL_PICKUP_VALUE = 250f;
+   private const float FUEL_PICKUP_VALUE = 200f;
    private const float FUEL_USE_RATE = 100f;
-   private const string GUAGE_LABEL = "Gas Reserve: ";
-   private const float HIGH_TILT_LIMIT = 359.7f;
-   private const string HUD_COLOUR = "\"#FF7070\"";
+   private const float HIGH_TILT_LIMIT = 359.6f;
    private const float KILL_TIMER = 4f;
-   private const float LOW_TILT_LIMIT = 0.3f;
+   private const float LOW_TILT_LIMIT = 0.4f;
    private const float PICKUP_VOLUME = 0.7f;
    private const float ROTATE_EXPEL_RATE = 0.5f;
    private const float ROTATION_FACTOR = 270f;
@@ -36,29 +34,31 @@ public class Player : MonoBehaviour {
    private const float THRUST_MIN = 20f;
    private const float THRUST_POWER_FACTOR = 0.02f;
    private const float THRUST_VOLUME = 0.22f;
+   private const string HUD_COLOUR = "\"#FF7070\"";
+   private const string GUAGE_LABEL = "Gas Reserve: ";
 
    private bool debugMode, deRotating, invulnerable, tutorialIsVisible;
    private float deRotationTime, thrustAudioLength, thrustAudioTimer;
 
-   private float debugThrustMax = 0f;
    private float fuelLevel = 1000f;
    private float masterVolume = 1.0f;
    private float thrustSliderValue = 40f;
 
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
+   private GameObject cockpit;
+   private GameObject thrusterBell;
+   private GameObject thrustLight;
+   private GameObject tutorialText;
+   private GlueCam sceneCamera;
    private ParticleSystem.EmissionModule thrustBubbles;
    private ParticleSystem thrustParticleSystem;
    private PickupTracker pickupTracker;
    private Quaternion startRotation;
    private Rigidbody thisRigidbody;
-   private Timekeeper timeKeeper;
-   private GameObject thrusterBell;
-   private GameObject thrustLight;
-   private GameObject tutorialText;
    private Slider thrustPowerSlider;
    private Slider gasLevelSlider;
-
+   private Timekeeper timeKeeper;
    private Vector3 debugThrustState = Vector3.zero;
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
@@ -68,10 +68,12 @@ public class Player : MonoBehaviour {
    {
       audioSources = GetComponents<AudioSource>();
       pickupTracker = FindObjectOfType<PickupTracker>();
+      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
       thisRigidbody = GetComponent<Rigidbody>();
       thrustParticleSystem = GetComponent<ParticleSystem>();
       timeKeeper = FindObjectOfType<Timekeeper>();
 
+      cockpit = GameObject.FindGameObjectWithTag("Cockpit");
       tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
       thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
       thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
@@ -97,13 +99,13 @@ public class Player : MonoBehaviour {
       thrustPowerSlider.maxValue = THRUST_MAX;
       thrustPowerSlider.minValue = THRUST_MIN;
       thrustPowerSlider.value = thrustSliderValue;
-      ColourThrustPower();
+      DoColourThrustPower();
       thrustLight.SetActive(false);
 
       gasLevelSlider.maxValue = FUEL_MAX;
       gasLevelSlider.minValue = 0;
       gasLevelSlider.value = fuelLevel;
-      ColourGasLevelSlider();
+      DoColourForGasLevel();
 
       thisRigidbody.constraints = 
          RigidbodyConstraints.FreezeRotationX | 
@@ -117,15 +119,6 @@ public class Player : MonoBehaviour {
       GenerateFuel();
 		PlayerControlPoll();
       if (debugMode) DebugControlPoll();
-   }
-
-   private void OnGUI()
-   {
-      // Rect: x, y, w, h
-      Rect thrustRect = new Rect(10, 100, 300, 60);
-      if (debugThrustState.y > debugThrustMax) debugThrustMax = debugThrustState.y;
-      if (debugMode) GUI.Label(thrustRect, 
-         "<color=" + HUD_COLOUR + "><b>Live T-Power: current/peak\n" + debugThrustState.y + "\n" + debugThrustMax + "</b></color>");
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -181,7 +174,7 @@ public class Player : MonoBehaviour {
       else thrustSliderValue += delta;
 
       thrustPowerSlider.value = thrustSliderValue;
-      ColourThrustPower();
+      DoColourThrustPower();
    }
 
    private void AutoDeRotate()
@@ -199,7 +192,7 @@ public class Player : MonoBehaviour {
       }
    }
 
-   private void ColourThrustPower()
+   private void DoColourThrustPower()
    {
       Color colour;
       float ratio = thrustSliderValue / THRUST_MAX;
@@ -209,19 +202,19 @@ public class Player : MonoBehaviour {
       thrusterBell.GetComponent<MeshRenderer>().material.color = colour;
    }
 
-   private void ColourGasLevelSlider()
+   private void DoColourForGasLevel()
    {
       Color colour;
       float ratio = fuelLevel / FUEL_MAX;
       colour = Vector4.Lerp(gasHigh, gasLow, 1 - ratio);
       gasFill.color = colour;
+      cockpit.GetComponent<MeshRenderer>().material.color = colour;
    }
 
    private void DebugControlPoll()
    {
       if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
-      if (Input.GetKeyDown(KeyCode.M)) debugThrustMax = 0;
    }
 
    private void DeRotate()
@@ -258,7 +251,6 @@ public class Player : MonoBehaviour {
       }
       else
       {
-         fuelLevel = 0;
          gasLevelSlider.value = fuelLevel;
          return false;
       }
@@ -269,6 +261,7 @@ public class Player : MonoBehaviour {
       fuelLevel += Time.fixedDeltaTime * FUEL_GEN_RATE;
       if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
       gasLevelSlider.value = fuelLevel;
+      DoColourForGasLevel();
    }
 
    private void HideTutorial()
@@ -324,16 +317,8 @@ public class Player : MonoBehaviour {
    private void PollMisc()
    {
       if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
-      if (Input.GetKeyDown(KeyCode.R))
-      {
-         fuelLevel = FUEL_MAX;
-         timeKeeper.Init();
-         tutorialIsVisible = true;
-         tutorialText.SetActive(true);
-         transform.position = startPosition;
-         transform.rotation = startRotation;
-         pickupTracker.Restart();
-      }
+      if (Input.GetKeyDown(KeyCode.R)) Restart();
+
    }
 
    private void PollVertical()
@@ -345,6 +330,19 @@ public class Player : MonoBehaviour {
          AdjustThrusterPower(threeControlAxis.y);
       }
    }
+
+   private void Restart()
+   {
+      sceneCamera.Restart();
+      fuelLevel = FUEL_MAX;
+      timeKeeper.Init();
+      tutorialIsVisible = true;
+      tutorialText.SetActive(true);
+      transform.position = startPosition;
+      transform.rotation = startRotation;
+      pickupTracker.Restart();
+   }
+ 
 
    private void Rotate(float direction)
    {

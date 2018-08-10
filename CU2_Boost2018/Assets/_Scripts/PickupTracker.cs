@@ -4,8 +4,8 @@ using UnityEngine.UI;
 public class PickupTracker : MonoBehaviour {
 
    private bool complete;
-   private int count = 0;
    private GameObject[] pickups;
+   private int count = 0;
    private Text readout;
    private Timekeeper timeKeeper;
 

@@ -3,13 +3,13 @@ using UnityEngine.UI;
 
 public class Timekeeper : MonoBehaviour {
 
+   private bool finished;
+   private bool started;
    private float elapsed;
    private float endTime;
-   private bool finished;
-   private Text readout;
-   private Records records;
-   private bool started;
    private float startTime;
+   private Records records;
+   private Text readout; 
 
    public void Begin()
    {

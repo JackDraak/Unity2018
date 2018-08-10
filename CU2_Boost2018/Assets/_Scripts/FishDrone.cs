@@ -2,10 +2,10 @@
 
 public class FishDrone : MonoBehaviour {
 
-   private Vector3 planes = Vector3.zero;
    private float speed;
-   private Rigidbody thisRigidbody;
    private float turnRate;
+   private Rigidbody thisRigidbody;
+   private Vector3 planes = Vector3.zero;
 
    private const float SCALE_MAX = 1.6f;
    private const float SCALE_MIN = 0.4f;

@@ -4,15 +4,23 @@ public class GlueCam : MonoBehaviour
 {
    [SerializeField] GameObject player;
 
+   private const float ELASTICITY_FACTOR = 0.06f;
    private Vector3 offset;
+   private Vector3 startPos;
 
-   void Start()
+   private void LateUpdate()
    {
-      offset = transform.position - player.transform.position;
+      transform.position = Vector3.Lerp(transform.position, player.transform.position + offset, ELASTICITY_FACTOR);
    }
 
-   void LateUpdate()
+   public void Restart()
    {
-      transform.position = player.transform.position + offset;
+      transform.position = startPos;
+   }
+
+   private void Start()
+   {
+      startPos = transform.position;
+      offset = startPos - player.transform.position;
    }
 }
