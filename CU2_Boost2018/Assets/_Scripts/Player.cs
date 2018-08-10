@@ -21,7 +21,9 @@ public class Player : MonoBehaviour {
    private const float FUEL_GEN_RATE = 40f;
    private const float FUEL_MAX = 1000f;
    private const float FUEL_PICKUP_VALUE = 200f;
+   private const float FUEL_POWER_FACTOR = 0.75f;
    private const float FUEL_USE_RATE = 100f;
+   private const float FUEL_WARN_LEVEL = 20f;
    private const float HIGH_TILT_LIMIT = 359.6f;
    private const float KILL_TIMER = 4f;
    private const float LOW_TILT_LIMIT = 0.4f;
@@ -30,19 +32,22 @@ public class Player : MonoBehaviour {
    private const float ROTATION_FACTOR = 270f;
    private const float THRUST_EXPEL_RATE = 1f;
    private const float THRUST_FACTOR = 9.81f;
-   private const float THRUST_MAX = 60f;
+   private const float THRUST_FADE_FACTOR = 0.03f;
+   private const float THRUST_LIGHTRANGE_MAX = 2f;
+   private const float THRUST_MAX = 80f;
    private const float THRUST_MIN = 20f;
    private const float THRUST_POWER_FACTOR = 0.02f;
    private const float THRUST_VOLUME = 0.22f;
+   private const int HALF_ARC = 180;
    private const string HUD_COLOUR = "\"#FF7070\"";
    private const string GUAGE_LABEL = "Gas Reserve: ";
 
    private bool debugMode, deRotating, invulnerable, tutorialIsVisible;
    private float deRotationTime, thrustAudioLength, thrustAudioTimer;
 
-   private float fuelLevel = 1000f;
+   private float fuelLevel = FUEL_MAX;
    private float masterVolume = 1.0f;
-   private float thrustSliderValue = 40f;
+   private float thrustSliderValue = THRUST_MAX - ((THRUST_MAX - THRUST_MIN) / 2);
 
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
@@ -59,7 +64,6 @@ public class Player : MonoBehaviour {
    private Slider thrustPowerSlider;
    private Slider gasLevelSlider;
    private Timekeeper timeKeeper;
-   private Vector3 debugThrustState = Vector3.zero;
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
    private Vector3 threeControlAxis = Vector3.zero;
@@ -100,7 +104,6 @@ public class Player : MonoBehaviour {
       thrustPowerSlider.minValue = THRUST_MIN;
       thrustPowerSlider.value = thrustSliderValue;
       DoColourThrustPower();
-      thrustLight.SetActive(false);
 
       gasLevelSlider.maxValue = FUEL_MAX;
       gasLevelSlider.minValue = 0;
@@ -182,13 +185,13 @@ public class Player : MonoBehaviour {
       float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
       localEulers = transform.localRotation.eulerAngles;
       float playerTilt = localEulers.z;
-      if (playerTilt >= 180 &&  playerTilt < HIGH_TILT_LIMIT)
+      if (playerTilt >= HALF_ARC &&  playerTilt < HIGH_TILT_LIMIT)
       {
          transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
       }
-      else if (playerTilt < 180 && playerTilt > LOW_TILT_LIMIT)
+      else if (playerTilt < HALF_ARC && playerTilt > LOW_TILT_LIMIT)
       {
-         transform.Rotate(Vector3.back * ((playerTilt + 180) * assertion) * Time.deltaTime);
+         transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
       }
    }
 
@@ -197,8 +200,11 @@ public class Player : MonoBehaviour {
       Color colour;
       float ratio = thrustSliderValue / THRUST_MAX;
       colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
+
       thrustFill.color = colour;
+      if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
       thrustLight.GetComponent<Light>().color = colour;
+      thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
       thrusterBell.GetComponent<MeshRenderer>().material.color = colour;
    }
 
@@ -236,17 +242,21 @@ public class Player : MonoBehaviour {
       thrustAudio.Stop();
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       thrustAudioTimer -= thrustAudioLength;
-      thrustLight.SetActive(false);
-      debugThrustState = Vector3.zero;
+      thrustLight.GetComponent<Light>().range = Mathf.Lerp(thrustLight.GetComponent<Light>().range, 0, THRUST_FADE_FACTOR);
+      thrusterBell.GetComponent<MeshRenderer>().material.color = 
+         Vector4.Lerp(thrusterBell.GetComponent<MeshRenderer>().material.color, Color.black, THRUST_FADE_FACTOR);
    }
 
    private bool ExpelGas(float rate)
    {
-      float expulsionRate = rate * FUEL_USE_RATE * (thrustSliderValue * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
+      float expulsionRate = 
+         rate * FUEL_USE_RATE * ((thrustSliderValue * FUEL_POWER_FACTOR) * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
       if (fuelLevel > expulsionRate)
       {
          fuelLevel -= expulsionRate;
          gasLevelSlider.value = fuelLevel;
+
+         DoColourThrustPower();
          return true;
       }
       else
@@ -288,7 +298,6 @@ public class Player : MonoBehaviour {
          {
             Thrust(threeControlAxis.z);
             AdjustEmissionRate(EMISSION_RATE_THRUST);
-            thrustLight.SetActive(true);
          }
          else EndExpulsion();
          if (tutorialIsVisible) HideTutorial();
@@ -333,16 +342,15 @@ public class Player : MonoBehaviour {
 
    private void Restart()
    {
-      sceneCamera.Restart();
       fuelLevel = FUEL_MAX;
-      timeKeeper.Init();
+      pickupTracker.Restart();
+      sceneCamera.Restart();
+      timeKeeper.Restart();
       tutorialIsVisible = true;
       tutorialText.SetActive(true);
       transform.position = startPosition;
       transform.rotation = startRotation;
-      pickupTracker.Restart();
    }
- 
 
    private void Rotate(float direction)
    {
@@ -352,8 +360,8 @@ public class Player : MonoBehaviour {
 
    private void Thrust(float force)
    {
-      debugThrustState = Vector3.up * thrustSliderValue * THRUST_FACTOR * Time.deltaTime * force; 
-      thisRigidbody.AddRelativeForce(debugThrustState);
+      Vector3 thrustState = Vector3.up * thrustSliderValue * THRUST_FACTOR * Time.deltaTime * force; 
+      thisRigidbody.AddRelativeForce(thrustState);
       if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {
          thrustAudio.Stop();

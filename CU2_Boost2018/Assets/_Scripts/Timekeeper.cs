@@ -27,7 +27,7 @@ public class Timekeeper : MonoBehaviour {
       records.Add(ratio);
    }
 
-   public void Init()
+   public void Restart()
    {
       started = false;
       finished = false;
@@ -39,7 +39,7 @@ public class Timekeeper : MonoBehaviour {
    {
       readout = GetComponent<Text>();
       records = FindObjectOfType<Records>();
-      Init();
+      Restart();
    }
 
    void Update()
