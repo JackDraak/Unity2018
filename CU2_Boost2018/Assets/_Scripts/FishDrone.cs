@@ -9,9 +9,9 @@ public class FishDrone : MonoBehaviour {
 
    private const float SCALE_MAX = 1.6f;
    private const float SCALE_MIN = 0.4f;
-   private const float SPEED_MAX = 1.1f;
-   private const float SPEED_MIN = 0.35f;
-   private const float TURN_MAX = 14f;
+   private const float SPEED_MAX = 0.9f;
+   private const float SPEED_MIN = 0.3f;
+   private const float TURN_MAX = 10f;
    private const float TURN_MIN = 3f;
 
    private bool FiftyFifty()

@@ -47,7 +47,6 @@ public class Player : MonoBehaviour {
 
    private float fuelLevel = FUEL_MAX;
    private float masterVolume = 1.0f;
-   private float thrustSliderValue = THRUST_MAX - ((THRUST_MAX - THRUST_MIN) / 2);
 
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
@@ -89,7 +88,7 @@ public class Player : MonoBehaviour {
       startPosition = transform.position;
       startRotation = transform.rotation;
       thrustAudioLength = thrustSound.length;
-      thrustAudioTimer -= thrustAudioLength;
+      thrustAudioTimer = 0 - thrustAudioLength;
       thrustBubbles = thrustParticleSystem.emission;
 
       thrustAudio = audioSources[0];
@@ -102,7 +101,7 @@ public class Player : MonoBehaviour {
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       thrustPowerSlider.maxValue = THRUST_MAX;
       thrustPowerSlider.minValue = THRUST_MIN;
-      thrustPowerSlider.value = thrustSliderValue;
+      thrustPowerSlider.value = THRUST_MAX - ((THRUST_MAX - THRUST_MIN) / 2);
       DoColourThrustPower();
 
       gasLevelSlider.maxValue = FUEL_MAX;
@@ -120,7 +119,7 @@ public class Player : MonoBehaviour {
    void FixedUpdate ()
    {
       GenerateFuel();
-		PlayerControlPoll();
+      PlayerControlPoll();
       if (debugMode) DebugControlPoll();
    }
 
@@ -166,17 +165,17 @@ public class Player : MonoBehaviour {
 
    private void AdjustThrusterPower(float delta)
    {
-      if (delta + thrustSliderValue > THRUST_MAX)
+      if (delta + thrustPowerSlider.value > THRUST_MAX)
       {
-         thrustSliderValue = THRUST_MAX;
+         thrustPowerSlider.value = THRUST_MAX;
       }
-      else if (delta + thrustSliderValue < THRUST_MIN)
+      else if (delta + thrustPowerSlider.value < THRUST_MIN)
       {
-         thrustSliderValue = THRUST_MIN;
+         thrustPowerSlider.value = THRUST_MIN;
       }
-      else thrustSliderValue += delta;
+      else thrustPowerSlider.value += delta;
 
-      thrustPowerSlider.value = thrustSliderValue;
+      thrustPowerSlider.value = thrustPowerSlider.value;
       DoColourThrustPower();
    }
 
@@ -198,7 +197,7 @@ public class Player : MonoBehaviour {
    private void DoColourThrustPower()
    {
       Color colour;
-      float ratio = thrustSliderValue / THRUST_MAX;
+      float ratio = thrustPowerSlider.value / THRUST_MAX;
       colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
 
       thrustFill.color = colour;
@@ -250,7 +249,7 @@ public class Player : MonoBehaviour {
    private bool ExpelGas(float rate)
    {
       float expulsionRate = 
-         rate * FUEL_USE_RATE * ((thrustSliderValue * FUEL_POWER_FACTOR) * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
+         rate * FUEL_USE_RATE * ((thrustPowerSlider.value * FUEL_POWER_FACTOR) * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
       if (fuelLevel > expulsionRate)
       {
          fuelLevel -= expulsionRate;
@@ -327,7 +326,16 @@ public class Player : MonoBehaviour {
    {
       if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
       if (Input.GetKeyDown(KeyCode.R)) Restart();
-
+      if (Input.GetKeyDown(KeyCode.Alpha0)) SetPower(1.0f);
+      else if (Input.GetKeyDown(KeyCode.Alpha9)) SetPower(0.9f);
+      else if (Input.GetKeyDown(KeyCode.Alpha8)) SetPower(0.8f);
+      else if (Input.GetKeyDown(KeyCode.Alpha7)) SetPower(0.7f);
+      else if (Input.GetKeyDown(KeyCode.Alpha6)) SetPower(0.6f);
+      else if (Input.GetKeyDown(KeyCode.Alpha5)) SetPower(0.5f);
+      else if (Input.GetKeyDown(KeyCode.Alpha4)) SetPower(0.4f);
+      else if (Input.GetKeyDown(KeyCode.Alpha3)) SetPower(0.3f);
+      else if (Input.GetKeyDown(KeyCode.Alpha2)) SetPower(0.2f);
+      else if (Input.GetKeyDown(KeyCode.Alpha1)) SetPower(0.1f);
    }
 
    private void PollVertical()
@@ -335,7 +343,6 @@ public class Player : MonoBehaviour {
       threeControlAxis.y = CrossPlatformInputManager.GetAxis("Vertical");
       if (threeControlAxis.y != 0)
       {
-         if (tutorialIsVisible) HideTutorial();
          AdjustThrusterPower(threeControlAxis.y);
       }
    }
@@ -350,17 +357,25 @@ public class Player : MonoBehaviour {
       tutorialText.SetActive(true);
       transform.position = startPosition;
       transform.rotation = startRotation;
+      thisRigidbody.velocity = Vector3.zero;
    }
 
    private void Rotate(float direction)
    {
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
       if (thrustBubbles.rateOverTime.constant < EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_ROTATION);
+      if (thrustLight.GetComponent<Light>().range < (THRUST_LIGHTRANGE_MAX / 4)) thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX / 4;
+   }
+
+   private void SetPower(float power)
+   {  // MAX - MIN = Delta; Value = Delta * power + MIN
+      thrustPowerSlider.value = (THRUST_MAX - THRUST_MIN) * power + THRUST_MIN;
+      DoColourThrustPower();
    }
 
    private void Thrust(float force)
    {
-      Vector3 thrustState = Vector3.up * thrustSliderValue * THRUST_FACTOR * Time.deltaTime * force; 
+      Vector3 thrustState = Vector3.up * thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force; 
       thisRigidbody.AddRelativeForce(thrustState);
       if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {

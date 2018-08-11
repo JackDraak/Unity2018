@@ -62,13 +62,16 @@ public class Records : MonoBehaviour {
       records.Clear();
    }
 
-   public void Update()
+   private void Update()
    {
-      readout.text = "Time Records\n";
+      int count = 0;
+      readout.text = "<i><b>Time Records</b></i>\n";
       foreach (string record in records)
       {
          readout.text += record;
+         count++;
       }
-      readout.text += "(seconds per canister)";
+      if (count > 0) readout.text += "<i>(seconds per canister)</i>";
+      else readout.text += "<i>gather all canisters to see your record</i>";
    }
 }

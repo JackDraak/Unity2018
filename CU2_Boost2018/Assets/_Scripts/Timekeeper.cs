@@ -35,14 +35,14 @@ public class Timekeeper : MonoBehaviour {
       startTime = 0f;
    }
 
-   void Start()
+   private void Start()
    {
       readout = GetComponent<Text>();
       records = FindObjectOfType<Records>();
       Restart();
    }
 
-   void Update()
+   private void Update()
    {
       if (!started && !finished)
       {

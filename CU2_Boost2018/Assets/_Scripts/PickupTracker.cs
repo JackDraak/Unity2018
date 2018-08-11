@@ -20,7 +20,7 @@ public class PickupTracker : MonoBehaviour {
       }
    }
 
-   void Start ()
+   private void Start ()
    {
       timeKeeper = FindObjectOfType<Timekeeper>();
       pickups = GameObject.FindGameObjectsWithTag("GoodObject_01");
@@ -28,7 +28,7 @@ public class PickupTracker : MonoBehaviour {
       complete = false;
    }
 	
-	void Update ()
+	private void Update ()
    {
       count = 0;
       foreach (GameObject pickup in pickups)
@@ -45,5 +45,5 @@ public class PickupTracker : MonoBehaviour {
             timeKeeper.Cease(pickups.Length);
          }
       }
-	}
+   }
 }
