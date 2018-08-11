@@ -101,8 +101,7 @@ public class Player : MonoBehaviour {
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       thrustPowerSlider.maxValue = THRUST_MAX;
       thrustPowerSlider.minValue = THRUST_MIN;
-      thrustPowerSlider.value = THRUST_MAX - ((THRUST_MAX - THRUST_MIN) / 2);
-      DoColourThrustPower();
+      SetPower(0.5f);
 
       gasLevelSlider.maxValue = FUEL_MAX;
       gasLevelSlider.minValue = 0;
@@ -175,8 +174,8 @@ public class Player : MonoBehaviour {
       }
       else thrustPowerSlider.value += delta;
 
-      thrustPowerSlider.value = thrustPowerSlider.value;
       DoColourThrustPower();
+      //thrustPowerSlider.value = thrustPowerSlider.value;
    }
 
    private void AutoDeRotate()
@@ -254,7 +253,6 @@ public class Player : MonoBehaviour {
       {
          fuelLevel -= expulsionRate;
          gasLevelSlider.value = fuelLevel;
-
          DoColourThrustPower();
          return true;
       }
@@ -368,7 +366,7 @@ public class Player : MonoBehaviour {
    }
 
    private void SetPower(float power)
-   {  // MAX - MIN = Delta; Value = Delta * power + MIN
+   {
       thrustPowerSlider.value = (THRUST_MAX - THRUST_MIN) * power + THRUST_MIN;
       DoColourThrustPower();
    }

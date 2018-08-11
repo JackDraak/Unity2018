@@ -28,7 +28,7 @@ public class PickupTracker : MonoBehaviour {
       complete = false;
    }
 	
-	private void Update ()
+   private void Update ()
    {
       count = 0;
       foreach (GameObject pickup in pickups)
