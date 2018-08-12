@@ -205,7 +205,6 @@ public class Player : MonoBehaviour {
       thrustLight.GetComponent<Light>().color = colour;
       thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
       thrusterBell.GetComponent<MeshRenderer>().material.color = colour;
-      //Debug.Log(thrusterBell.GetComponent<MeshRenderer>().material.color);
    }
 
    private void DoColourForGasLevel()
