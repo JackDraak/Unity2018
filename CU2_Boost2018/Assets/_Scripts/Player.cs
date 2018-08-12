@@ -42,7 +42,7 @@ public class Player : MonoBehaviour {
    private const string HUD_COLOUR = "\"#FF7070\"";
    private const string GUAGE_LABEL = "Gas Reserve: ";
 
-   private bool debugMode, deRotating, invulnerable, tutorialIsVisible;
+   private bool debugMode, deRotating, invulnerable, paused, trackOne, tutorialIsVisible;
    private float deRotationTime, thrustAudioLength, thrustAudioTimer;
 
    private float fuelLevel = FUEL_MAX;
@@ -96,6 +96,8 @@ public class Player : MonoBehaviour {
 
       deRotating = false;
       invulnerable = false;
+      paused = false;
+      trackOne = true;
       tutorialIsVisible = true;
 
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
@@ -174,8 +176,7 @@ public class Player : MonoBehaviour {
       }
       else thrustPowerSlider.value += delta;
 
-      DoColourThrustPower();
-      //thrustPowerSlider.value = thrustPowerSlider.value;
+      DoColourForThrustPower();
    }
 
    private void AutoDeRotate()
@@ -193,7 +194,7 @@ public class Player : MonoBehaviour {
       }
    }
 
-   private void DoColourThrustPower()
+   private void DoColourForThrustPower()
    {
       Color colour;
       float ratio = thrustPowerSlider.value / THRUST_MAX;
@@ -204,6 +205,7 @@ public class Player : MonoBehaviour {
       thrustLight.GetComponent<Light>().color = colour;
       thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
       thrusterBell.GetComponent<MeshRenderer>().material.color = colour;
+      //Debug.Log(thrusterBell.GetComponent<MeshRenderer>().material.color);
    }
 
    private void DoColourForGasLevel()
@@ -253,7 +255,7 @@ public class Player : MonoBehaviour {
       {
          fuelLevel -= expulsionRate;
          gasLevelSlider.value = fuelLevel;
-         DoColourThrustPower();
+         DoColourForThrustPower();
          return true;
       }
       else
@@ -276,6 +278,30 @@ public class Player : MonoBehaviour {
       tutorialIsVisible = false;
       tutorialText.SetActive(false);
       timeKeeper.Begin();
+   }
+
+   public bool Pause()
+   {
+      paused = !paused;
+      if (paused)
+      {
+         if (thrustAudio.isPlaying)
+         {
+            trackOne = false;
+            thrustAudio.Stop();
+         }
+         if (xAudio.isPlaying) xAudio.Stop();
+      }
+      else
+      {
+         if (!trackOne)
+         {
+            thrustAudio.PlayOneShot(thrustSound, masterVolume * THRUST_VOLUME);
+            thrustAudioTimer = Time.time;
+            trackOne = true;
+         }
+      }
+      return paused;
    }
 
    private void PlayerControlPoll()
@@ -368,13 +394,13 @@ public class Player : MonoBehaviour {
    private void SetPower(float power)
    {
       thrustPowerSlider.value = (THRUST_MAX - THRUST_MIN) * power + THRUST_MIN;
-      DoColourThrustPower();
+      DoColourForThrustPower();
    }
 
    private void Thrust(float force)
    {
-      Vector3 thrustState = Vector3.up * thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force; 
-      thisRigidbody.AddRelativeForce(thrustState);
+      Vector3 appliedForce = Vector3.up * thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force; 
+      thisRigidbody.AddRelativeForce(appliedForce);
       if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {
          thrustAudio.Stop();

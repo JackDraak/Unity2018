@@ -51,7 +51,9 @@ public class Timekeeper : MonoBehaviour {
       else if (started && !finished)
       {
          float elapsed = (Mathf.FloorToInt((Time.time - startTime) * 10)) / 10f;
-         readout.text = "Elapsed Time: " + elapsed.ToString() + " seconds";
+         readout.text = "Elapsed Time: " + elapsed.ToString();
+         if (elapsed % 1 == 0) readout.text += ".0";
+         readout.text += " seconds";
       }
       else if (finished)
       {
