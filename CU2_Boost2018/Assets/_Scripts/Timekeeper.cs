@@ -60,5 +60,9 @@ public class Timekeeper : MonoBehaviour {
          elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
          readout.text = "tap 'R' to retry; your prior run took: " + elapsed.ToString() + " seconds";
       }
+      if (Input.GetKeyDown(KeyCode.Z))
+      {
+         records.Add(Random.Range(0f, 10f));
+      }
    }
 }

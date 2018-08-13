@@ -2,33 +2,23 @@
 
 public class FishDrone : MonoBehaviour {
 
-   private bool on;
    private float changeDelay, changeTime;
+   private float roughScale, scaleFactor;
    private float speed, newSpeed;
    private float turnRate;
-   private float roughScale, scaleFactor;
    private Rigidbody thisRigidbody;
-   private Vector3 planes = Vector3.zero;
+   private Vector3 dimensions = Vector3.zero;
    private Animator animator;
 
    private const float ANIMATION_SPEED_FACTOR = 1.8f;
-   private const float CHANGE_MAX = 3f; // TODO change
-   private const float CHANGE_MIN = 2f; // TODO change
+   private const float CHANGE_MAX = 10f;
+   private const float CHANGE_MIN = 4f;
    private const float SCALE_MAX = 1.6f;
    private const float SCALE_MIN = 0.4f;
    private const float SPEED_MAX = 1.3f;
    private const float SPEED_MIN = 0.2f;
    private const float TURN_MAX = 10f;
    private const float TURN_MIN = 3f;
-
-   private void DoLerp()
-   {
-      if (!(Mathf.Approximately(speed, newSpeed)))
-      {
-         speed = Mathf.Lerp(speed, newSpeed, 0.003f);
-         animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
-      }
-   }
 
    private bool FiftyFifty()
    {
@@ -38,15 +28,20 @@ public class FishDrone : MonoBehaviour {
 
    private void FixedUpdate()
    {
-      planes.y = Time.deltaTime * turnRate;
-      transform.Rotate(planes, Space.World);
+      dimensions.y = Time.deltaTime * turnRate;
+      transform.Rotate(dimensions, Space.World);
       transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed, Space.Self);
-      if (changeTime + changeDelay < Time.time)
+      if (changeTime + changeDelay < Time.time) SetSpeed();
+      LerpSpeeds();
+   }
+
+   private void LerpSpeeds()
+   {
+      if (!(Mathf.Approximately(speed, newSpeed)))
       {
-         SetSpeed();
-         //Debug.Log(transform + "speed: " + speed);
+         speed = Mathf.Lerp(speed, newSpeed, 0.003f);
+         animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
       }
-      DoLerp();
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -56,7 +51,7 @@ public class FishDrone : MonoBehaviour {
 
    private void OnTriggerEnter(Collider other)
    {
-      if (other.gameObject.tag == "BadObject_01") transform.Rotate(0, 180, 0);
+      if (other.gameObject.tag == "BadObject_01") transform.Rotate(0, 180, 0); // TODO this or... something?
    }
 
    private void SetSpeed()
@@ -78,16 +73,9 @@ public class FishDrone : MonoBehaviour {
       transform.localScale = scale;
 
       roughScale = scale.x + scale.y + scale.z / 3.0f;
-      if (roughScale < 2)
-      {
-         scaleFactor = 1.7f;
-      }
-      else if (roughScale < 3)
-      {
-         scaleFactor = 0.7f; // TODO
-      }
+      if (roughScale < 2) scaleFactor = 1.7f; // TODO
+      else if (roughScale < 3) scaleFactor = 0.7f; // TODO
       else scaleFactor = 0.4f; // TODO
-      Debug.Log(roughScale);
 
       animator = GetComponent<Animator>();
       SetSpeed();
