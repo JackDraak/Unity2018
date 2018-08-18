@@ -28,24 +28,25 @@ Icons and Audio assets are from the awesome CCO asset creator Kenney - https://k
 License (Creative Commons Zero, CC0) - http://creativecommons.org/publicdomain/zero/1.0/
 */
 
+/// devenote: I have taken many liberties with this sourcefile... go find the original, is my advice.
+
 using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Image))]
 public class SumPause : MonoBehaviour {
 
-   private Player player;
-   private GlueCam glueCam;
+   [SerializeField] bool useEvent = false, detectEscapeKey = true;
+   [SerializeField] Sprite pausedSprite, playingSprite;
 
    public delegate void PauseAction(bool paused);
    public static event PauseAction pauseEvent;
 
-   [SerializeField] bool useEvent = false, detectEscapeKey = true;
-   [SerializeField] Sprite pausedSprite, playingSprite;
+   static bool status = false;
 
    Image image;
-
-   static bool status = false;
+   private Player player;
+   private GlueCam glueCam;
 
    /// Sets/Returns current pause state (true for paused, false for normal)
    public static bool Status
@@ -54,18 +55,14 @@ public class SumPause : MonoBehaviour {
       set {
          status = value;
          //Debug.Log("Pause status set to " + status.ToString());
-
          OnChange();
 
          // Change image to the proper sprite if everything is set
-         if (CheckLinks())
-               instance.image.sprite = status ? instance.pausedSprite : instance.playingSprite;
-         else
-               Debug.LogError("Links missing on SumPause component. Please check the sumPauseButton object for missing references.");
+         if (CheckLinks()) instance.image.sprite = status ? instance.pausedSprite : instance.playingSprite;
+         else Debug.LogError("Links missing on SumPause component. Please check the sumPauseButton object for missing references.");
 
          // Notify other objects of change
-         if (instance.useEvent && pauseEvent != null)
-               pauseEvent(status);
+         if (instance.useEvent && pauseEvent != null) pauseEvent(status);
       }
    }
 
@@ -78,18 +75,16 @@ public class SumPause : MonoBehaviour {
 
    void Start ()
    {
-      if (SumPause.instance == null)
-         SumPause.instance = this;
-      else
-         Destroy(this);
+      if (SumPause.instance == null) SumPause.instance = this;
+      else Destroy(this);
 
       player = FindObjectOfType<Player>();
       glueCam = FindObjectOfType<GlueCam>();
    }
 
-   void Update() {
-      if (detectEscapeKey && Input.GetKeyDown(KeyCode.Escape))
-      TogglePause();
+   void Update() 
+   {
+      if (detectEscapeKey && Input.GetKeyDown(KeyCode.Escape)) TogglePause();
    }
 
    public void TogglePause ()
@@ -106,11 +101,7 @@ public class SumPause : MonoBehaviour {
 
    static void OnChange()
    {
-      if(status) {
-         Time.timeScale = 0;
-      }
-      else {
-         Time.timeScale = 1;
-      }
+      if(status) Time.timeScale = 0;
+      else Time.timeScale = 1;
    }
 }

@@ -3,32 +3,27 @@ using UnityEngine.UI;
 
 public class PickupTracker : MonoBehaviour {
 
-   private bool complete;
+   private bool         complete;
+   private int          count;
    private GameObject[] pickups;
-   private int count = 0;
-   private Text readout;
-   private Timekeeper timeKeeper;
+   private Text         readout;
+   private Timekeeper   timeKeeper;
 
    public void Restart()
    {
+      foreach (GameObject pickup in pickups) pickup.SetActive(true);
       complete = false;
-      count = 0;
-      foreach (GameObject pickup in pickups)
-      {
-         count++;
-         pickup.SetActive(true);
-      }
    }
 
    private void Start ()
    {
-      timeKeeper = FindObjectOfType<Timekeeper>();
       pickups = GameObject.FindGameObjectsWithTag("GoodObject_01");
+      timeKeeper = FindObjectOfType<Timekeeper>();
       readout = GetComponent<Text>();
       complete = false;
    }
-	
-   private void Update ()
+
+   private void TrackPickups()
    {
       count = 0;
       foreach (GameObject pickup in pickups)
@@ -45,5 +40,10 @@ public class PickupTracker : MonoBehaviour {
             timeKeeper.Cease(pickups.Length);
          }
       }
+   }
+
+   private void Update()
+   {
+      TrackPickups();
    }
 }

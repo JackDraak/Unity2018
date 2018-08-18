@@ -8,6 +8,7 @@ public class Spinner : MonoBehaviour {
    private Vector3 mySpin = Vector3.zero;
    private float spinRate;
 
+   // On average, return 'True' ~half the time, and 'False' ~half the time.
    private bool FiftyFifty()
    {
       if (Mathf.FloorToInt(Random.Range(0, 2)) == 1) return true;

@@ -3,6 +3,7 @@ using UnityEngine.UI;
 
 public class Timekeeper : MonoBehaviour {
 
+   private bool debugMode;
    private bool finished;
    private bool started;
    private float elapsed;
@@ -20,10 +21,10 @@ public class Timekeeper : MonoBehaviour {
    public void Cease(int count)
    {
       endTime = Time.time;
-      elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
+      elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f; // Get 1 decimal place.
       finished = true;
       float ratio = (elapsed / count) * 100f;
-      ratio = Mathf.FloorToInt(ratio) / 100f;
+      ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
       records.Add(ratio);
    }
 
@@ -37,6 +38,7 @@ public class Timekeeper : MonoBehaviour {
 
    private void Start()
    {
+      debugMode = Debug.isDebugBuild;
       readout = GetComponent<Text>();
       records = FindObjectOfType<Records>();
       Restart();
@@ -50,19 +52,20 @@ public class Timekeeper : MonoBehaviour {
       }
       else if (started && !finished)
       {
-         float elapsed = (Mathf.FloorToInt((Time.time - startTime) * 10)) / 10f;
-         readout.text = "Elapsed Time: " + elapsed.ToString();
-         if (elapsed % 1 == 0) readout.text += ".0";
+         float elapsed = (Mathf.FloorToInt((Time.time - startTime) * 10)) / 10f; // Get 1 decimal place.
+         readout.text = "Elapsed Time: " + elapsed.ToString("F1");
          readout.text += " seconds";
       }
       else if (finished)
       {
-         elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f;
-         readout.text = "tap 'R' to retry; your prior run took: " + elapsed.ToString() + " seconds";
+         elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f; // Get 1 decimal place.
+         readout.text = "tap 'R' to retry; your prior run took: " + elapsed.ToString("F1") + " seconds";
       }
-      if (Input.GetKeyDown(KeyCode.Z))
+      
+      // Debugging tool to throw random records into the game
+      if (Input.GetKeyDown(KeyCode.Z) && debugMode) // TODO InputManager.cs ?
       {
-         records.Add(Random.Range(0f, 10f));
+         records.Add(Random.Range(0.9f, 11f));
       }
    }
 }

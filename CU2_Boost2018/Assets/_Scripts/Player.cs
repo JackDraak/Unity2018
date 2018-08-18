@@ -4,13 +4,16 @@ using UnityStandardAssets.CrossPlatformInput;
 
 public class Player : MonoBehaviour {
 
-   [SerializeField] AudioClip bonusSound;
+   #region Exposed Variables
+   [SerializeField] AudioClip bonusSound; // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ 
    [SerializeField] AudioClip collisionSound;
    [SerializeField] AudioClip thrustSound;
    [SerializeField] Color gasHigh, gasLow, thrustHigh, thrustLow;
    [SerializeField] GameObject collisionEffect;
    [SerializeField] Image gasFill, thrustFill;
+   #endregion
 
+   #region Private Variables
    private const float CLIP_TIME = 0.5f;
    private const float COLLISION_VOLUME = 0.4f;
    private const float DAMAGE_VALUE = 35f;
@@ -25,6 +28,7 @@ public class Player : MonoBehaviour {
    private const float FUEL_USE_RATE = 100f;
    private const float FUEL_WARN_LEVEL = 20f;
    private const float HIGH_TILT_LIMIT = 359.6f;
+   private const float INITIAL_POWER_LEVEL = 0.3f;
    private const float KILL_TIMER = 4f;
    private const float LOW_TILT_LIMIT = 0.4f;
    private const float PICKUP_VOLUME = 0.7f;
@@ -55,6 +59,7 @@ public class Player : MonoBehaviour {
    private GameObject thrustLight;
    private GameObject tutorialText;
    private GlueCam sceneCamera;
+   private FishDrone[] fishDrones;
    private ParticleSystem.EmissionModule thrustBubbles;
    private ParticleSystem thrustParticleSystem;
    private PickupTracker pickupTracker;
@@ -66,61 +71,18 @@ public class Player : MonoBehaviour {
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
    private Vector3 threeControlAxis = Vector3.zero;
+   #endregion
 
    void Start ()
    {
-      audioSources = GetComponents<AudioSource>();
-      pickupTracker = FindObjectOfType<PickupTracker>();
-      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
-      thisRigidbody = GetComponent<Rigidbody>();
-      thrustParticleSystem = GetComponent<ParticleSystem>();
-      timeKeeper = FindObjectOfType<Timekeeper>();
-
-      cockpit = GameObject.FindGameObjectWithTag("Cockpit");
-      tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
-      thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
-      thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
-
-      gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
-      thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
-
-      debugMode = Debug.isDebugBuild;
-      startPosition = transform.position;
-      startRotation = transform.rotation;
-      thrustAudioLength = thrustSound.length;
-      thrustAudioTimer = 0 - thrustAudioLength;
-      thrustBubbles = thrustParticleSystem.emission;
-
-      thrustAudio = audioSources[0];
-      xAudio = audioSources[1];
-
-      deRotating = false;
-      invulnerable = false;
-      paused = false;
-      trackOne = true;
-      tutorialIsVisible = true;
-
-      AdjustEmissionRate(EMISSION_RATE_INACTIVE);
-      thrustPowerSlider.maxValue = THRUST_MAX;
-      thrustPowerSlider.minValue = THRUST_MIN;
-      SetPower(0.5f);
-
-      gasLevelSlider.maxValue = FUEL_MAX;
-      gasLevelSlider.minValue = 0;
-      gasLevelSlider.value = fuelLevel;
-      DoColourForGasLevel();
-
-      thisRigidbody.constraints = 
-         RigidbodyConstraints.FreezeRotationX | 
-         RigidbodyConstraints.FreezeRotationY | 
-         RigidbodyConstraints.FreezeRotationZ |
-         RigidbodyConstraints.FreezePositionZ;
+      InitVars();
    }
 
-   void FixedUpdate ()
+   void FixedUpdate()
    {
       GenerateFuel();
       PlayerControlPoll();
+      MaintainAlignment();
       if (debugMode) DebugControlPoll();
    }
 
@@ -159,6 +121,51 @@ public class Player : MonoBehaviour {
       }
    }
 
+   private void InitVars()
+   {
+      audioSources = GetComponents<AudioSource>();
+      fishDrones = FindObjectsOfType<FishDrone>();
+      pickupTracker = FindObjectOfType<PickupTracker>();
+      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
+      thisRigidbody = GetComponent<Rigidbody>();
+      thrustParticleSystem = GetComponent<ParticleSystem>();
+      timeKeeper = FindObjectOfType<Timekeeper>();
+
+      cockpit = GameObject.FindGameObjectWithTag("Cockpit");
+      tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
+      thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
+      thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
+
+      gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
+      thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
+
+      debugMode = Debug.isDebugBuild;
+      startPosition = transform.position;
+      startRotation = transform.rotation;
+      thrustAudioLength = thrustSound.length;
+      thrustAudioTimer = 0 - thrustAudioLength;
+      thrustBubbles = thrustParticleSystem.emission;
+
+      thrustAudio = audioSources[0];
+      xAudio = audioSources[1];
+
+      deRotating = false;
+      invulnerable = false;
+      paused = false;
+      trackOne = true;
+      tutorialIsVisible = true;
+
+      AdjustEmissionRate(EMISSION_RATE_INACTIVE);
+      thrustPowerSlider.maxValue = THRUST_MAX;
+      thrustPowerSlider.minValue = THRUST_MIN;
+      SetPower(INITIAL_POWER_LEVEL);
+
+      gasLevelSlider.maxValue = FUEL_MAX;
+      gasLevelSlider.minValue = 0;
+      gasLevelSlider.value = fuelLevel;
+      DoColourForGasLevel();
+   }
+
    private void AdjustEmissionRate(float newRate)
    {
       thrustBubbles.rateOverTime = newRate;
@@ -184,27 +191,8 @@ public class Player : MonoBehaviour {
       float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
       localEulers = transform.localRotation.eulerAngles;
       float playerTilt = localEulers.z;
-      if (playerTilt >= HALF_ARC &&  playerTilt < HIGH_TILT_LIMIT)
-      {
-         transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
-      }
-      else if (playerTilt < HALF_ARC && playerTilt > LOW_TILT_LIMIT)
-      {
-         transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
-      }
-   }
-
-   private void DoColourForThrustPower()
-   {
-      Color colour;
-      float ratio = thrustPowerSlider.value / THRUST_MAX;
-      colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
-
-      thrustFill.color = colour;
-      if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
-      thrustLight.GetComponent<Light>().color = colour;
-      thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
-      thrusterBell.GetComponent<MeshRenderer>().material.color = colour;
+      if (playerTilt >= HALF_ARC &&  playerTilt < HIGH_TILT_LIMIT) transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
+      else if (playerTilt < HALF_ARC && playerTilt > LOW_TILT_LIMIT) transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
    }
 
    private void DoColourForGasLevel()
@@ -212,8 +200,20 @@ public class Player : MonoBehaviour {
       Color colour;
       float ratio = fuelLevel / FUEL_MAX;
       colour = Vector4.Lerp(gasHigh, gasLow, 1 - ratio);
-      gasFill.color = colour;
-      cockpit.GetComponent<MeshRenderer>().material.color = colour;
+      cockpit.GetComponent<MeshRenderer>().material.color = gasFill.color = colour;
+   }
+
+   private void DoColourForThrustPower()
+   {
+      thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
+
+      Color colour;
+      float ratio = thrustPowerSlider.value / THRUST_MAX;
+      colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
+
+      thrustFill.color = colour;
+      if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
+      thrusterBell.GetComponent<MeshRenderer>().material.color = thrustLight.GetComponent<Light>().color = colour;
    }
 
    private void DebugControlPoll()
@@ -277,6 +277,12 @@ public class Player : MonoBehaviour {
       tutorialIsVisible = false;
       tutorialText.SetActive(false);
       timeKeeper.Begin();
+   }
+
+   private void MaintainAlignment()
+   {
+      transform.position = new Vector3(transform.position.x, transform.position.y, 0.0f); // Lock Z position.
+      transform.rotation = Quaternion.Euler(0.0f, 0.0f, transform.rotation.eulerAngles.z); // Lock XY rotation.
    }
 
    public bool Pause()
@@ -364,10 +370,7 @@ public class Player : MonoBehaviour {
    private void PollVertical()
    {
       threeControlAxis.y = CrossPlatformInputManager.GetAxis("Vertical");
-      if (threeControlAxis.y != 0)
-      {
-         AdjustThrusterPower(threeControlAxis.y);
-      }
+      if (threeControlAxis.y != 0) AdjustThrusterPower(threeControlAxis.y);
    }
 
    private void Restart()
@@ -381,6 +384,7 @@ public class Player : MonoBehaviour {
       transform.position = startPosition;
       transform.rotation = startRotation;
       thisRigidbody.velocity = Vector3.zero;
+      foreach (FishDrone drone in fishDrones) drone.Reset();
    }
 
    private void Rotate(float direction)

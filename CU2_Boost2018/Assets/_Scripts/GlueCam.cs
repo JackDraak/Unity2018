@@ -4,8 +4,12 @@ public class GlueCam : MonoBehaviour
 {
    [SerializeField] GameObject player;
 
+   // Determine how "glued" the cam is to the player. 
+   // 1 = infinite glue, 0 = infinite elasticity...
+   // 0.01f == correct position by 1%, each frame.
+   private const float ELASTICITY_FACTOR = 0.07f; // 06
+
    private bool paused = false;
-   private const float ELASTICITY_FACTOR = 0.06f;
    private Vector3 offset;
    private Vector3 startPos;
 
