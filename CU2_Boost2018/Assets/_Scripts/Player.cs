@@ -76,6 +76,7 @@ public class Player : MonoBehaviour {
    void Start ()
    {
       InitVars();
+      // movementFactor = (Mathf.Sin(Time.time * oscillationSpeed)) / 2f + 0.5f;
    }
 
    void FixedUpdate()
@@ -173,16 +174,9 @@ public class Player : MonoBehaviour {
 
    private void AdjustThrusterPower(float delta)
    {
-      if (delta + thrustPowerSlider.value > THRUST_MAX)
-      {
-         thrustPowerSlider.value = THRUST_MAX;
-      }
-      else if (delta + thrustPowerSlider.value < THRUST_MIN)
-      {
-         thrustPowerSlider.value = THRUST_MIN;
-      }
+      if (delta + thrustPowerSlider.value > THRUST_MAX) thrustPowerSlider.value = THRUST_MAX;
+      else if (delta + thrustPowerSlider.value < THRUST_MIN) thrustPowerSlider.value = THRUST_MIN;
       else thrustPowerSlider.value += delta;
-
       DoColourForThrustPower();
    }
 
@@ -330,10 +324,7 @@ public class Player : MonoBehaviour {
          else EndExpulsion();
          if (tutorialIsVisible) HideTutorial();
       }
-      else if (thrustAudio.isPlaying)
-      {
-         EndExpulsion();
-      }
+      else if (thrustAudio.isPlaying) EndExpulsion();
    }
 
    private void PollHorizontal()

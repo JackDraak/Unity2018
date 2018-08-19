@@ -2,10 +2,10 @@
 
 public class Spinner : MonoBehaviour {
 
-   private const float SPINRATE_HIGH = 100f;
-   private const float SPINRATE_LOW = 10f;
+   private const float SPINRATE_FAST = 100f;
+   private const float SPINRATE_SLOW = 10f;
 
-   private Vector3 mySpin = Vector3.zero;
+   private Vector3 spin = Vector3.zero;
    private float spinRate;
 
    // On average, return 'True' ~half the time, and 'False' ~half the time.
@@ -17,13 +17,13 @@ public class Spinner : MonoBehaviour {
 
    private void Start()
    {
-      spinRate = Random.Range(SPINRATE_LOW, SPINRATE_HIGH);
+      spinRate = Random.Range(SPINRATE_SLOW, SPINRATE_FAST);
       if (FiftyFifty()) spinRate = -spinRate;
    }
 
    private void Update()
    {
-      mySpin.y = Time.deltaTime * spinRate;
-      transform.Rotate(mySpin, Space.World);
+      spin.y = Time.deltaTime * spinRate;
+      transform.Rotate(spin, Space.World);
    }
 }

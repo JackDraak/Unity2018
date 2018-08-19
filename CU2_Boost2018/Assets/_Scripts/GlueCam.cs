@@ -7,7 +7,7 @@ public class GlueCam : MonoBehaviour
    // Determine how "glued" the cam is to the player. 
    // 1 = infinite glue, 0 = infinite elasticity...
    // 0.01f == correct position by 1%, each frame.
-   private const float ELASTICITY_FACTOR = 0.07f; // 06
+   private const float ELASTICITY_FACTOR = 0.07f;
 
    private bool paused = false;
    private Vector3 offset;

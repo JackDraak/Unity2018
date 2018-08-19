@@ -46,10 +46,7 @@ public class Timekeeper : MonoBehaviour {
 
    private void Update()
    {
-      if (!started && !finished)
-      {
-         readout.text = "Touching the Controls Will Start the Timer: 0.0 seconds";
-      }
+      if (!started && !finished) readout.text = "Touching the Controls Will Start the Timer: 0.0 seconds";
       else if (started && !finished)
       {
          float elapsed = (Mathf.FloorToInt((Time.time - startTime) * 10)) / 10f; // Get 1 decimal place.
@@ -63,9 +60,6 @@ public class Timekeeper : MonoBehaviour {
       }
       
       // Debugging tool to throw random records into the game
-      if (Input.GetKeyDown(KeyCode.Z) && debugMode) // TODO InputManager.cs ?
-      {
-         records.Add(Random.Range(0.9f, 11f));
-      }
+      if (debugMode && Input.GetKeyDown(KeyCode.Z)) records.Add(Random.Range(0.9f, 11f));
    }
 }
