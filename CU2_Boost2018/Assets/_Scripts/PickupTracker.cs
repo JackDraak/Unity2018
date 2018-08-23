@@ -1,26 +1,36 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class PickupTracker : MonoBehaviour {
 
-   private bool         complete;
-   private int          count;
-   private GameObject[] pickups;
-   private Text         readout;
-   private Timekeeper   timeKeeper;
+   [SerializeField] Color goalHigh, goalLow;
+   [SerializeField] Image goalFill;
+   [SerializeField] Player player;
+   [SerializeField] Slider goalSlider;
+   [SerializeField] TextMeshProUGUI text_tasklist;
+
+   private bool            complete, task1, task2;
+   private float           maxPower;
+   private int             count, highCount;
+   private GameObject[]    pickups;
+   private TextMeshProUGUI text_tracker;
+   private Timekeeper      timeKeeper;
 
    public void Restart()
    {
       foreach (GameObject pickup in pickups) pickup.SetActive(true);
       complete = false;
+      highCount = 0;
    }
 
    private void Start ()
    {
       pickups = GameObject.FindGameObjectsWithTag("GoodObject_01");
       timeKeeper = FindObjectOfType<Timekeeper>();
-      readout = GetComponent<Text>();
-      complete = false;
+      text_tracker = GetComponent<TextMeshProUGUI>();
+      complete = task1 = task2 = false;
+      text_tasklist.text = "Goal: Raise Thrust Cap to 60%\nMini-Goal: Collect Gas Canisters";
    }
 
    private void TrackPickups()
@@ -29,8 +39,9 @@ public class PickupTracker : MonoBehaviour {
       foreach (GameObject pickup in pickups)
       {
          if (pickup.activeSelf) count++;
+         if (count > highCount) highCount = count;
       }
-      readout.text = "Gas Canisters Remaining: " + count.ToString();
+      text_tracker.text = count.ToString() + " Gas Canisters Remaining";
 
       if (!complete)
       {
@@ -38,8 +49,24 @@ public class PickupTracker : MonoBehaviour {
          {
             complete = true;
             timeKeeper.Cease(pickups.Length);
+            maxPower = player.BoostMaxPower();
+            if (!task1)
+            {
+               task1 = true;
+               text_tasklist.text = "Goal: Raise Thrust Cap to 60%, 'R'eset and do\nMini-Goal: Collect More Gas Canisters";
+            }
+            if (maxPower >= 0.6f && !task2)
+            {
+               task2 = true;
+               text_tasklist.text = "Level One Complete.\nWatch for future development, thanks for playing!";
+            }
          }
       }
+
+      float fillLerp = (float)((float)(highCount - count) / (float)highCount);
+      Color fillColor = Vector4.Lerp(goalLow, goalHigh, fillLerp);
+      goalFill.color = fillColor;
+      goalSlider.value = fillLerp;
    }
 
    private void Update()

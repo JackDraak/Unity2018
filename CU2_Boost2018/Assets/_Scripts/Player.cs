@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityStandardAssets.CrossPlatformInput;
 
@@ -10,7 +11,8 @@ public class Player : MonoBehaviour {
    [SerializeField] AudioClip thrustSound;
    [SerializeField] Color gasHigh, gasLow, thrustHigh, thrustLow;
    [SerializeField] GameObject collisionEffect;
-   [SerializeField] Image gasFill, thrustFill;
+   [SerializeField] Image gasFill, thrustcapFill, thrustFill;
+   [SerializeField] TextMeshProUGUI thrustcapSlideText;
    #endregion
 
    #region Private Variables
@@ -25,7 +27,7 @@ public class Player : MonoBehaviour {
    private const float FUEL_MAX = 1000f;
    private const float FUEL_PICKUP_VALUE = 200f;
    private const float FUEL_POWER_FACTOR = 0.75f;
-   private const float FUEL_USE_RATE = 100f;
+   private const float FUEL_USE_RATE = 10000f;
    private const float FUEL_WARN_LEVEL = 20f;
    private const float HIGH_TILT_LIMIT = 359.6f;
    private const float INITIAL_POWER_LEVEL = 0.3f;
@@ -33,24 +35,25 @@ public class Player : MonoBehaviour {
    private const float LOW_TILT_LIMIT = 0.4f;
    private const float PICKUP_VOLUME = 0.7f;
    private const float ROTATE_EXPEL_RATE = 0.5f;
-   private const float ROTATION_FACTOR = 270f;
+   private const float ROTATION_FACTOR = 230f;
    private const float THRUST_EXPEL_RATE = 1f;
-   private const float THRUST_FACTOR = 9.81f;
+   private const float THRUST_FACTOR = 0.08f;
    private const float THRUST_FADE_FACTOR = 0.03f;
    private const float THRUST_LIGHTRANGE_MAX = 2f;
-   private const float THRUST_MAX = 80f;
-   private const float THRUST_MIN = 20f;
+   private const float THRUST_MAX = 1f;
+   private const float THRUST_MIN = 0f;
    private const float THRUST_POWER_FACTOR = 0.02f;
    private const float THRUST_VOLUME = 0.22f;
    private const int HALF_ARC = 180;
    private const string HUD_COLOUR = "\"#FF7070\"";
    private const string GUAGE_LABEL = "Gas Reserve: ";
 
-   private bool debugMode, deRotating, invulnerable, paused, trackOne, tutorialIsVisible;
+   private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
    private float deRotationTime, thrustAudioLength, thrustAudioTimer;
 
    private float fuelLevel = FUEL_MAX;
    private float masterVolume = 1.0f;
+   private float maxPower = INITIAL_POWER_LEVEL;
 
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
@@ -65,9 +68,11 @@ public class Player : MonoBehaviour {
    private PickupTracker pickupTracker;
    private Quaternion startRotation;
    private Rigidbody thisRigidbody;
+   private Slider thrustPowercapSlider;
    private Slider thrustPowerSlider;
    private Slider gasLevelSlider;
    private Timekeeper timeKeeper;
+   private Vector3 baseThrust = new Vector3(0, 13000, 0);
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
    private Vector3 threeControlAxis = Vector3.zero;
@@ -138,6 +143,7 @@ public class Player : MonoBehaviour {
       thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
 
       gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
+      thrustPowercapSlider = GameObject.FindGameObjectWithTag("Slider_Powercap").GetComponent<Slider>();
       thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
 
       debugMode = Debug.isDebugBuild;
@@ -153,18 +159,22 @@ public class Player : MonoBehaviour {
       deRotating = false;
       invulnerable = false;
       paused = false;
-      trackOne = true;
+      thrustAudioTrack = true;
       tutorialIsVisible = true;
 
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       thrustPowerSlider.maxValue = THRUST_MAX;
       thrustPowerSlider.minValue = THRUST_MIN;
+      thrustPowercapSlider.minValue = 0f;
+      thrustPowercapSlider.maxValue = 1f;
+      thrustPowercapSlider.value = maxPower;
       SetPower(INITIAL_POWER_LEVEL);
 
       gasLevelSlider.maxValue = FUEL_MAX;
       gasLevelSlider.minValue = 0;
       gasLevelSlider.value = fuelLevel;
       DoColourForGasLevel();
+      DoColourForThrustcap();
    }
 
    private void AdjustEmissionRate(float newRate)
@@ -174,9 +184,12 @@ public class Player : MonoBehaviour {
 
    private void AdjustThrusterPower(float delta)
    {
-      if (delta + thrustPowerSlider.value > THRUST_MAX) thrustPowerSlider.value = THRUST_MAX;
-      else if (delta + thrustPowerSlider.value < THRUST_MIN) thrustPowerSlider.value = THRUST_MIN;
+      delta *= 0.01f;
+      float deltaPlus = delta + thrustPowerSlider.value;
+      if (deltaPlus > THRUST_MAX) thrustPowerSlider.value = THRUST_MAX;
+      else if (deltaPlus < THRUST_MIN) thrustPowerSlider.value = THRUST_MIN;
       else thrustPowerSlider.value += delta;
+      if (thrustPowerSlider.value > maxPower) thrustPowerSlider.value = maxPower;
       DoColourForThrustPower();
    }
 
@@ -189,12 +202,30 @@ public class Player : MonoBehaviour {
       else if (playerTilt < HALF_ARC && playerTilt > LOW_TILT_LIMIT) transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
    }
 
+   public float BoostMaxPower()
+   {
+      maxPower += 0.1f;
+      if (maxPower > 1) maxPower = 1;
+      thrustPowercapSlider.value = maxPower;
+      DoColourForThrustcap();
+      return maxPower;
+   }
+
    private void DoColourForGasLevel()
    {
       Color colour;
       float ratio = fuelLevel / FUEL_MAX;
       colour = Vector4.Lerp(gasHigh, gasLow, 1 - ratio);
       cockpit.GetComponent<MeshRenderer>().material.color = gasFill.color = colour;
+   }
+
+   private void DoColourForThrustcap()
+   {
+      thrustcapSlideText.text = "Thrust Cap: " + Mathf.FloorToInt(maxPower * 100) + "%";
+      Color colour;
+      float ratio = thrustPowercapSlider.value / THRUST_MAX;
+      colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
+      thrustcapFill.color = colour;
    }
 
    private void DoColourForThrustPower()
@@ -214,6 +245,7 @@ public class Player : MonoBehaviour {
    {
       if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
+      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower();
    }
 
    private void DeRotate()
@@ -286,19 +318,21 @@ public class Player : MonoBehaviour {
       {
          if (thrustAudio.isPlaying)
          {
-            trackOne = false;
+            thrustAudioTrack = false;
             thrustAudio.Stop();
          }
          if (xAudio.isPlaying) xAudio.Stop();
+         tutorialText.SetActive(true);
       }
       else
       {
-         if (!trackOne)
+         if (!thrustAudioTrack)
          {
             thrustAudio.PlayOneShot(thrustSound, masterVolume * THRUST_VOLUME);
             thrustAudioTimer = Time.time;
-            trackOne = true;
+            thrustAudioTrack = true;
          }
+         if (timeKeeper.started) tutorialText.SetActive(false);
       }
       return paused;
    }
@@ -387,13 +421,14 @@ public class Player : MonoBehaviour {
 
    private void SetPower(float power)
    {
-      thrustPowerSlider.value = (THRUST_MAX - THRUST_MIN) * power + THRUST_MIN;
+      if (power > maxPower) power = maxPower;
+      thrustPowerSlider.value = power;
       DoColourForThrustPower();
    }
 
    private void Thrust(float force)
    {
-      Vector3 appliedForce = Vector3.up * thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force; 
+      Vector3 appliedForce = baseThrust * (thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force); 
       thisRigidbody.AddRelativeForce(appliedForce);
       if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {

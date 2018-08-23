@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 public class Records : MonoBehaviour {
 
-   private const int RECORD_LIMIT = 27; // Limit records so the "entire list" can fit on-screen.
+   private const int RECORD_LIMIT = 39; // Limit records so the "entire list" can fit on-screen.
 
-   private Text readout;
+   private TextMeshProUGUI readout;
    private List<string> records = new List<string>();
    private string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
    private string[] comTwo =     { "Is it even possible? ", "Amazing: ", "Stupendous: ", "Lucky! "};
@@ -45,15 +45,15 @@ public class Records : MonoBehaviour {
       {
          readout.text += record;
          count++;
+         if (count == RECORD_LIMIT) records.RemoveAt(0);
       }
-      if (count > RECORD_LIMIT) records.RemoveAt(0);
       if (count > 0) readout.text += "<i>(seconds per canister)</i>";
-      else readout.text += "<i>gather all canisters to see your record</i>";
+      else readout.text += "<i>...gather all canisters to see your first record...</i>";
    }
 
    private void Start()
    {
-      readout = GetComponent<Text>();
+      readout = GetComponent<TextMeshProUGUI>();
       records.Clear();
    }
 

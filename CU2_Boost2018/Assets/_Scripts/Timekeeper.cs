@@ -1,16 +1,16 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 public class Timekeeper : MonoBehaviour {
 
    private bool debugMode;
    private bool finished;
-   private bool started;
+   public bool started;
    private float elapsed;
    private float endTime;
    private float startTime;
    private Records records;
-   private Text readout; 
+   private TextMeshProUGUI readout; 
 
    public void Begin()
    {
@@ -39,7 +39,7 @@ public class Timekeeper : MonoBehaviour {
    private void Start()
    {
       debugMode = Debug.isDebugBuild;
-      readout = GetComponent<Text>();
+      readout = GetComponent<TextMeshProUGUI>();
       records = FindObjectOfType<Records>();
       Restart();
    }
@@ -50,8 +50,8 @@ public class Timekeeper : MonoBehaviour {
       else if (started && !finished)
       {
          float elapsed = (Mathf.FloorToInt((Time.time - startTime) * 10)) / 10f; // Get 1 decimal place.
-         readout.text = "Elapsed Time: " + elapsed.ToString("F1");
-         readout.text += " seconds";
+         readout.text = elapsed.ToString("F1");
+         readout.text += " seconds (Elapsed time)";
       }
       else if (finished)
       {
