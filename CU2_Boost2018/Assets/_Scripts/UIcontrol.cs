@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class UIcontrol : MonoBehaviour {
 
@@ -13,6 +11,20 @@ public class UIcontrol : MonoBehaviour {
    private bool status, deltaStatus;
    private GameObject[] UIobjects = new GameObject[5];
 
+   public bool HUD_vis
+   {
+      get { return status; }
+      set { deltaStatus = value; }
+   }
+
+   private void SetState()
+   {
+      foreach (GameObject go in UIobjects)
+      {
+         go.SetActive(status);
+      }
+   }
+
    private void Start()
    {
       UIobjects[0] = TPC_slider;
@@ -20,8 +32,11 @@ public class UIcontrol : MonoBehaviour {
       UIobjects[2] = GL_slider;
       UIobjects[3] = MGP_slider;
       UIobjects[4] = tasklist;
-      deltaStatus = true;
-      status = true;
+
+      // pre-emtively deactivate the controlled HUD elements...
+      deltaStatus = false;
+      status = false;
+      SetState();
    }
 
    private void Update()
@@ -29,25 +44,7 @@ public class UIcontrol : MonoBehaviour {
       if (status != deltaStatus)
       {
          status = deltaStatus;
-         foreach (GameObject go in UIobjects)
-         {
-            go.SetActive(status);
-         }
+         SetState();
       }
-   }
-
-   public void HUD_view()
-   {
-      deltaStatus = true;
-   }
-
-   public void HUD_hide()
-   {
-      deltaStatus = false;
-   }
-   public bool HUD_vis
-   {
-      get { return status; }
-      set { deltaStatus = value; }
    }
 }

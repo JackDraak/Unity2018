@@ -173,9 +173,10 @@ public class Player : MonoBehaviour {
       gasLevelSlider.value = fuelLevel;
       DoColourForGasLevel();
       DoColourForThrustcap();
-      uiControl = FindObjectOfType<UIcontrol>();
-      Invoke("uiControl.HUD_hide();", 0.1f);
+      //Invoke("uiControl.HUD_hide();", 0.1f);
       //Restart();
+      uiControl = FindObjectOfType<UIcontrol>();
+      uiControl.HUD_vis = false;
    }
 
    private void AdjustEmissionRate(float newRate)
@@ -314,7 +315,8 @@ public class Player : MonoBehaviour {
    {
       tutorialIsVisible = false;
       tutorialText.SetActive(false);
-      uiControl.HUD_view();
+      //uiControl.HUD_view();
+      uiControl.HUD_vis = true;
       timeKeeper.Begin();
    }
 
@@ -336,7 +338,8 @@ public class Player : MonoBehaviour {
          }
          if (xAudio.isPlaying) xAudio.Stop();
          tutorialText.SetActive(true);
-         uiControl.HUD_hide();
+         //uiControl.HUD_hide();
+         uiControl.HUD_vis = false;
       }
       else
       {
@@ -349,7 +352,8 @@ public class Player : MonoBehaviour {
          if (timeKeeper.started)
          {
             tutorialText.SetActive(false);
-            uiControl.HUD_view();
+            //uiControl.HUD_view();
+            uiControl.HUD_vis = true;
          }
       }
       return paused;
@@ -424,7 +428,8 @@ public class Player : MonoBehaviour {
       timeKeeper.Restart();
       tutorialIsVisible = true;
       tutorialText.SetActive(true);
-      uiControl.HUD_hide();
+      //uiControl.HUD_hide();
+      uiControl.HUD_vis = false;
       transform.position = startPosition;
       transform.rotation = startRotation;
       thisRigidbody.velocity = Vector3.zero;
