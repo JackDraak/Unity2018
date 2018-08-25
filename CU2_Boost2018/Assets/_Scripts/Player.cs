@@ -72,24 +72,30 @@ public class Player : MonoBehaviour {
    private Slider thrustPowerSlider;
    private Slider gasLevelSlider;
    private Timekeeper timeKeeper;
+   private UIcontrol uiControl;
    private Vector3 baseThrust = new Vector3(0, 13000, 0);
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
    private Vector3 threeControlAxis = Vector3.zero;
    #endregion
 
-   void Start ()
+   private void Start ()
    {
       InitVars();
       // movementFactor = (Mathf.Sin(Time.time * oscillationSpeed)) / 2f + 0.5f;
    }
 
-   void FixedUpdate()
+   private void FixedUpdate()
    {
       GenerateFuel();
       PlayerControlPoll();
       MaintainAlignment();
       if (debugMode) DebugControlPoll();
+   }
+
+   private void OnApplicationPause(bool pause)
+   {
+      if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -129,14 +135,6 @@ public class Player : MonoBehaviour {
 
    private void InitVars()
    {
-      audioSources = GetComponents<AudioSource>();
-      fishDrones = FindObjectsOfType<FishDrone>();
-      pickupTracker = FindObjectOfType<PickupTracker>();
-      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
-      thisRigidbody = GetComponent<Rigidbody>();
-      thrustParticleSystem = GetComponent<ParticleSystem>();
-      timeKeeper = FindObjectOfType<Timekeeper>();
-
       cockpit = GameObject.FindGameObjectWithTag("Cockpit");
       tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
       thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
@@ -175,11 +173,25 @@ public class Player : MonoBehaviour {
       gasLevelSlider.value = fuelLevel;
       DoColourForGasLevel();
       DoColourForThrustcap();
+      uiControl = FindObjectOfType<UIcontrol>();
+      Invoke("uiControl.HUD_hide();", 0.1f);
+      //Restart();
    }
 
    private void AdjustEmissionRate(float newRate)
    {
       thrustBubbles.rateOverTime = newRate;
+   }
+
+   private void Awake()
+   {
+      audioSources = GetComponents<AudioSource>();
+      fishDrones = FindObjectsOfType<FishDrone>();
+      pickupTracker = FindObjectOfType<PickupTracker>();
+      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
+      thisRigidbody = GetComponent<Rigidbody>();
+      thrustParticleSystem = GetComponent<ParticleSystem>();
+      timeKeeper = FindObjectOfType<Timekeeper>();
    }
 
    private void AdjustThrusterPower(float delta)
@@ -302,6 +314,7 @@ public class Player : MonoBehaviour {
    {
       tutorialIsVisible = false;
       tutorialText.SetActive(false);
+      uiControl.HUD_view();
       timeKeeper.Begin();
    }
 
@@ -323,6 +336,7 @@ public class Player : MonoBehaviour {
          }
          if (xAudio.isPlaying) xAudio.Stop();
          tutorialText.SetActive(true);
+         uiControl.HUD_hide();
       }
       else
       {
@@ -332,7 +346,11 @@ public class Player : MonoBehaviour {
             thrustAudioTimer = Time.time;
             thrustAudioTrack = true;
          }
-         if (timeKeeper.started) tutorialText.SetActive(false);
+         if (timeKeeper.started)
+         {
+            tutorialText.SetActive(false);
+            uiControl.HUD_view();
+         }
       }
       return paused;
    }
@@ -406,6 +424,7 @@ public class Player : MonoBehaviour {
       timeKeeper.Restart();
       tutorialIsVisible = true;
       tutorialText.SetActive(true);
+      uiControl.HUD_hide();
       transform.position = startPosition;
       transform.rotation = startRotation;
       thisRigidbody.velocity = Vector3.zero;

@@ -19,6 +19,7 @@ public class PickupTracker : MonoBehaviour {
 
    public void Restart()
    {
+      //pickups = GameObject.FindGameObjectsWithTag("GoodObject_01");
       foreach (GameObject pickup in pickups) pickup.SetActive(true);
       complete = false;
       highCount = 0;
