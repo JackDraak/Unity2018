@@ -4,7 +4,8 @@ using TMPro;
 
 public class PickupTracker : MonoBehaviour {
 
-   [SerializeField] Color goalHigh, goalLow;
+   [SerializeField] Color goalHigh = Color.clear;
+   [SerializeField] Color goalLow = Color.clear;
    [SerializeField] Image goalFill;
    [SerializeField] Player player;
    [SerializeField] Slider goalSlider;
@@ -19,7 +20,6 @@ public class PickupTracker : MonoBehaviour {
 
    public void Restart()
    {
-      //pickups = GameObject.FindGameObjectsWithTag("GoodObject_01");
       foreach (GameObject pickup in pickups) pickup.SetActive(true);
       complete = false;
       highCount = 0;

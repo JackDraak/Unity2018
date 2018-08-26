@@ -37,7 +37,8 @@ using UnityEngine.UI;
 public class SumPause : MonoBehaviour {
 
    [SerializeField] bool useEvent = false, detectEscapeKey = true;
-   [SerializeField] Sprite pausedSprite, playingSprite;
+   [SerializeField] Sprite pausedSprite = null;
+   [SerializeField] Sprite playingSprite = null;
 
    public delegate void PauseAction(bool paused);
    public static event PauseAction pauseEvent;
@@ -73,6 +74,11 @@ public class SumPause : MonoBehaviour {
       image = GetComponent<Image>();
    }
 
+   static bool CheckLinks()
+   {
+      return (instance.image != null && instance.playingSprite != null && instance.pausedSprite != null);
+   }
+
    void Start ()
    {
       if (SumPause.instance == null) SumPause.instance = this;
@@ -82,9 +88,16 @@ public class SumPause : MonoBehaviour {
       glueCam = FindObjectOfType<GlueCam>();
    }
 
-   void Update() 
+   void Update()
+   {
+      PollForInput();
+   }
+
+   private void PollForInput()
    {
       if (detectEscapeKey && Input.GetKeyDown(KeyCode.Escape)) TogglePause();
+      if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
+      if (Input.GetKeyDown(KeyCode.R)) player.Restart();
    }
 
    public void TogglePause ()
@@ -92,11 +105,6 @@ public class SumPause : MonoBehaviour {
       Status = !Status; 
       player.Pause();
       glueCam.Pause();
-   }
-
-   static bool CheckLinks ()
-   {
-      return (instance.image != null && instance.playingSprite != null && instance.pausedSprite != null);
    }
 
    static void OnChange()

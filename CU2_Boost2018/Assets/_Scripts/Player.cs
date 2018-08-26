@@ -9,9 +9,14 @@ public class Player : MonoBehaviour {
    [SerializeField] AudioClip bonusSound; // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ 
    [SerializeField] AudioClip collisionSound;
    [SerializeField] AudioClip thrustSound;
-   [SerializeField] Color gasHigh, gasLow, thrustHigh, thrustLow;
+   [SerializeField] Color gasHigh = Color.clear;
+   [SerializeField] Color gasLow = Color.clear;
+   [SerializeField] Color thrustHigh = Color.clear;
+   [SerializeField] Color thrustLow = Color.clear;
    [SerializeField] GameObject collisionEffect;
-   [SerializeField] Image gasFill, thrustcapFill, thrustFill;
+   [SerializeField] Image gasFill = null;
+   [SerializeField] Image thrustcapFill = null;
+   [SerializeField] Image thrustFill = null;
    [SerializeField] TextMeshProUGUI thrustcapSlideText;
    #endregion
 
@@ -82,6 +87,8 @@ public class Player : MonoBehaviour {
    private void Start ()
    {
       InitVars();
+
+      // just hanging onto a formula someone posted that might be handy when I get to "level 2":
       // movementFactor = (Mathf.Sin(Time.time * oscillationSpeed)) / 2f + 0.5f;
    }
 
@@ -133,16 +140,30 @@ public class Player : MonoBehaviour {
       }
    }
 
+   private void Awake()
+   {
+      // Objects disabled by UIcontrol should be assigned in Awake() to avoid any intermittent "race conditions".
+      // *(the other 2 objects under UIcontrol are manually assigned to PickupTracker.cs in the inspector).
+      gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
+      thrustPowercapSlider = GameObject.FindGameObjectWithTag("Slider_Powercap").GetComponent<Slider>();
+      thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
+   }
+
    private void InitVars()
    {
+      audioSources = GetComponents<AudioSource>();
+      fishDrones = FindObjectsOfType<FishDrone>();
+      pickupTracker = FindObjectOfType<PickupTracker>();
+      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
+      thisRigidbody = GetComponent<Rigidbody>();
+      thrustParticleSystem = GetComponent<ParticleSystem>();
+      timeKeeper = FindObjectOfType<Timekeeper>();
+      uiControl = FindObjectOfType<UIcontrol>();
+
       cockpit = GameObject.FindGameObjectWithTag("Cockpit");
       tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
       thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
       thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
-
-      gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
-      thrustPowercapSlider = GameObject.FindGameObjectWithTag("Slider_Powercap").GetComponent<Slider>();
-      thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
 
       debugMode = Debug.isDebugBuild;
       startPosition = transform.position;
@@ -159,6 +180,7 @@ public class Player : MonoBehaviour {
       paused = false;
       thrustAudioTrack = true;
       tutorialIsVisible = true;
+      uiControl.visible = false; // (DEPRECIATED) this seems to fail intermittently, so UIcontrol.cs now handles start-up state directly
 
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       thrustPowerSlider.maxValue = THRUST_MAX;
@@ -173,26 +195,11 @@ public class Player : MonoBehaviour {
       gasLevelSlider.value = fuelLevel;
       DoColourForGasLevel();
       DoColourForThrustcap();
-      //Invoke("uiControl.HUD_hide();", 0.1f);
-      //Restart();
-      uiControl = FindObjectOfType<UIcontrol>();
-      uiControl.HUD_vis = false;
    }
 
    private void AdjustEmissionRate(float newRate)
    {
       thrustBubbles.rateOverTime = newRate;
-   }
-
-   private void Awake()
-   {
-      audioSources = GetComponents<AudioSource>();
-      fishDrones = FindObjectsOfType<FishDrone>();
-      pickupTracker = FindObjectOfType<PickupTracker>();
-      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
-      thisRigidbody = GetComponent<Rigidbody>();
-      thrustParticleSystem = GetComponent<ParticleSystem>();
-      timeKeeper = FindObjectOfType<Timekeeper>();
    }
 
    private void AdjustThrusterPower(float delta)
@@ -256,9 +263,9 @@ public class Player : MonoBehaviour {
 
    private void DebugControlPoll()
    {
+      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower();
       if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
-      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower();
    }
 
    private void DeRotate()
@@ -315,8 +322,7 @@ public class Player : MonoBehaviour {
    {
       tutorialIsVisible = false;
       tutorialText.SetActive(false);
-      //uiControl.HUD_view();
-      uiControl.HUD_vis = true;
+      uiControl.visible = true;
       timeKeeper.Begin();
    }
 
@@ -338,8 +344,7 @@ public class Player : MonoBehaviour {
          }
          if (xAudio.isPlaying) xAudio.Stop();
          tutorialText.SetActive(true);
-         //uiControl.HUD_hide();
-         uiControl.HUD_vis = false;
+         uiControl.visible = false;
       }
       else
       {
@@ -352,8 +357,7 @@ public class Player : MonoBehaviour {
          if (timeKeeper.started)
          {
             tutorialText.SetActive(false);
-            //uiControl.HUD_view();
-            uiControl.HUD_vis = true;
+            uiControl.visible = true;
          }
       }
       return paused;
@@ -400,8 +404,7 @@ public class Player : MonoBehaviour {
 
    private void PollMisc()
    {
-      if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
-      if (Input.GetKeyDown(KeyCode.R)) Restart();
+      // SumPause.cs is Polling: Q, R & ESC keys.
       if (Input.GetKeyDown(KeyCode.Alpha0)) SetPower(1.0f);
       else if (Input.GetKeyDown(KeyCode.Alpha9)) SetPower(0.9f);
       else if (Input.GetKeyDown(KeyCode.Alpha8)) SetPower(0.8f);
@@ -420,7 +423,7 @@ public class Player : MonoBehaviour {
       if (threeControlAxis.y != 0) AdjustThrusterPower(threeControlAxis.y);
    }
 
-   private void Restart()
+   public void Restart()
    {
       fuelLevel = FUEL_MAX;
       pickupTracker.Restart();
@@ -428,8 +431,7 @@ public class Player : MonoBehaviour {
       timeKeeper.Restart();
       tutorialIsVisible = true;
       tutorialText.SetActive(true);
-      //uiControl.HUD_hide();
-      uiControl.HUD_vis = false;
+      uiControl.visible = false;
       transform.position = startPosition;
       transform.rotation = startRotation;
       thisRigidbody.velocity = Vector3.zero;

@@ -7,10 +7,10 @@ public class FishDrone : MonoBehaviour {
    private float roughScale, scaleFactor;
    private float speed, newSpeed;
    private float turnRate;
+   private Quaternion startQuat;
    private Rigidbody thisRigidbody;
    private Vector3 dimensions = Vector3.zero;
    private Vector3 startPos;
-   private Quaternion startQuat;
 
    private const float ANIMATION_SPEED_FACTOR = 1.8f;
    private const float ANIMATION_SCALING_LARGE = 0.4f;
