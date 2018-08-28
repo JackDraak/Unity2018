@@ -148,7 +148,9 @@ public class Player : MonoBehaviour {
       switch (other.gameObject.tag)
       {
          case "GoodObject_01":
-            other.gameObject.SetActive(false);
+            //other.gameObject.SetActive(false); // TODO maybe need to revise?
+            Destroy(other.gameObject, 0.01f);
+            pickupTracker.ClaimPickup();
             xAudio.PlayOneShot(bonusSound, masterVolume * PICKUP_VOLUME);
             fuelLevel += FUEL_PICKUP_VALUE;
             if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
