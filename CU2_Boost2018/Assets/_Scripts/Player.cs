@@ -9,14 +9,18 @@ public class Player : MonoBehaviour {
    [SerializeField] AudioClip bonusSound; // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ 
    [SerializeField] AudioClip collisionSound;
    [SerializeField] AudioClip thrustSound;
+
    [SerializeField] Color gasHigh = Color.clear;
    [SerializeField] Color gasLow = Color.clear;
    [SerializeField] Color thrustHigh = Color.clear;
    [SerializeField] Color thrustLow = Color.clear;
+
    [SerializeField] GameObject collisionEffect;
+
    [SerializeField] Image gasFill = null;
    [SerializeField] Image thrustcapFill = null;
    [SerializeField] Image thrustFill = null;
+
    [SerializeField] TextMeshProUGUI thrustcapSlideText;
    #endregion
 
@@ -49,7 +53,9 @@ public class Player : MonoBehaviour {
    private const float THRUST_MIN = 0f;
    private const float THRUST_POWER_FACTOR = 0.02f;
    private const float THRUST_VOLUME = 0.22f;
+
    private const int HALF_ARC = 180;
+
    private const string HUD_COLOUR = "\"#FF7070\"";
    private const string GUAGE_LABEL = "Gas Reserve: ";
 
@@ -62,22 +68,34 @@ public class Player : MonoBehaviour {
 
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
+
+   private FishDrone[] fishDrones;
+
    private GameObject cockpit;
    private GameObject thrusterBell;
    private GameObject thrustLight;
    private GameObject tutorialText;
+
    private GlueCam sceneCamera;
-   private FishDrone[] fishDrones;
+
    private ParticleSystem.EmissionModule thrustBubbles;
+
    private ParticleSystem thrustParticleSystem;
+
    private PickupTracker pickupTracker;
+
    private Quaternion startRotation;
+
    private Rigidbody thisRigidbody;
+
    private Slider thrustPowercapSlider;
    private Slider thrustPowerSlider;
    private Slider gasLevelSlider;
+
    private Timekeeper timeKeeper;
+
    private UIcontrol uiControl;
+
    private Vector3 baseThrust = new Vector3(0, 13000, 0);
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
@@ -142,8 +160,11 @@ public class Player : MonoBehaviour {
 
    private void Awake()
    {
-      // Objects disabled by UIcontrol should be assigned in Awake() to avoid any intermittent "race conditions".
-      // *(the other 2 objects under UIcontrol are manually assigned to PickupTracker.cs in the inspector).
+      // Objects disabled by UIcontrol should be assigned in Awake() to avoid trying to capture them after they've been disabled**.
+      // *The other 2 objects under UIcontrol are manually assigned to PickupTracker.cs in the inspector.
+      // **Originally UIcontrol.cs was designed to be used from Player.cs through public methods. It still is, but for unknown
+      //   reasons, it was failing to enforce that control in the local Start() method (intermittently, no-less), thus the functionality
+      //   being moved into UIcontrol.cs:Start()
       gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
       thrustPowercapSlider = GameObject.FindGameObjectWithTag("Slider_Powercap").GetComponent<Slider>();
       thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
@@ -152,13 +173,15 @@ public class Player : MonoBehaviour {
    private void InitVars()
    {
       audioSources = GetComponents<AudioSource>();
-      fishDrones = FindObjectsOfType<FishDrone>();
-      pickupTracker = FindObjectOfType<PickupTracker>();
-      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
       thisRigidbody = GetComponent<Rigidbody>();
       thrustParticleSystem = GetComponent<ParticleSystem>();
+
+      fishDrones = FindObjectsOfType<FishDrone>();
+      pickupTracker = FindObjectOfType<PickupTracker>();
       timeKeeper = FindObjectOfType<Timekeeper>();
       uiControl = FindObjectOfType<UIcontrol>();
+
+      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
 
       cockpit = GameObject.FindGameObjectWithTag("Cockpit");
       tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
