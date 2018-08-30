@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System; 
+using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,7 @@ public class PickupTracker : MonoBehaviour {
    private GameObject[]    pickupsArray;
    private GameObject[]    spawnPointsArray;
    private List<GameObject> pickups;
+   private List<Collider> others;
    private TextMeshProUGUI text_tracker;
    private Timekeeper      timeKeeper;
 
@@ -32,6 +34,8 @@ public class PickupTracker : MonoBehaviour {
       Debug.Log("Number of spawnPoints: " + spawnPointsArray.Length);
 
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
+
+      others = new List<Collider>();
    }
 
    private void Start()
@@ -40,23 +44,18 @@ public class PickupTracker : MonoBehaviour {
       complete = spawning = task1 = task2 = false;
       text_tasklist.text = "Goal: Raise Thrust Cap to 60%\nMini-Goal: Collect Gas Canisters";
 
-      DoSpawn();
+      // DoSpawn();
+      StartCoroutine("DoSpawn");
    }
 
-   private void DoSpawn()
+   IEnumerator DoSpawn()
    {
       Debug.Log("Spawntime: " + Time.time.ToString("F2"));
       spawning = true;
 
-      // despawn all
-      foreach (GameObject spawnPoint in spawnPointsArray)
-      {
-         if (spawnPoint.transform.childCount != 0)
-         {
-            //spawnPoints.Remove(spawnPoint);
-            Destroy(spawnPoint.transform.GetChild(0).gameObject);
-         }
-      }
+      DespawnAll();
+      yield return new WaitForSeconds(0.2f);
+   
 
       int sp = 0;
       do
@@ -65,6 +64,42 @@ public class PickupTracker : MonoBehaviour {
          sp++;
       }
       while (sp < spawnPointsArray.Length); // TDOO
+
+      if (SpawnPointsAreEmpty())
+      {
+         Debug.Log("why the fuck?");
+         sp = 0;
+         do
+         {
+            SpawnRandomSpawnpoint();
+            sp++;
+         }
+         while (sp < spawnPointsArray.Length); // TDOO
+      }
+
+      if (SpawnPointsAreEmpty())
+      {
+         Debug.Log("why fuck?");
+         sp = 0;
+         do
+         {
+            SpawnRandomSpawnpoint();
+            sp++;
+         }
+         while (sp < spawnPointsArray.Length); // TDOO
+      }
+
+      if (SpawnPointsAreEmpty())
+      {
+         Debug.Log("fuck?");
+         sp = 0;
+         do
+         {
+            SpawnRandomSpawnpoint();
+            sp++;
+         }
+         while (sp < spawnPointsArray.Length); // TDOO
+      }
       //while (!SpawnPointsAreFull());
 
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
@@ -87,7 +122,7 @@ public class PickupTracker : MonoBehaviour {
 
    public void Restart()
    {
-      DoSpawn();
+      StartCoroutine("DoSpawn");
    }
 
    // On average, return 'True' ~half the time, and 'False' ~half the time.
@@ -186,7 +221,7 @@ public class PickupTracker : MonoBehaviour {
 
    private void TrackPickups()
    {
-      CountPickups(); // TODO maybe not?
+      //CountPickups(); // TODO maybe not?
 
       if (!complete && !spawning)
       {
@@ -215,9 +250,13 @@ public class PickupTracker : MonoBehaviour {
       goalSlider.value = fillLerp;
    }
 
-   public int ClaimPickup()
+   public int ClaimPickup(Collider other)
    {
-      count -= 1;
+      if (!others.Contains(other))
+      {
+         count -= 1;
+         others.Add(other);
+      }
       text_tracker.text = count.ToString() + " Gas Canisters Remaining";
       return count;
    }
@@ -238,5 +277,7 @@ public class PickupTracker : MonoBehaviour {
    private void Update()
    {
       TrackPickups();
+      if (Input.GetKeyDown(KeyCode.V)) DoSpawn();
+      if (Input.GetKeyDown(KeyCode.B)) DespawnAll();
    }
 }
