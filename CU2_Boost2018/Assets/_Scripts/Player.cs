@@ -3,8 +3,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityStandardAssets.CrossPlatformInput;
 
-public class Player : MonoBehaviour {
-
+public class Player : MonoBehaviour
+{
    #region Exposed Variables
    [SerializeField] AudioClip bonusSound; // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ 
    [SerializeField] AudioClip collisionSound;
@@ -70,6 +70,7 @@ public class Player : MonoBehaviour {
    private AudioSource xAudio, thrustAudio;
 
    private FishDrone[] fishDrones;
+   private FishPool fishPool;
 
    private GameObject cockpit;
    private GameObject thrusterBell;
@@ -181,6 +182,7 @@ public class Player : MonoBehaviour {
       thrustParticleSystem = GetComponent<ParticleSystem>();
 
       fishDrones = FindObjectsOfType<FishDrone>();
+      fishPool = FindObjectOfType<FishPool>();
       pickupTracker = FindObjectOfType<PickupTracker>();
       timeKeeper = FindObjectOfType<Timekeeper>();
       uiControl = FindObjectOfType<UIcontrol>();
@@ -453,6 +455,7 @@ public class Player : MonoBehaviour {
    public void Restart()
    {
       fuelLevel = FUEL_MAX;
+      //fishPool.Reset(); // TODO work in Reset for ObjectPool (and rename?)
       pickupTracker.Restart();
       sceneCamera.Restart();
       timeKeeper.Restart();

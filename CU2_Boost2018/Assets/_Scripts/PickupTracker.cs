@@ -79,7 +79,8 @@ public class PickupTracker : MonoBehaviour {
 
       DespawnAll();
       yield return new WaitForSeconds(0.2f);
-      SpawnAll();
+      SpawnPercent(33); // TODO decide how to use this dynamically
+      //SpawnAll();
 
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
@@ -92,9 +93,9 @@ public class PickupTracker : MonoBehaviour {
       complete = false;
    }
 
-   // On average, return 'True' ~half the time, and 'False' ~half the time.
    private bool FiftyFifty()
    {
+      // On average, return 'True' ~half the time, and 'False' ~half the time.
       if (Mathf.FloorToInt(UnityEngine.Random.Range(0, 2)) == 1) return true;
       else return false;
    }
@@ -137,14 +138,27 @@ public class PickupTracker : MonoBehaviour {
       highCount = count;
    }
 
-   private int SpawnCount()
+   private int SpawnTally()
    {
-      int spawnCount = 0;
+      int spawnTally = 0;
       foreach (GameObject spawnPoint in spawnPointsArray)
       {
-         if (spawnPoint.transform.childCount > 0) spawnCount++;
+         if (spawnPoint.transform.childCount > 0) spawnTally++;
       }
-      return spawnCount;
+      return spawnTally;
+   }
+
+   private void SpawnPercent(int percent)
+   {
+      if (percent < 0) return;
+      if (percent > 100) percent = 100;
+      else
+      {
+         float floatPercent = percent / 100f;
+         int target = Mathf.FloorToInt(spawnPointsArray.Length * floatPercent);
+         for (int i = 0; i < target; i++) SpawnRandomSpawnpoint();
+         count = highCount = target;
+      }
    }
 
    private bool SpawnPointIsEmpty()
@@ -161,7 +175,7 @@ public class PickupTracker : MonoBehaviour {
 
    private void TrackPickups()
    {
-      count = highCount - (highCount - SpawnCount());
+      count = highCount - (highCount - SpawnTally());
       if (!complete && !spawning)
       {
          if (count == 0)

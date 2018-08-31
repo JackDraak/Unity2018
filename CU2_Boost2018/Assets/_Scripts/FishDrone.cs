@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
-public class FishDrone : MonoBehaviour {
-
+public class FishDrone : MonoBehaviour
+{
    private Animator animator;
    private float changeDelay, changeTime;
    private float roughScale, scaleFactor;
@@ -46,15 +46,23 @@ public class FishDrone : MonoBehaviour {
 
    private void Init()
    {
+      // Set dynamic turnrate and direction.
       turnRate = Random.Range(TURNRATE_MIN, TURNRATE_MAX);
       if (FiftyFifty()) turnRate = -turnRate;
 
+      // Set dynamic rotation in Y dimension.
+      Vector3 thisRotation = Vector3.zero;
+      thisRotation.y = Random.Range(0f,360f);
+      transform.Rotate(thisRotation, Space.World); // TODO, no this is last
+
+      // Set dynamic scale.
       Vector3 scale = Vector3.zero;
       scale.x = Random.Range(SCALE_MIN, SCALE_MAX);
       scale.y = Random.Range(SCALE_MIN, SCALE_MAX);
       scale.z = Random.Range(SCALE_MIN, SCALE_MAX);
       transform.localScale = scale;
 
+      // Set dynamic animation speed (~slower for larger fish).
       roughScale = scale.x + scale.y + scale.z / 3.0f; // Average the scales of the 3 planes.
       if (roughScale < SIZE_MID_BREAK) scaleFactor = ANIMATION_SCALING_SMALL;
       else if (roughScale < SIZE_LARGE_BREAK) scaleFactor = ANIMATION_SCALING_MED;
@@ -79,9 +87,12 @@ public class FishDrone : MonoBehaviour {
 
    public void Reset()
    {
-      transform.position = startPos;
-      transform.rotation = startQuat;
-      Init();
+      if (transform != null)
+      {
+         transform.position = startPos;
+         transform.rotation = startQuat;
+         Init();
+      }
    }
 
    private void SetSpeed()
