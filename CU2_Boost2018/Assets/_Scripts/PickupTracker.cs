@@ -15,18 +15,20 @@ public class PickupTracker : MonoBehaviour {
    [SerializeField] Slider goalSlider;
    [SerializeField] TextMeshProUGUI text_tasklist;
 
-   private bool            complete, spawning, task1, task2;
-   private float           maxPower;
-   private int             count, highCount;
-   private GameObject[]    pickupsArray;
-   private GameObject[]    spawnPointsArray;
-   private List<GameObject> pickups;
-   private List<Collider> others;
-   private TextMeshProUGUI text_tracker;
-   private Timekeeper      timeKeeper;
+   private bool complete, debugMode, spawning, task1, task2;
+   private float              maxPower;
+   private int                count, highCount;
+   private GameObject[]       pickupsArray;
+   private GameObject[]       spawnPointsArray;
+   private List<Collider>     others;
+   private List<GameObject>   pickups;
+   private TextMeshProUGUI    text_tracker;
+   private Timekeeper         timeKeeper;
 
    private void Awake()
    {
+      debugMode = Debug.isDebugBuild;
+
       text_tracker = GetComponent<TextMeshProUGUI>();
       if (!text_tracker) Debug.Log("FAIL: no text_tracker object variable!!");
 
@@ -44,106 +46,57 @@ public class PickupTracker : MonoBehaviour {
       complete = spawning = task1 = task2 = false;
       text_tasklist.text = "Goal: Raise Thrust Cap to 60%\nMini-Goal: Collect Gas Canisters";
 
-      // DoSpawn();
       StartCoroutine("DoSpawn");
    }
 
-   IEnumerator DoSpawn()
+   public bool ClaimPickup(Collider other)
+   {
+      if (!others.Contains(other))
+      {
+         count -= 1;
+         others.Add(other);
+         text_tracker.text = count.ToString() + " Gas Canisters Remaining";
+         return true;
+      }
+      return false;
+   }
+
+   private void DespawnAll()
+   {
+      foreach (GameObject spawnPoint in spawnPointsArray)
+      {
+         if (spawnPoint.transform.childCount != 0)
+         {
+            Destroy(spawnPoint.transform.GetChild(0).gameObject);
+         }
+      }
+   }
+
+   private IEnumerator DoSpawn()
    {
       Debug.Log("Spawntime: " + Time.time.ToString("F2"));
       spawning = true;
 
       DespawnAll();
       yield return new WaitForSeconds(0.2f);
-   
-
-      int sp = 0;
-      do
-      {
-         SpawnRandomSpawnpoint();
-         sp++;
-      }
-      while (sp < spawnPointsArray.Length); // TDOO
-
-      if (SpawnPointsAreEmpty())
-      {
-         Debug.Log("why the fuck?");
-         sp = 0;
-         do
-         {
-            SpawnRandomSpawnpoint();
-            sp++;
-         }
-         while (sp < spawnPointsArray.Length); // TDOO
-      }
-
-      if (SpawnPointsAreEmpty())
-      {
-         Debug.Log("why fuck?");
-         sp = 0;
-         do
-         {
-            SpawnRandomSpawnpoint();
-            sp++;
-         }
-         while (sp < spawnPointsArray.Length); // TDOO
-      }
-
-      if (SpawnPointsAreEmpty())
-      {
-         Debug.Log("fuck?");
-         sp = 0;
-         do
-         {
-            SpawnRandomSpawnpoint();
-            sp++;
-         }
-         while (sp < spawnPointsArray.Length); // TDOO
-      }
-      //while (!SpawnPointsAreFull());
+      SpawnAll();
 
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
       Debug.Log("Number of pickups: " + pickupsArray.Length);
 
-      // count here
-      count = highCount = 0;
-      foreach (GameObject pickup in pickupsArray)
-      {
-         if (pickup.activeSelf) count++; // TODO no longer using active/inactive
-
-         if (count > highCount) highCount = count;
-      }
       text_tracker.text = count.ToString() + " Gas Canisters Remaining";
 
-      complete = false;
+      others = new List<Collider>();
       spawning = false;
-   }
-
-   public void Restart()
-   {
-      StartCoroutine("DoSpawn");
+      complete = false;
    }
 
    // On average, return 'True' ~half the time, and 'False' ~half the time.
    private bool FiftyFifty()
    {
-      return true;
-      //if (Mathf.FloorToInt(UnityEngine.Random.Range(0, 2)) == 1) return true;
-      //else return false;
-   }
-
-   public void DespawnAll()
-   {
-      // despawn all
-      foreach (GameObject spawnPoint in spawnPointsArray)
-      {
-         if (spawnPoint.transform.childCount != 0)
-         {
-            //spawnPoints.Remove(spawnPoint);
-            Destroy(spawnPoint.transform.GetChild(0).gameObject);
-         }
-      }
+      if (Mathf.FloorToInt(UnityEngine.Random.Range(0, 2)) == 1) return true;
+      else return false;
    }
 
    private void FillPosition(Transform position)
@@ -171,36 +124,17 @@ public class PickupTracker : MonoBehaviour {
       else return null;
    }
 
-   public void SpawnAllSpawnpoints()
+   public void Restart()
    {
-      GameObject freePos = RandomFreePosition();
-      if (freePos) FillPosition(freePos.transform);
-
-      float delayBetweenSpawn = 0.001f;
-      if (RandomFreePosition()) Invoke("SpawnAllSpawnpoints", delayBetweenSpawn);
-      else if (SpawnPointsAreFull())
-      {
-         Debug.Log("SpawnAllSpawnpoints() ");
-      }
+      StartCoroutine("DoSpawn");
    }
 
-   public bool SpawnPointsAreEmpty()
+   private void SpawnAll()
    {
-      foreach (GameObject spawnPoint in spawnPointsArray)
-      {
-         if (spawnPoint.transform.childCount > 0) return false;
-      }
-      return true;
-   }
-
-   public bool SpawnPointsAreFull()
-   {
-      //   foreach (GameObject spawnPoint in spawnPointsArray)
-      //   {
-      //      if (spawnPoint.transform.childCount == 0) return false;
-      //   }
-      //   return true;
-      return !SpawnPointsAreEmpty();
+      count = highCount = 0;
+      do { SpawnRandomSpawnpoint(); count++; }
+      while (SpawnPointIsEmpty());
+      highCount = count;
    }
 
    private int SpawnCount()
@@ -213,7 +147,13 @@ public class PickupTracker : MonoBehaviour {
       return spawnCount;
    }
 
-   public void SpawnRandomSpawnpoint()
+   private bool SpawnPointIsEmpty()
+   {
+      if (RandomFreePosition()) return true;
+      else return false;
+   }
+
+   private void SpawnRandomSpawnpoint()
    {
       GameObject freePos = RandomFreePosition();
       if (freePos) FillPosition(freePos.transform);
@@ -221,15 +161,13 @@ public class PickupTracker : MonoBehaviour {
 
    private void TrackPickups()
    {
-      //CountPickups(); // TODO maybe not?
-
+      count = highCount - (highCount - SpawnCount());
       if (!complete && !spawning)
       {
          if (count == 0)
          {
             complete = true;
-            timeKeeper.Cease(highCount); // TODO
-            //timeKeeper.Cease(pickupsArray.Length); // TODO
+            timeKeeper.Cease(highCount);
             maxPower = player.BoostMaxPower();
             if (!task1)
             {
@@ -243,41 +181,16 @@ public class PickupTracker : MonoBehaviour {
             }
          }
       }
-
       float fillLerp = (float)((float)(highCount - count) / (float)highCount);
       Color fillColor = Vector4.Lerp(goalLow, goalHigh, fillLerp);
       goalFill.color = fillColor;
       goalSlider.value = fillLerp;
    }
 
-   public int ClaimPickup(Collider other)
-   {
-      if (!others.Contains(other))
-      {
-         count -= 1;
-         others.Add(other);
-      }
-      text_tracker.text = count.ToString() + " Gas Canisters Remaining";
-      return count;
-   }
-
-   private void CountPickups()
-   {
-    //  var pickupsArr = GameObject.FindGameObjectsWithTag("GoodObject_01"); // TODO - really?
-    //  count = highCount = 0;
-    // foreach (GameObject pickup in pickupsArr)
-    //  {
-    //     if (pickup.activeSelf) count++; // TODO no longer using active/inactive
-//
-   //      if (count > highCount) highCount = count;
-   //   }
-      text_tracker.text = count.ToString() + " Gas Canisters Remaining";
-   }
-
    private void Update()
    {
       TrackPickups();
-      if (Input.GetKeyDown(KeyCode.V)) DoSpawn();
-      if (Input.GetKeyDown(KeyCode.B)) DespawnAll();
+      if (Input.GetKeyDown(KeyCode.N) && debugMode) StartCoroutine("DoSpawn");
+      if (Input.GetKeyDown(KeyCode.M) && debugMode) DespawnAll();
    }
 }

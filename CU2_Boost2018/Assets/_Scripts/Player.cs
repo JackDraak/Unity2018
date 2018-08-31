@@ -148,12 +148,14 @@ public class Player : MonoBehaviour {
       switch (other.gameObject.tag)
       {
          case "GoodObject_01":
-            //other.gameObject.SetActive(false); // TODO maybe need to revise?
-            pickupTracker.ClaimPickup(other);
-            Destroy(other.gameObject, 0.01f);
-            xAudio.PlayOneShot(bonusSound, masterVolume * PICKUP_VOLUME);
-            fuelLevel += FUEL_PICKUP_VALUE;
-            if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
+            if (pickupTracker.ClaimPickup(other))
+            {
+               // TODO switch back to active/deactice model in order to recycle objects?
+               Destroy(other.gameObject, 0.01f);
+               xAudio.PlayOneShot(bonusSound, masterVolume * PICKUP_VOLUME);
+               fuelLevel += FUEL_PICKUP_VALUE;
+               if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
+            }
             break;
          default:
             break;
@@ -205,7 +207,6 @@ public class Player : MonoBehaviour {
       paused = false;
       thrustAudioTrack = true;
       tutorialIsVisible = true;
-      uiControl.visible = false; // (DEPRECIATED) this seems to fail intermittently, so UIcontrol.cs now handles start-up state directly
 
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       thrustPowerSlider.maxValue = THRUST_MAX;
@@ -430,6 +431,7 @@ public class Player : MonoBehaviour {
    private void PollMisc()
    {
       // SumPause.cs is Polling: Q, R & ESC keys.
+      // PickupTracker is Polling: M, N only for debug purposes.
       if (Input.GetKeyDown(KeyCode.Alpha0)) SetPower(1.0f);
       else if (Input.GetKeyDown(KeyCode.Alpha9)) SetPower(0.9f);
       else if (Input.GetKeyDown(KeyCode.Alpha8)) SetPower(0.8f);
