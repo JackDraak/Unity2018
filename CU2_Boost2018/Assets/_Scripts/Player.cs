@@ -455,7 +455,7 @@ public class Player : MonoBehaviour
    public void Restart()
    {
       fuelLevel = FUEL_MAX;
-      //fishPool.Reset(); // TODO work in Reset for ObjectPool (and rename?)
+      fishPool.Reset();
       pickupTracker.Restart();
       sceneCamera.Restart();
       timeKeeper.Restart();

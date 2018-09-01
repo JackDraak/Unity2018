@@ -6,7 +6,7 @@ public class ObjectPool : MonoBehaviour
    [Tooltip("Allow pool to grow as needed (if checked)")]
    [SerializeField] bool dynamicPool = false;
 
-   [SerializeField] int initialPoolSize = 16;
+   [SerializeField] int initialPoolSize = 45; // works best when set to the same # of spawn-points; unexpected results when larger than.
 
    [Range(1, 8)]
    [SerializeField] int poolGrowthRate = 8;
@@ -42,11 +42,8 @@ public class ObjectPool : MonoBehaviour
       myObjects = new MyObject[initialPoolSize];
       poolIndex = initialPoolSize;
       spawnPoints = GetComponentsInChildren<FishSpawn>();
-      Debug.Log(spawnPoints.Length + " ObjectPool spawnPoints identified.");
-
-      // Build initial pool
-      for (int i = 0; i < initialPoolSize; i++) CreateObject(i);
-
+      Debug.Log(spawnPoints.Length + " FishPool spawnPoints identified.");
+      for (int i = 0; i < initialPoolSize; i++) CreateObject(i);  // Build initial pool
       Spawn();
    }
 
@@ -56,6 +53,17 @@ public class ObjectPool : MonoBehaviour
       if (Input.GetKeyDown(KeyCode.L) && Debug.isDebugBuild) Respawn();
       ExpireObjects();
    }
+
+   private int CountActive()
+   {
+      int active = 0;
+      foreach (MyObject mo in myObjects)
+      {
+         if (mo.on) active++;
+      }
+      return active;
+   }
+
    private void CreateObject(int i)
    {
       myObjects[i].gameObject = Instantiate(myObject, transform.position, Quaternion.identity, transform);
@@ -68,28 +76,11 @@ public class ObjectPool : MonoBehaviour
       transformTable.Add(i, transform);
    }
 
-   private void ExpireObjects()
-   {
-      CycleLifespan();
-      CycleInactive();
-   }
-
    private void CycleInactive()
    {
       for (int i = 0; i < dynamicPoolSize; i++)
       {
-         if (!myObjects[i].on)
-         {
-            myObjects[i].on = false;
-            myObjects[i].gameObject.SetActive(false);
-
-            // get transform from transformTable
-            Transform xform;
-            if (transformTable.TryGetValue(i, out xform))
-            {
-               myObjects[i].xform = xform;
-            }
-         }
+         if (!myObjects[i].on) myObjects[i].gameObject.transform.parent = this.transform;
       }
    }
 
@@ -109,6 +100,12 @@ public class ObjectPool : MonoBehaviour
             }
          }
       }
+   }
+
+   private void ExpireObjects()
+   {
+      CycleLifespan();
+      CycleInactive();
    }
 
    private void GrowPool()
@@ -131,7 +128,7 @@ public class ObjectPool : MonoBehaviour
       }
    }
 
-   private void PopObject(Transform transform)
+   private void PopObject(Transform xform)
    {
       poolIndex++;
       if (poolIndex >= dynamicPoolSize) poolIndex = 0;
@@ -141,7 +138,7 @@ public class ObjectPool : MonoBehaviour
          GrowPool();
          poolIndex++;
       }
-      RecycleObject(transform, poolIndex);
+      RecycleObject(xform, poolIndex);
    }
 
    private Transform RandomFreeTransform()
@@ -177,41 +174,40 @@ public class ObjectPool : MonoBehaviour
    private void ReclaimAllObjects()
    {
       int reclaimCount = 0;
-      for (int i = 0; i < dynamicPoolSize; i++)
+      for (int i = 0; i < myObjects.Length; i++)
       {
          if (myObjects[i].on)
          {
             myObjects[i].on = false;
             myObjects[i].gameObject.SetActive(false);
+            myObjects[i].gameObject.transform.parent = this.transform;
             reclaimCount++;
          }
       }
-      Debug.Log("Fishes reclaimed: " + reclaimCount);
+      Debug.Log("Fishes reclaimed: " + reclaimCount + ". Total active count: " + CountActive().ToString());
    }
 
    private void RecycleObject(Transform xform, int poolIndex)
    {
       myObjects[poolIndex].on = true;
       myObjects[poolIndex].onTime = Time.time;
-      myObjects[poolIndex].gameObject.transform.position = xform.position;
       myObjects[poolIndex].gameObject.transform.parent = xform;
-
-      // TODO more stuff
-
-      // doing a pre-emtive toggle-off ensures that even non-dynamic use gives a
-      // more dynamic appearance, but depending on your application, it might not
-      // be optimal -- it's safe to comment-out the following "false" line.
-      //myObjects[position].gameObject.SetActive(false);
+      myObjects[poolIndex].gameObject.transform.position = xform.position;
       myObjects[poolIndex].gameObject.SetActive(true);
+      myObjects[poolIndex].xform = xform;
    }
 
    private void Respawn()
    {
-      foreach (MyObject mo in myObjects)
+      int respawnCount = 0;
+      ReclaimAllObjects();
+      int target = Mathf.FloorToInt(myObjects.Length * (spawnPercent / 100f));
+      for (int i = 0; i < target; i++)
       {
-         mo.gameObject.SetActive(true);
-         // mo.on = true;
+         RecycleObject(RandomFreeTransform(),i);
+         respawnCount++;
       }
+      Debug.Log("Fishes respawned: " + respawnCount + ". Total active count: " + CountActive().ToString());
    }
 
    private void Spawn()
@@ -239,6 +235,6 @@ public class ObjectPool : MonoBehaviour
             }
          }
       }
-      Debug.Log("SpawnCount: " + spawnCount);
+      Debug.Log("FishPool SpawnCount: " + spawnCount + ". Total active count: " + CountActive().ToString());
    }
 }
