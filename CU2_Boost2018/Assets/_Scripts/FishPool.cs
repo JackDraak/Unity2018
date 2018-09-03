@@ -1,48 +1,48 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class FishPool : MonoBehaviour
 {
+   [Tooltip("In seconds (0 = do not expire)")]
+   [SerializeField] float fishLifespan = 0;
+
    [Tooltip("Allow pool to grow as needed (if checked)")]
    [SerializeField] bool dynamicPool = false;
 
    [Tooltip("Works best when set to the same # of spawn-points; unexpected results when larger than.")]
    [SerializeField] int initialPoolSize = 45;
 
-   [Range(1, 8)]
-   [SerializeField] int poolGrowthRate = 8;
-
-   [Space(10)] [SerializeField] GameObject fishPrefab;
-
-   [Tooltip("0 = do not expire")]
-   [SerializeField] float fishLifespan = 0;
-
-   [Range(0, 100)]
-   [SerializeField] int spawnPercent = 50;
+   [Range(1, 8)][SerializeField] int poolGrowthRate = 8;
+   [Space(10)][SerializeField] GameObject fishPrefab;
+   [Range(0, 100)][SerializeField] int spawnPercent = 50;
 
    struct Fish
    {
       public bool on;
       public float onTime;
-      public int poolIndex;
       public GameObject fishObject;
+      public int poolIndex;
       public Transform xform;
    }
 
-   private FishSpawn[] spawnPoints;
-   private int dynamicPoolSize;
-   private int poolIndex;
    private Fish[] fishes;
+   private FishSpawn[] spawnPoints;
+   public int dynamicPoolSize;
+   private int poolIndex = 0;
    private Transform xform;
 
    private void Start()
    {
       dynamicPoolSize = initialPoolSize;
       fishes = new Fish[initialPoolSize];
-      poolIndex = initialPoolSize; // ?? Why did I do that?!? lol...
       spawnPoints = GetComponentsInChildren<FishSpawn>();
       Debug.Log(spawnPoints.Length + " FishPool spawnPoints identified.");
-      for (int i = 0; i < initialPoolSize; i++) CreateFishObject(i);  // Build initial pool
+      for (int i = 0; i < initialPoolSize; i++) CreateFishObject(i);
+
+      // more new changes, not done for max-efficiency
+      // grow pool to min required size automagically
+      int targetDelta = Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f));
+      targetDelta -= initialPoolSize;
+      GrowPool(targetDelta);
       Spawn();
    }
 
@@ -66,11 +66,11 @@ public class FishPool : MonoBehaviour
    private void CreateFishObject(int i)
    {
       fishes[i].fishObject = Instantiate(fishPrefab, transform.position, Quaternion.identity, transform);
+      fishes[i].fishObject.SetActive(false);
+      fishes[i].on = false;
       fishes[i].onTime = 0;
       fishes[i].poolIndex = i;
-      fishes[i].on = false;
       fishes[i].xform = transform;
-      fishes[i].fishObject.SetActive(false);
    }
 
    private void CycleInactive()
@@ -123,6 +123,34 @@ public class FishPool : MonoBehaviour
       {
          CreateFishObject(i + dynamicPoolSize - poolGrowthRate);
       }
+      Debug.Log("Pool Dynamically Grown, +" + poolGrowthRate + 
+         ". Added fish #'s: " + (dynamicPoolSize - poolGrowthRate + 1) + "-" + dynamicPoolSize);
+   }
+
+   private void GrowPool(int growRate)
+   {
+      // place old array in temp storage
+      Fish[] temp = new Fish[dynamicPoolSize];
+      for (int i = 0; i < dynamicPoolSize; i++)
+      {
+         temp[i] = fishes[i];
+      }
+      dynamicPoolSize += growRate;
+
+      // copy from temp onto newer, larger array
+      fishes = new Fish[dynamicPoolSize];
+      for (int i = 0; i < dynamicPoolSize - growRate; i++)
+      {
+         fishes[i] = temp[i];
+      }
+
+      // create next pool fish(es) in the series
+      for (int i = 0; i < growRate; i++)
+      {
+         CreateFishObject(i + dynamicPoolSize - growRate);
+      }
+      Debug.Log("Pool Emergency Grown, +" + growRate + 
+         ". Added fish #'s: " + (dynamicPoolSize - growRate + 1) + "-" + dynamicPoolSize);
    }
 
    private void PlaceFish(Transform xform)
@@ -130,9 +158,9 @@ public class FishPool : MonoBehaviour
       poolIndex++;
       if (poolIndex >= dynamicPoolSize) poolIndex = 0;
 
-      if (fishes[poolIndex].on && dynamicPool)
+      while (fishes[poolIndex].on && dynamicPool)
       {
-         GrowPool();
+         GrowPool(); // TODO working on this but also falling asleep
          poolIndex++;
       }
       RecycleFish(xform, poolIndex);
@@ -187,9 +215,9 @@ public class FishPool : MonoBehaviour
 
    private void Respawn()
    {
-      int respawnCount = 0;
       ReclaimAllFish();
-      int target = Mathf.FloorToInt(fishes.Length * (spawnPercent / 100f));
+      int respawnCount = 0;
+      int target = Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f));
       for (int i = 0; i < target; i++)
       {
          RecycleFish(RandomFreeTransform(), i);
@@ -201,6 +229,8 @@ public class FishPool : MonoBehaviour
    private void Spawn()
    {
       int spawnCount = 0;
+      int spawnCountRFT = 0;
+
       int target = Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f));
       for (int i = 0; i < target; i++)
       {
@@ -208,10 +238,11 @@ public class FishPool : MonoBehaviour
          if (rft)
          {
             PlaceFish(rft);
-            spawnCount++;
+            spawnCountRFT++;
          }
          else
          {
+            // Depreciated?
             for (int n = dynamicPoolSize; n >= 0; n--)
             {
                if (!fishes[n].on)
@@ -223,6 +254,8 @@ public class FishPool : MonoBehaviour
             }
          }
       }
-      Debug.Log("FishPool SpawnCount: " + spawnCount + ". Total active count: " + CountActive().ToString());
+      Debug.Log("FishPool Spawn-Recovery: " + spawnCount + 
+         " (RFTs requested: " + spawnCountRFT + 
+         "). Total active count: " + CountActive().ToString());
    }
 }

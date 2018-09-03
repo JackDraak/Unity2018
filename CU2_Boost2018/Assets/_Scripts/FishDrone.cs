@@ -37,11 +37,16 @@ public class FishDrone : MonoBehaviour
 
    private void FixedUpdate()
    {
+      // turn
       dimensions.y = Time.deltaTime * turnRate;
       transform.Rotate(dimensions, Space.World);
+
+      // propel
       transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed, Space.Self);
       if (changeTime + changeDelay < Time.time) SetSpeed();
       LerpSpeeds();
+
+      //AvoidCollisions();
    }
 
    private void Init()
@@ -53,7 +58,7 @@ public class FishDrone : MonoBehaviour
       // Set dynamic rotation in Y dimension.
       Vector3 thisRotation = Vector3.zero;
       thisRotation.y = Random.Range(0f,360f);
-      transform.Rotate(thisRotation, Space.World); // TODO, no this is last
+      transform.Rotate(thisRotation, Space.World);
 
       // Set dynamic scale.
       Vector3 scale = Vector3.zero;

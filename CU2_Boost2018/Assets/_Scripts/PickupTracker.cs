@@ -182,7 +182,7 @@ public class PickupTracker : MonoBehaviour {
          {
             complete = true;
             timeKeeper.Cease(highCount);
-            maxPower = player.BoostMaxPower();
+            maxPower = player.BoostMaxPower(0.1f); // 10% boost
             if (!task1)
             {
                task1 = true;
