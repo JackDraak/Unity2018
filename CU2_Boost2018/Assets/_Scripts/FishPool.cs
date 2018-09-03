@@ -26,7 +26,7 @@ public class FishPool : MonoBehaviour
 
    private Fish[] fishes;
    private FishSpawn[] spawnPoints;
-   public int dynamicPoolSize;
+   private int dynamicPoolSize;
    private int poolIndex = 0;
    private Transform xform;
 
@@ -35,14 +35,12 @@ public class FishPool : MonoBehaviour
       dynamicPoolSize = initialPoolSize;
       fishes = new Fish[initialPoolSize];
       spawnPoints = GetComponentsInChildren<FishSpawn>();
-      Debug.Log(spawnPoints.Length + " FishPool spawnPoints identified.");
-      for (int i = 0; i < initialPoolSize; i++) CreateFishObject(i);
 
-      // more new changes, not done for max-efficiency
-      // grow pool to min required size automagically
-      int targetDelta = Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f));
-      targetDelta -= initialPoolSize;
-      GrowPool(targetDelta);
+      Debug.Log(spawnPoints.Length + " FishPool spawnPoints identified.");
+      // Build initial pool.
+      for (int i = 0; i < initialPoolSize; i++) CreateFishObject(i);
+      CorrectPoolSize();
+
       Spawn();
    }
 
@@ -53,6 +51,14 @@ public class FishPool : MonoBehaviour
       ExpireFish();
    }
 
+   private void CorrectPoolSize()
+   {
+      // Grow pool to min required size automagically.
+      int targetDelta = Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f));
+      targetDelta -= CountAll();
+      if (targetDelta > 0) GrowPool(targetDelta);
+   }
+
    private int CountActive()
    {
       int active = 0;
@@ -61,6 +67,11 @@ public class FishPool : MonoBehaviour
          if (mo.on) active++;
       }
       return active;
+   }
+
+   private int CountAll()
+   {
+      return fishes.Length;
    }
 
    private void CreateFishObject(int i)
@@ -160,7 +171,7 @@ public class FishPool : MonoBehaviour
 
       while (fishes[poolIndex].on && dynamicPool)
       {
-         GrowPool(); // TODO working on this but also falling asleep
+         GrowPool();
          poolIndex++;
       }
       RecycleFish(xform, poolIndex);
@@ -216,6 +227,7 @@ public class FishPool : MonoBehaviour
    private void Respawn()
    {
       ReclaimAllFish();
+      CorrectPoolSize();
       int respawnCount = 0;
       int target = Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f));
       for (int i = 0; i < target; i++)
@@ -242,7 +254,7 @@ public class FishPool : MonoBehaviour
          }
          else
          {
-            // Depreciated?
+            // Depreciated? Re-places already placed fish for sake of getting enough placements. Silly.
             for (int n = dynamicPoolSize; n >= 0; n--)
             {
                if (!fishes[n].on)

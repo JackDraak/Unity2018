@@ -49,6 +49,7 @@ public class Player : MonoBehaviour
    private const float KILL_TIMER = 4f;
    private const float LOW_TILT_LIMIT = 0.4f;
    private const float PICKUP_VOLUME = 0.7f;
+   private const float POWER_CONTROLLER_FACTOR = 0.008f;
    private const float ROTATE_EXPEL_RATE = 0.5f;
    private const float ROTATION_FACTOR = 230f;
    private const float THRUST_EXPEL_RATE = 1f;
@@ -62,11 +63,10 @@ public class Player : MonoBehaviour
 
    private const int HALF_ARC = 180;
 
-   private const string HUD_COLOUR = "\"#FF7070\""; // coral
-   private const string GUAGE_LABEL = "Gas Reserve: ";
    private const string AXIS_POWER = "Vertical";
    private const string AXIS_ROTATION = "Horizontal";
    private const string AXIS_THRUST = "Jump";
+   private const string HUD_COLOUR = "\"#FF7070\""; // coral
 
    private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
    private float deRotationTime, thrustAudioLength, thrustAudioTimer;
@@ -236,7 +236,7 @@ public class Player : MonoBehaviour
 
    private void AdjustThrusterPower(float delta)
    {
-      delta *= 0.008f;
+      delta *= POWER_CONTROLLER_FACTOR;
       float deltaPlus = delta + thrustPowerSlider.value;
       if (deltaPlus > THRUST_MAX) thrustPowerSlider.value = THRUST_MAX;
       else if (deltaPlus < THRUST_MIN) thrustPowerSlider.value = THRUST_MIN;
@@ -250,8 +250,10 @@ public class Player : MonoBehaviour
       float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
       localEulers = transform.localRotation.eulerAngles;
       float playerTilt = localEulers.z;
-      if (playerTilt >= HALF_ARC &&  playerTilt < HIGH_TILT_LIMIT) transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
-      else if (playerTilt < HALF_ARC && playerTilt > LOW_TILT_LIMIT) transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
+      if (playerTilt >= HALF_ARC &&  playerTilt < HIGH_TILT_LIMIT)
+         transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
+      else if (playerTilt < HALF_ARC && playerTilt > LOW_TILT_LIMIT)
+         transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
    }
 
    public float BoostMaxPower(float boost)
@@ -295,7 +297,7 @@ public class Player : MonoBehaviour
 
    private void DebugControlPoll()
    {
-      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower(0.05f);
+      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower(0.025f); // 2.5% boost
       if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
       if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
    }
