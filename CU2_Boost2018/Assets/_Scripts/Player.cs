@@ -52,8 +52,8 @@ public class Player : MonoBehaviour
    private const float KILL_TIMER = 4f;
    private const float POWER_CONTROLLER_FACTOR = 0.008f;
    private const float ROTATION_FACTOR = 230f;
-   private const float TILT_LIMIT_MAX = 357.5f; // 9.6
-   private const float TILT_LIMIT_MIN = 2.5f; // 0.4
+   private const float TILT_LIMIT_MAX = 357.5f;
+   private const float TILT_LIMIT_MIN = 2.5f;
    private const float THRUST_FACTOR = 0.08f;
    private const float THRUST_FADE_FACTOR = 0.03f;
    private const float THRUST_LIGHTRANGE_MAX = 2f;
@@ -71,18 +71,18 @@ public class Player : MonoBehaviour
    private const string AXIS_THRUST = "Jump";
    private const string HUD_COLOUR = "\"#FF7070\""; // coral
 
-   private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
-   private float deRotationTime, thrustAudioLength, thrustAudioTimer;
-
-   private float fuelLevel = FUEL_MAX;
-   private float masterVolume = 1.0f;
-   private float maxPower = INITIAL_POWER_LEVEL;
-
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
 
+   private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
+
    private FishDrone[] fishDrones;
    private FishPool fishPool;
+
+   private float deRotationTime, thrustAudioLength, thrustAudioTimer;
+   private float fuelLevel = FUEL_MAX;
+   private float masterVolume = 1.0f;
+   private float maxPower = INITIAL_POWER_LEVEL;
 
    private GameObject cockpit;
    private GameObject thrusterBell;
@@ -91,9 +91,9 @@ public class Player : MonoBehaviour
 
    private GlueCam sceneCamera;
 
-   private ParticleSystem.EmissionModule thrustBubbles;
-
    private ParticleSystem thrustParticleSystem;
+
+   private ParticleSystem.EmissionModule thrustBubbles;
 
    private PickupTracker pickupTracker;
 
@@ -101,9 +101,9 @@ public class Player : MonoBehaviour
 
    private Rigidbody thisRigidbody;
 
+   private Slider gasLevelSlider;
    private Slider thrustPowercapSlider;
    private Slider thrustPowerSlider;
-   private Slider gasLevelSlider;
 
    private Timekeeper timeKeeper;
 
@@ -114,6 +114,18 @@ public class Player : MonoBehaviour
    private Vector3 startPosition = Vector3.zero;
    private Vector3 threeControlAxis = Vector3.zero;
    #endregion
+
+   private void Awake()
+   {
+      // Objects disabled by UIcontrol should be assigned in Awake() to avoid trying to capture them after they've been disabled**.
+      // *The other 2 objects under UIcontrol are manually assigned to PickupTracker.cs in the inspector.
+      // **Originally UIcontrol.cs was designed to be used from Player.cs through public methods. It still is, but for unknown
+      //   reasons, it was failing to enforce that control in the local Start() method (intermittently, no-less), thus the functionality
+      //   being moved into UIcontrol.cs:Start()
+      gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
+      thrustPowercapSlider = GameObject.FindGameObjectWithTag("Slider_Powercap").GetComponent<Slider>();
+      thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
+   }
 
    private void Start ()
    {
@@ -163,18 +175,6 @@ public class Player : MonoBehaviour
       }
    }
 
-   private void Awake()
-   {
-      // Objects disabled by UIcontrol should be assigned in Awake() to avoid trying to capture them after they've been disabled**.
-      // *The other 2 objects under UIcontrol are manually assigned to PickupTracker.cs in the inspector.
-      // **Originally UIcontrol.cs was designed to be used from Player.cs through public methods. It still is, but for unknown
-      //   reasons, it was failing to enforce that control in the local Start() method (intermittently, no-less), thus the functionality
-      //   being moved into UIcontrol.cs:Start()
-      gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
-      thrustPowercapSlider = GameObject.FindGameObjectWithTag("Slider_Powercap").GetComponent<Slider>();
-      thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
-   }
-
    private void InitVars()
    {
       audioSources = GetComponents<AudioSource>();
@@ -217,12 +217,12 @@ public class Player : MonoBehaviour
       thrustPowercapSlider.maxValue = 1f;
       thrustPowercapSlider.value = maxPower;
       SetPower(INITIAL_POWER_LEVEL);
+      DoColourForThrustcap();
 
       gasLevelSlider.maxValue = FUEL_MAX;
       gasLevelSlider.minValue = 0;
       gasLevelSlider.value = fuelLevel;
       DoColourForGasLevel();
-      DoColourForThrustcap();
    }
 
    private void AdjustEmissionRate(float newRate)
@@ -261,6 +261,27 @@ public class Player : MonoBehaviour
       return maxPower;
    }
 
+   private void DebugControlPoll()
+   {
+      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower(0.025f); // 2.5% boost
+      if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
+      if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
+   }
+
+   private void DeRotate()
+   {
+      if (!deRotating)
+      {
+         deRotationTime = Time.time;
+         deRotating = true;
+      }
+      else
+      {
+         AutoDeRotate();
+         if (threeControlAxis.z == 0) EndExpulsion();
+      }
+   }
+
    private void DoColourForGasLevel()
    {
       Color colour;
@@ -289,27 +310,6 @@ public class Player : MonoBehaviour
       thrustFill.color = colour;
       if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
       thrusterBell.GetComponent<MeshRenderer>().material.color = thrustLight.GetComponent<Light>().color = colour;
-   }
-
-   private void DebugControlPoll()
-   {
-      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower(0.025f); // 2.5% boost
-      if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
-      if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
-   }
-
-   private void DeRotate()
-   {
-      if (!deRotating)
-      {
-         deRotationTime = Time.time;
-         deRotating = true;
-      }
-      else
-      {
-         AutoDeRotate();
-         if (threeControlAxis.z == 0) EndExpulsion();
-      }
    }
 
    private void EndExpulsion()
