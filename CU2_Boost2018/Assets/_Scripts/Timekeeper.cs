@@ -1,16 +1,22 @@
-﻿using UnityEngine;
-using TMPro;
+﻿using TMPro;
+using UnityEngine;
 
 public class Timekeeper : MonoBehaviour {
 
-   private bool debugMode;
-   private bool finished;
-   public bool started;
-   private float elapsed;
-   private float endTime;
-   private float startTime;
-   private Records records;
-   private TextMeshProUGUI readout; 
+   public bool running
+   {
+      get { return started; }
+      set { } // publicly visible, but read-only
+   }
+
+   private bool debugMode = false;
+   private bool finished = false;
+   private bool started = false;
+   private float elapsed = 0f;
+   private float endTime = 0f;
+   private float startTime = 0f;
+   private Records records = null;
+   private TextMeshProUGUI readout = null; 
 
    public void Begin()
    {
@@ -30,9 +36,9 @@ public class Timekeeper : MonoBehaviour {
 
    public void Restart()
    {
-      started = false;
-      finished = false;
       endTime = 0f;
+      finished = false;
+      started = false;
       startTime = 0f;
    }
 

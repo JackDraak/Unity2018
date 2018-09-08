@@ -2,10 +2,8 @@
 
 public class Spinner : MonoBehaviour {
 
-   [SerializeField] GameObject pickupEffect;
-
-   private const float SPINRATE_FAST = 100f;
-   private const float SPINRATE_SLOW = 10f;
+   private const float SPINRATE_MAX = 100f;
+   private const float SPINRATE_MIN = 10f;
 
    private Vector3 spin = Vector3.zero;
    private float spinRate;
@@ -17,16 +15,9 @@ public class Spinner : MonoBehaviour {
       else return false;
    }
 
-   //private void OnDisable()
-   //{
-   //   GameObject leakDamage = (GameObject)Instantiate(pickupEffect, transform.position, Quaternion.identity);
-   //   //xAudio.PlayOneShot(collisionSound, masterVolume * COLLISION_VOLUME);
-   //   Destroy(leakDamage, 1);
-   //}
-
    private void Start()
    {
-      spinRate = Random.Range(SPINRATE_SLOW, SPINRATE_FAST);
+      spinRate = Random.Range(SPINRATE_MIN, SPINRATE_MAX);
       if (FiftyFifty()) spinRate = -spinRate;
    }
 

@@ -2,6 +2,8 @@
 //    Dev-Notes:
 //
 //    idea fish bopping bonus level: gain extra %'s of Gas Level
+//    
+//    TODO : work on Fog / lighting?
 //
 
 using TMPro;                                    // For text UI objects
@@ -22,6 +24,7 @@ public class Player : MonoBehaviour
    [SerializeField] Color thrustLow = Color.clear;
 
    [SerializeField] GameObject collisionEffect;
+   [SerializeField] GameObject pickupEffect;
 
    [SerializeField] Image gasFill = null;
    [SerializeField] Image thrustcapFill = null;
@@ -32,34 +35,34 @@ public class Player : MonoBehaviour
 
    #region Private Variables
    private const float CLIP_TIME = 0.5f;
-   private const float COLLISION_VOLUME = 0.4f;
    private const float DAMAGE_VALUE = 35f;
    private const float DEROTATION_RATE = 0.2f;
    private const float EMISSION_RATE_INACTIVE = 1.3f;
    private const float EMISSION_RATE_ROTATION = 20f;
    private const float EMISSION_RATE_THRUST = 60f;
+   private const float EXPEL_RATE_ROTATE = 0.5f;
+   private const float EXPEL_RATE_THRUST = 1f;
    private const float FUEL_GEN_RATE = 40f;
    private const float FUEL_MAX = 1000f;
    private const float FUEL_PICKUP_VALUE = 200f;
    private const float FUEL_POWER_FACTOR = 0.75f;
    private const float FUEL_USE_RATE = 10000f;
    private const float FUEL_WARN_LEVEL = 20f;
-   private const float HIGH_TILT_LIMIT = 359.6f;
    private const float INITIAL_POWER_LEVEL = 0.3f;
    private const float KILL_TIMER = 4f;
-   private const float LOW_TILT_LIMIT = 0.4f;
-   private const float PICKUP_VOLUME = 0.7f;
    private const float POWER_CONTROLLER_FACTOR = 0.008f;
-   private const float ROTATE_EXPEL_RATE = 0.5f;
    private const float ROTATION_FACTOR = 230f;
-   private const float THRUST_EXPEL_RATE = 1f;
+   private const float TILT_LIMIT_MAX = 357.5f; // 9.6
+   private const float TILT_LIMIT_MIN = 2.5f; // 0.4
    private const float THRUST_FACTOR = 0.08f;
    private const float THRUST_FADE_FACTOR = 0.03f;
    private const float THRUST_LIGHTRANGE_MAX = 2f;
    private const float THRUST_MAX = 1f;
    private const float THRUST_MIN = 0f;
    private const float THRUST_POWER_FACTOR = 0.02f;
-   private const float THRUST_VOLUME = 0.22f;
+   private const float VOLUME_COLLISION = 0.4f;
+   private const float VOLUME_PICKUP = 0.5f;
+   private const float VOLUME_THRUST = 0.2f;
 
    private const int HALF_ARC = 180;
 
@@ -130,40 +133,33 @@ public class Player : MonoBehaviour
 
    private void OnCollisionEnter(Collision collision)
    {
-      switch (collision.gameObject.tag)
+      if (collision.gameObject.tag == "BadObject_01")
       {
-         case "BadObject_01":
-            if (!invulnerable)
-            {
-               fuelLevel -= DAMAGE_VALUE;
-               if (fuelLevel < 0) fuelLevel = 0;
-               GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-               xAudio.PlayOneShot(collisionSound, masterVolume * COLLISION_VOLUME);
-               Destroy(leakDamage, KILL_TIMER);
-            }
-            else Debug.Log("invulnerable: BO-01");
-            break;
-         default:
-            break;
+         if (!invulnerable)
+         {
+            fuelLevel -= DAMAGE_VALUE;
+            if (fuelLevel < 0) fuelLevel = 0;
+            GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
+            xAudio.PlayOneShot(collisionSound, masterVolume * VOLUME_COLLISION);
+            Destroy(leakDamage, KILL_TIMER);
+         }
+         else Debug.Log("invulnerable: BO-01");
       }
    }
 
    private void OnTriggerEnter(Collider other)
    {
-      switch (other.gameObject.tag)
+      if (other.gameObject.tag == "GoodObject_01")
       {
-         case "GoodObject_01":
-            if (pickupTracker.ClaimPickup(other))
-            {
-               // TODO switch back to active/deactice model in order to recycle objects?
-               Destroy(other.gameObject, 0.01f);
-               xAudio.PlayOneShot(bonusSound, masterVolume * PICKUP_VOLUME);
-               fuelLevel += FUEL_PICKUP_VALUE;
-               if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
-            }
-            break;
-         default:
-            break;
+         if (pickupTracker.ClaimPickup(other))
+         {
+            Destroy(other.gameObject, 0.01f);
+            xAudio.PlayOneShot(bonusSound, masterVolume * VOLUME_PICKUP);
+            GameObject pickupPop = (GameObject)Instantiate(pickupEffect, other.transform.position, Quaternion.identity);
+            Destroy(pickupPop, KILL_TIMER);
+            fuelLevel += FUEL_PICKUP_VALUE;
+            if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
+         }
       }
    }
 
@@ -194,9 +190,9 @@ public class Player : MonoBehaviour
       sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
 
       cockpit = GameObject.FindGameObjectWithTag("Cockpit");
-      tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
       thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
       thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
+      tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
 
       debugMode = Debug.isDebugBuild;
       startPosition = transform.position;
@@ -250,9 +246,9 @@ public class Player : MonoBehaviour
       float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
       localEulers = transform.localRotation.eulerAngles;
       float playerTilt = localEulers.z;
-      if (playerTilt >= HALF_ARC &&  playerTilt < HIGH_TILT_LIMIT)
+      if (playerTilt >= HALF_ARC &&  playerTilt < TILT_LIMIT_MAX)
          transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
-      else if (playerTilt < HALF_ARC && playerTilt > LOW_TILT_LIMIT)
+      else if (playerTilt < HALF_ARC && playerTilt > TILT_LIMIT_MIN)
          transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
    }
 
@@ -354,10 +350,10 @@ public class Player : MonoBehaviour
 
    private void HideTutorial()
    {
+      timeKeeper.Begin();
       tutorialIsVisible = false;
       tutorialText.SetActive(false);
       uiControl.visible = true;
-      timeKeeper.Begin();
    }
 
    private void MaintainAlignment()
@@ -384,11 +380,11 @@ public class Player : MonoBehaviour
       {
          if (!thrustAudioTrack)
          {
-            thrustAudio.PlayOneShot(thrustSound, masterVolume * THRUST_VOLUME);
+            thrustAudio.PlayOneShot(thrustSound, masterVolume * VOLUME_THRUST);
             thrustAudioTimer = Time.time;
             thrustAudioTrack = true;
          }
-         if (timeKeeper.started)
+         if (timeKeeper.running)
          {
             tutorialText.SetActive(false);
             uiControl.visible = true;
@@ -436,7 +432,7 @@ public class Player : MonoBehaviour
       if (threeControlAxis.x != 0)
       {
          if (tutorialIsVisible) HideTutorial();
-         if (ExpelGas(ROTATE_EXPEL_RATE))
+         if (ExpelGas(EXPEL_RATE_ROTATE))
          {
             Rotate(threeControlAxis.x);
             deRotating = false;
@@ -450,7 +446,7 @@ public class Player : MonoBehaviour
       threeControlAxis.z = CrossPlatformInputManager.GetAxis(AXIS_THRUST);
       if (threeControlAxis.z != 0)
       {
-         if (ExpelGas(THRUST_EXPEL_RATE))
+         if (ExpelGas(EXPEL_RATE_THRUST))
          {
             Thrust(threeControlAxis.z);
             AdjustEmissionRate(EMISSION_RATE_THRUST);
@@ -463,17 +459,17 @@ public class Player : MonoBehaviour
 
    public void Restart()
    {
-      fuelLevel = FUEL_MAX;
       fishPool.Reset();
+      fuelLevel = FUEL_MAX;
       pickupTracker.Restart();
       sceneCamera.Restart();
+      thisRigidbody.velocity = Vector3.zero;
       timeKeeper.Restart();
+      transform.position = startPosition;
+      transform.rotation = startRotation;
       tutorialIsVisible = true;
       tutorialText.SetActive(true);
       uiControl.visible = false;
-      transform.position = startPosition;
-      transform.rotation = startRotation;
-      thisRigidbody.velocity = Vector3.zero;
       foreach (FishDrone drone in fishDrones) drone.Reset();
    }
 
@@ -499,7 +495,7 @@ public class Player : MonoBehaviour
       if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
       {
          thrustAudio.Stop();
-         thrustAudio.PlayOneShot(thrustSound, masterVolume * THRUST_VOLUME);
+         thrustAudio.PlayOneShot(thrustSound, masterVolume * VOLUME_THRUST);
          thrustAudioTimer = Time.time;
       }
    }

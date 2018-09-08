@@ -12,10 +12,10 @@ public class FishDrone : MonoBehaviour
    private Vector3 dimensions = Vector3.zero;
    private Vector3 startPos;
 
-   private const float ANIMATION_SPEED_FACTOR = 1.8f;
    private const float ANIMATION_SCALING_LARGE = 0.4f;
    private const float ANIMATION_SCALING_MED = 0.7f;
    private const float ANIMATION_SCALING_SMALL = 1.7f;
+   private const float ANIMATION_SPEED_FACTOR = 1.8f;
    private const float CHANGE_TIME_MAX = 10f;
    private const float CHANGE_TIME_MIN = 4f;
    private const float LERP_FACTOR_FOR_SPEED = 0.003f;
@@ -46,7 +46,7 @@ public class FishDrone : MonoBehaviour
       if (changeTime + changeDelay < Time.time) SetSpeed();
       LerpSpeeds();
 
-      //AvoidCollisions();
+      //TODO AvoidCollisions();
    }
 
    private void Init()
