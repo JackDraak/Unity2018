@@ -33,7 +33,7 @@ public class PickupTracker : MonoBehaviour {
       if (!text_tracker) Debug.Log("FAIL: no text_tracker object variable!!");
 
       spawnPointsArray = GameObject.FindGameObjectsWithTag("Spawn_Good");
-      Debug.Log("Number of Pickups Spawn Points: " + spawnPointsArray.Length);
+      Debug.Log("FishPool number of Pickup spawn-points: " + spawnPointsArray.Length);
 
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
 
@@ -84,7 +84,7 @@ public class PickupTracker : MonoBehaviour {
 
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
-      Debug.Log("Number of pickups: " + pickupsArray.Length);
+      Debug.Log("FishPool number of pickups spawned: " + pickupsArray.Length);
 
       text_tracker.text = count.ToString() + " Gas Canisters Remaining";
 

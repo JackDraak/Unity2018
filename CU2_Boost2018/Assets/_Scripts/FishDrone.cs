@@ -4,8 +4,8 @@ public class FishDrone : MonoBehaviour
 {
    private Animator animator;
    private float changeDelay, changeTime;
+   private float newSpeed, speed;
    private float roughScale, scaleFactor;
-   private float speed, newSpeed;
    private float turnRate;
    private Quaternion startQuat;
    private Rigidbody thisRigidbody;
@@ -28,6 +28,11 @@ public class FishDrone : MonoBehaviour
    private const float TURNRATE_MAX = 10f;
    private const float TURNRATE_MIN = 3f;
 
+   private void AvoidCollisions()
+   {
+
+   }
+
    // On average, return 'True' ~half the time, and 'False' ~half the time.
    private bool FiftyFifty()
    {
@@ -46,7 +51,8 @@ public class FishDrone : MonoBehaviour
       if (changeTime + changeDelay < Time.time) SetSpeed();
       LerpSpeeds();
 
-      //TODO AvoidCollisions();
+      //TODO 
+      AvoidCollisions();
    }
 
    private void Init()

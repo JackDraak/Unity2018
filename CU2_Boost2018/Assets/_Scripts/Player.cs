@@ -6,8 +6,9 @@
 //    TODO : work on Fog / lighting?
 //
 
+using EZCameraShake;
 using TMPro;                                    // For text UI objects
-using UnityEngine;   
+using UnityEngine;
 using UnityEngine.UI;                           // For slider UI objects
 using UnityStandardAssets.CrossPlatformInput;   // For ramping keyboard inputs
 
@@ -31,6 +32,14 @@ public class Player : MonoBehaviour
    [SerializeField] Image thrustFill = null;
 
    [SerializeField] TextMeshProUGUI thrustcapSlideText;
+
+   [SerializeField] float shakeMagnitude = 1f;
+   [SerializeField] float shakeRough = 1f;
+   [SerializeField] float shakeRampUp = 0.2f;
+   [SerializeField] float shakeRampDown = 0.6f;
+
+   public Vector3 shakePosInf = new Vector3(0.75f, 0.55f, 0.15f);
+   public Vector3 shakeRotInf = new Vector3(2f, 3f, 7f);
    #endregion
 
    #region Private Variables
@@ -76,6 +85,8 @@ public class Player : MonoBehaviour
 
    private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
 
+   private CameraShakeInstance shake;
+
    private FishDrone[] fishDrones;
    private FishPool fishPool;
 
@@ -89,7 +100,7 @@ public class Player : MonoBehaviour
    private GameObject thrustLight;
    private GameObject tutorialText;
 
-   private GlueCam sceneCamera;
+   private GlueCam glueCam;
 
    private ParticleSystem thrustParticleSystem;
 
@@ -153,6 +164,7 @@ public class Player : MonoBehaviour
             if (fuelLevel < 0) fuelLevel = 0;
             GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
             xAudio.PlayOneShot(collisionSound, masterVolume * VOLUME_COLLISION);
+            shake = CameraShaker.Instance.ShakeOnce(shakeMagnitude, shakeRough, shakeRampUp, shakeRampDown, shakePosInf, shakeRotInf);
             Destroy(leakDamage, KILL_TIMER);
          }
          else Debug.Log("invulnerable: BO-01");
@@ -187,12 +199,12 @@ public class Player : MonoBehaviour
       timeKeeper = FindObjectOfType<Timekeeper>();
       uiControl = FindObjectOfType<UIcontrol>();
 
-      sceneCamera = FindObjectOfType<Camera>().GetComponent<GlueCam>();
-
       cockpit = GameObject.FindGameObjectWithTag("Cockpit");
       thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
       thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
       tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
+
+      glueCam = GameObject.FindGameObjectWithTag("GlueCam").GetComponent<GlueCam>();
 
       debugMode = Debug.isDebugBuild;
       startPosition = transform.position;
@@ -462,7 +474,7 @@ public class Player : MonoBehaviour
       fishPool.Reset();
       fuelLevel = FUEL_MAX;
       pickupTracker.Restart();
-      sceneCamera.Restart();
+      glueCam.Restart();
       thisRigidbody.velocity = Vector3.zero;
       timeKeeper.Restart();
       transform.position = startPosition;
