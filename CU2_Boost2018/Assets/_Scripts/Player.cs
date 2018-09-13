@@ -85,7 +85,7 @@ public class Player : MonoBehaviour
 
    private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
 
-   private CameraShakeInstance shake;
+   private CameraShakeInstance shake = null;
 
    private FishDrone[] fishDrones;
    private FishPool fishPool;
@@ -195,16 +195,18 @@ public class Player : MonoBehaviour
 
       fishDrones = FindObjectsOfType<FishDrone>();
       fishPool = FindObjectOfType<FishPool>();
+      glueCam = FindObjectOfType<GlueCam>();
       pickupTracker = FindObjectOfType<PickupTracker>();
       timeKeeper = FindObjectOfType<Timekeeper>();
       uiControl = FindObjectOfType<UIcontrol>();
+
 
       cockpit = GameObject.FindGameObjectWithTag("Cockpit");
       thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
       thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
       tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
 
-      glueCam = GameObject.FindGameObjectWithTag("GlueCam").GetComponent<GlueCam>();
+      //glueCam = GameObject.FindGameObjectWithTag("GlueCam").GetComponent<GlueCam>();
 
       debugMode = Debug.isDebugBuild;
       startPosition = transform.position;
