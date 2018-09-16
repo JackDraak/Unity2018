@@ -2,18 +2,19 @@
 
 public class FishDrone : MonoBehaviour
 {
-   [SerializeField] float RAYCAST_MAX_DISTANCE = 1.0f;
 
    private Animator animator;
    private float changeDelay, changeTime;
    private float correctedSpeed, newSpeed, speed;
    private float correctedTurnRate, turnRate;
    private float roughScale, scaleFactor;
+   private int layerMask; // = 1 << 8; // Bit shift the index of the layer (8) to get a bit mask
    private Quaternion startQuat;
    private Rigidbody thisRigidbody;
    private Vector3 dimensions = Vector3.zero;
+   private Vector3 fore, port, starbord;
    private Vector3 startPos;
-
+   
    private const float ANIMATION_SCALING_LARGE = 0.4f;
    private const float ANIMATION_SCALING_MED = 0.7f;
    private const float ANIMATION_SCALING_SMALL = 1.7f;
@@ -21,6 +22,9 @@ public class FishDrone : MonoBehaviour
    private const float CHANGE_TIME_MAX = 10f;
    private const float CHANGE_TIME_MIN = 4f;
    private const float LERP_FACTOR_FOR_SPEED = 0.003f;
+   private const float RAYCAST_CORRECTION_FACTOR = 3.3f;
+   private const float RAYCAST_DRAWTIME = 0;
+   private const float RAYCAST_MAX_DISTANCE = 1.0f;
    private const float SCALE_MAX = 1.6f;
    private const float SCALE_MIN = 0.4f;
    private const float SIZE_LARGE_BREAK = 3f;
@@ -30,63 +34,15 @@ public class FishDrone : MonoBehaviour
    private const float TURNRATE_MAX = 10f;
    private const float TURNRATE_MIN = 3f;
 
-   Vector3 ahead, port, starbord;
-   // Bit shift the index of the layer (8) to get a bit mask
-   int layerMask = 1 << 8;
-
-   private void AvoidCollisions()
+   private void BeFishy()
    {
-      // Setup some variables.
-      ahead = transform.TransformDirection(Vector3.forward);
-      port = ahead;
-      starbord = ahead;
-      port.z -= 0.5f;
-      starbord.z += 0.5f;
-
-      // Look ahead.
-      if (Physics.Raycast(transform.position, ahead, RAYCAST_MAX_DISTANCE, layerMask))
-      {
-         Debug.DrawRay(transform.position, ahead, Color.red, 0f);
-         correctedSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / correctedSpeed); // TODO tweak this
-      }
-      else correctedSpeed = speed;
-
-      // Look left.
-      if (Physics.Raycast(transform.position, port, RAYCAST_MAX_DISTANCE, layerMask))
-      {
-         Debug.DrawRay(transform.position, port, Color.blue, 0f);
-         if (turnRate > 0) correctedTurnRate = turnRate * 3; // TODO tweak this
-         else correctedTurnRate = turnRate * -3;
-      }
-      else correctedTurnRate = turnRate;
-
-      // Look right.
-      if (Physics.Raycast(transform.position, starbord, RAYCAST_MAX_DISTANCE, layerMask))
-      {
-         Debug.DrawRay(transform.position, starbord, Color.yellow, 0f);
-         if (turnRate < 0) correctedTurnRate = turnRate * 3; // TODO tweak this
-         else correctedTurnRate = turnRate * -3;
-      }
-      else correctedTurnRate = turnRate;
-
-      // turn
-      dimensions.y = Time.deltaTime * correctedTurnRate;
-      transform.Rotate(dimensions, Space.World);
-
-      // propel
-      transform.Translate(Vector3.forward * Time.fixedDeltaTime * correctedSpeed, Space.Self);
-      if (changeTime + changeDelay < Time.time) SetSpeed();
-
-      // LERP speed
-      if (!(Mathf.Approximately(speed, newSpeed)))
-      {
-         speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
-         animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
-      }
+      OrientView();
+      PlanPath();
+      Motivate();
+      LerpSpeed();
    }
 
-   // On average, return 'True' ~half the time, and 'False' ~half the time.
-   private bool FiftyFifty()
+   private bool FiftyFifty() // On average, return 'True' ~half the time, and 'False' ~half the time.
    {
       if (Mathf.FloorToInt(Random.Range(0, 2)) == 1) return true;
       else return false;
@@ -94,28 +50,18 @@ public class FishDrone : MonoBehaviour
 
    private void FixedUpdate()
    {
-      //TODO 
-      AvoidCollisions();
-
-      // turn
-      //dimensions.y = Time.deltaTime * correctedTurnRate;
-      //transform.Rotate(dimensions, Space.World);
-
-      // propel
-      //transform.Translate(Vector3.forward * Time.fixedDeltaTime * correctedSpeed, Space.Self);
-      //if (changeTime + changeDelay < Time.time) SetSpeed();
-      //LerpSpeeds();
+      BeFishy();
    }
 
    private void Init()
    {
-      // Set dynamic turnrate and direction.
+      // Set dynamic turnrate/direction.
       turnRate = Random.Range(TURNRATE_MIN, TURNRATE_MAX);
       if (FiftyFifty()) turnRate = -turnRate;
 
-      // Set dynamic rotation in Y dimension.
+      // Set dynamic starting orientation in Y dimension.
       Vector3 thisRotation = Vector3.zero;
-      thisRotation.y = Random.Range(0f,360f);
+      thisRotation.y = Random.Range(0f, 360f);
       transform.Rotate(thisRotation, Space.World);
 
       // Set dynamic scale.
@@ -133,17 +79,67 @@ public class FishDrone : MonoBehaviour
       SetSpeed();
    }
 
-   private void LerpSpeeds()
+   private void LerpSpeed()
    {
-      //if (!avoiding) // TODO make specific to advancing and not turning?
-      //{
-         // If speed and newSpeed are not ~=, lerp them by LERP_FACTOR_FOR_SPEED.
-         if (!(Mathf.Approximately(speed, newSpeed)))
-         {
-            speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
-            animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
-         }
-      //}
+      if (!(Mathf.Approximately(speed, newSpeed)))
+      {
+         speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
+         animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
+      }
+   }
+
+   private void Motivate()
+   {
+      // Turn.
+      dimensions.y = Time.deltaTime * correctedTurnRate;
+      transform.Rotate(dimensions, Space.World);
+
+      // Propel.
+      transform.Translate(Vector3.forward * Time.fixedDeltaTime * correctedSpeed, Space.Self);
+      if (changeTime + changeDelay < Time.time) SetSpeed();
+   }
+
+   private void OrientView()
+   {
+      fore = transform.forward;
+      port = starbord = fore;
+      port.z -= 0.6f;
+      starbord.z += 0.6f;
+   }
+
+   private void PlanPath()
+   {
+      RaycastHit hitPort, hitStarbord;
+
+      // Look ahead.
+      if (Physics.Raycast(transform.position, fore, RAYCAST_MAX_DISTANCE, layerMask))
+      {
+         Debug.DrawRay(transform.position, fore, Color.red, RAYCAST_DRAWTIME);
+         correctedSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / correctedSpeed);
+      }
+      else correctedSpeed = speed;
+
+      // Look left.
+      if (Physics.Raycast(transform.position, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask))
+      {
+         Debug.DrawRay(transform.position, port, Color.blue, RAYCAST_DRAWTIME);
+      }
+
+      // Look right.
+      if (Physics.Raycast(transform.position, starbord, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask))
+      {
+         Debug.DrawRay(transform.position, starbord, Color.yellow, RAYCAST_DRAWTIME);
+      }
+
+      // Select a direction based on path or obstacle detection.
+      if (hitPort.distance > 0 && hitStarbord.distance > 0)
+      {
+         if (hitPort.distance < hitStarbord.distance) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
+         else correctedTurnRate = -turnRate * RAYCAST_CORRECTION_FACTOR;
+      }
+      else if (hitPort.distance > 0) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR; // TODO finish
+      else if (hitStarbord.distance > 0) correctedTurnRate = -turnRate * RAYCAST_CORRECTION_FACTOR;
+      else correctedTurnRate = turnRate;
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -170,9 +166,11 @@ public class FishDrone : MonoBehaviour
 
    private void Start()
    {
-      // This would cast rays only against colliders in layer 8.
-      // But instead we want to collide against everything except layer 8. The ~ operator does this, it inverts a bitmask.
-      layerMask = ~layerMask;
+      // Setup for collision-avoidance: layerMask
+      // Bit shift the index of the layer (8) to get a bit mask
+      layerMask = 1 << 8; // This would cast rays only against colliders in layer 8.
+      // But we want to collide against everything except layer 8. 
+      layerMask = ~layerMask; // The ~ operator inverts the bitmask.
 
       animator = GetComponent<Animator>();
       startPos = transform.position;
