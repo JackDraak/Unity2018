@@ -46,7 +46,7 @@ public class FishDrone : MonoBehaviour
       // Look ahead.
       if (Physics.Raycast(transform.position, ahead, RAYCAST_MAX_DISTANCE, layerMask))
       {
-         Debug.DrawRay(transform.position, ahead, Color.red, .1f);
+         Debug.DrawRay(transform.position, ahead, Color.red, 0f);
          correctedSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / correctedSpeed); // TODO tweak this
       }
       else correctedSpeed = speed;
@@ -54,7 +54,7 @@ public class FishDrone : MonoBehaviour
       // Look left.
       if (Physics.Raycast(transform.position, port, RAYCAST_MAX_DISTANCE, layerMask))
       {
-         Debug.DrawRay(transform.position, port, Color.blue, .1f);
+         Debug.DrawRay(transform.position, port, Color.blue, 0f);
          if (turnRate > 0) correctedTurnRate = turnRate * 3; // TODO tweak this
          else correctedTurnRate = turnRate * -3;
       }
@@ -63,7 +63,7 @@ public class FishDrone : MonoBehaviour
       // Look right.
       if (Physics.Raycast(transform.position, starbord, RAYCAST_MAX_DISTANCE, layerMask))
       {
-         Debug.DrawRay(transform.position, starbord, Color.yellow, .1f);
+         Debug.DrawRay(transform.position, starbord, Color.yellow, 0f);
          if (turnRate < 0) correctedTurnRate = turnRate * 3; // TODO tweak this
          else correctedTurnRate = turnRate * -3;
       }
