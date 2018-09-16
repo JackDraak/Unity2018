@@ -5,7 +5,6 @@ public class FishDrone : MonoBehaviour
    [SerializeField] float RAYCAST_MAX_DISTANCE = 1.0f;
 
    private Animator animator;
-   private bool avoiding = false;
    private float changeDelay, changeTime;
    private float correctedSpeed, newSpeed, speed;
    private float correctedTurnRate, turnRate;
@@ -37,39 +36,38 @@ public class FishDrone : MonoBehaviour
 
    private void AvoidCollisions()
    {
-      avoiding = false;
+      // Setup some variables.
       ahead = transform.TransformDirection(Vector3.forward);
       port = ahead;
       starbord = ahead;
       port.z -= 0.5f;
       starbord.z += 0.5f;
 
-      RaycastHit hit;
       // Look ahead.
-      if (Physics.Raycast(transform.position, ahead, out hit, RAYCAST_MAX_DISTANCE, layerMask))
+      if (Physics.Raycast(transform.position, ahead, RAYCAST_MAX_DISTANCE, layerMask))
       {
          Debug.DrawRay(transform.position, ahead, Color.red, .1f);
-         correctedSpeed = Mathf.Lerp(speed * 0.2f, speed, 1 / correctedSpeed); // TODO tweak this
-         avoiding = true;
+         correctedSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / correctedSpeed); // TODO tweak this
       }
+      else correctedSpeed = speed;
 
       // Look left.
-      if (Physics.Raycast(transform.position, port, out hit, RAYCAST_MAX_DISTANCE, layerMask))
+      if (Physics.Raycast(transform.position, port, RAYCAST_MAX_DISTANCE, layerMask))
       {
          Debug.DrawRay(transform.position, port, Color.blue, .1f);
-         if (turnRate < 0) correctedTurnRate = turnRate * 3; // TODO tweak this
-         else correctedTurnRate = turnRate * -3;
-         avoiding = true;
-      }
-
-      // Look right.
-      if (Physics.Raycast(transform.position, starbord, out hit, RAYCAST_MAX_DISTANCE, layerMask))
-      {
-         Debug.DrawRay(transform.position, starbord, Color.yellow, .1f);
          if (turnRate > 0) correctedTurnRate = turnRate * 3; // TODO tweak this
          else correctedTurnRate = turnRate * -3;
-         avoiding = true;
       }
+      else correctedTurnRate = turnRate;
+
+      // Look right.
+      if (Physics.Raycast(transform.position, starbord, RAYCAST_MAX_DISTANCE, layerMask))
+      {
+         Debug.DrawRay(transform.position, starbord, Color.yellow, .1f);
+         if (turnRate < 0) correctedTurnRate = turnRate * 3; // TODO tweak this
+         else correctedTurnRate = turnRate * -3;
+      }
+      else correctedTurnRate = turnRate;
 
       // turn
       dimensions.y = Time.deltaTime * correctedTurnRate;
