@@ -2,11 +2,14 @@
 
 public class FishDrone : MonoBehaviour
 {
+   [SerializeField] float RAYCAST_MAX_DISTANCE = 1.0f;
+
    private Animator animator;
+   private bool avoiding = false;
    private float changeDelay, changeTime;
-   private float newSpeed, speed;
+   private float correctedSpeed, newSpeed, speed;
+   private float correctedTurnRate, turnRate;
    private float roughScale, scaleFactor;
-   private float turnRate;
    private Quaternion startQuat;
    private Rigidbody thisRigidbody;
    private Vector3 dimensions = Vector3.zero;
@@ -28,9 +31,60 @@ public class FishDrone : MonoBehaviour
    private const float TURNRATE_MAX = 10f;
    private const float TURNRATE_MIN = 3f;
 
+   Vector3 ahead, port, starbord;
+   // Bit shift the index of the layer (8) to get a bit mask
+   int layerMask = 1 << 8;
+
    private void AvoidCollisions()
    {
+      avoiding = false;
+      ahead = transform.TransformDirection(Vector3.forward);
+      port = ahead;
+      starbord = ahead;
+      port.z -= 0.5f;
+      starbord.z += 0.5f;
 
+      RaycastHit hit;
+      // Look ahead.
+      if (Physics.Raycast(transform.position, ahead, out hit, RAYCAST_MAX_DISTANCE, layerMask))
+      {
+         Debug.DrawRay(transform.position, ahead, Color.red, .1f);
+         correctedSpeed = Mathf.Lerp(speed * 0.2f, speed, 1 / correctedSpeed); // TODO tweak this
+         avoiding = true;
+      }
+
+      // Look left.
+      if (Physics.Raycast(transform.position, port, out hit, RAYCAST_MAX_DISTANCE, layerMask))
+      {
+         Debug.DrawRay(transform.position, port, Color.blue, .1f);
+         if (turnRate < 0) correctedTurnRate = turnRate * 3; // TODO tweak this
+         else correctedTurnRate = turnRate * -3;
+         avoiding = true;
+      }
+
+      // Look right.
+      if (Physics.Raycast(transform.position, starbord, out hit, RAYCAST_MAX_DISTANCE, layerMask))
+      {
+         Debug.DrawRay(transform.position, starbord, Color.yellow, .1f);
+         if (turnRate > 0) correctedTurnRate = turnRate * 3; // TODO tweak this
+         else correctedTurnRate = turnRate * -3;
+         avoiding = true;
+      }
+
+      // turn
+      dimensions.y = Time.deltaTime * correctedTurnRate;
+      transform.Rotate(dimensions, Space.World);
+
+      // propel
+      transform.Translate(Vector3.forward * Time.fixedDeltaTime * correctedSpeed, Space.Self);
+      if (changeTime + changeDelay < Time.time) SetSpeed();
+
+      // LERP speed
+      if (!(Mathf.Approximately(speed, newSpeed)))
+      {
+         speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
+         animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
+      }
    }
 
    // On average, return 'True' ~half the time, and 'False' ~half the time.
@@ -42,17 +96,17 @@ public class FishDrone : MonoBehaviour
 
    private void FixedUpdate()
    {
-      // turn
-      dimensions.y = Time.deltaTime * turnRate;
-      transform.Rotate(dimensions, Space.World);
-
-      // propel
-      transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed, Space.Self);
-      if (changeTime + changeDelay < Time.time) SetSpeed();
-      LerpSpeeds();
-
       //TODO 
       AvoidCollisions();
+
+      // turn
+      //dimensions.y = Time.deltaTime * correctedTurnRate;
+      //transform.Rotate(dimensions, Space.World);
+
+      // propel
+      //transform.Translate(Vector3.forward * Time.fixedDeltaTime * correctedSpeed, Space.Self);
+      //if (changeTime + changeDelay < Time.time) SetSpeed();
+      //LerpSpeeds();
    }
 
    private void Init()
@@ -83,12 +137,15 @@ public class FishDrone : MonoBehaviour
 
    private void LerpSpeeds()
    {
-      // If speed and newSpeed are not ~=, lerp them by LERP_FACTOR_FOR_SPEED.
-      if (!(Mathf.Approximately(speed, newSpeed)))
-      {
-         speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
-         animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
-      }
+      //if (!avoiding) // TODO make specific to advancing and not turning?
+      //{
+         // If speed and newSpeed are not ~=, lerp them by LERP_FACTOR_FOR_SPEED.
+         if (!(Mathf.Approximately(speed, newSpeed)))
+         {
+            speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
+            animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
+         }
+      //}
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -115,6 +172,10 @@ public class FishDrone : MonoBehaviour
 
    private void Start()
    {
+      // This would cast rays only against colliders in layer 8.
+      // But instead we want to collide against everything except layer 8. The ~ operator does this, it inverts a bitmask.
+      layerMask = ~layerMask;
+
       animator = GetComponent<Animator>();
       startPos = transform.position;
       startQuat = transform.rotation;

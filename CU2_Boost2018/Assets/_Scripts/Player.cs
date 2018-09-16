@@ -1,16 +1,16 @@
 ﻿//
 //    Dev-Notes:
 //
-//    idea fish bopping bonus level: gain extra %'s of Gas Level
+//    idea fish bopping bonus level: gain extra %'s of Gas Level.
 //    
-//    TODO : work on Fog / lighting?
+//    TODO : work on Fog / lighting? work on level 2 ideas?
 //
 
 using EZCameraShake;
-using TMPro;                                    // For text UI objects
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;                           // For slider UI objects
-using UnityStandardAssets.CrossPlatformInput;   // For ramping keyboard inputs
+using UnityEngine.UI;
+using UnityStandardAssets.CrossPlatformInput; 
 
 public class Player : MonoBehaviour
 {
@@ -32,14 +32,6 @@ public class Player : MonoBehaviour
    [SerializeField] Image thrustFill = null;
 
    [SerializeField] TextMeshProUGUI thrustcapSlideText;
-
-   [SerializeField] float shakeMagnitude = 1f;
-   [SerializeField] float shakeRough = 1f;
-   [SerializeField] float shakeRampUp = 0.2f;
-   [SerializeField] float shakeRampDown = 0.6f;
-
-   public Vector3 shakePosInf = new Vector3(0.75f, 0.55f, 0.15f);
-   public Vector3 shakeRotInf = new Vector3(2f, 3f, 7f);
    #endregion
 
    #region Private Variables
@@ -85,8 +77,6 @@ public class Player : MonoBehaviour
 
    private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
 
-   private CameraShakeInstance shake = null;
-
    private FishDrone[] fishDrones;
    private FishPool fishPool;
 
@@ -124,6 +114,21 @@ public class Player : MonoBehaviour
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
    private Vector3 threeControlAxis = Vector3.zero;
+
+   // *Sometimes* compiler's aren't smarter than you.
+   #pragma warning disable 0414
+   private CameraShakeInstance shake = null;
+   #pragma warning restore 0414
+
+   // Properties for CameraShake.
+   private float shakeMagnitude = 1.0f;
+   private float shakeRampDown = 2.0f;
+   private float shakeRampUp = 0.2f;
+   private float shakeRough = 1.0f;
+
+   // 3D positional & rotational influence of CameraShake, as percentage [1 = 100%]).
+   private Vector3 shakePosInf = new Vector3(0.75f, 0.55f, 0.15f);
+   private Vector3 shakeRotInf = new Vector3(2f, 3f, 7f);
    #endregion
 
    private void Awake()
@@ -160,10 +165,10 @@ public class Player : MonoBehaviour
       {
          if (!invulnerable)
          {
+            xAudio.PlayOneShot(collisionSound, masterVolume * VOLUME_COLLISION);
             fuelLevel -= DAMAGE_VALUE;
             if (fuelLevel < 0) fuelLevel = 0;
             GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-            xAudio.PlayOneShot(collisionSound, masterVolume * VOLUME_COLLISION);
             shake = CameraShaker.Instance.ShakeOnce(shakeMagnitude, shakeRough, shakeRampUp, shakeRampDown, shakePosInf, shakeRotInf);
             Destroy(leakDamage, KILL_TIMER);
          }

@@ -2,7 +2,7 @@
 
 public class FishPool : MonoBehaviour
 {
-   // TODO this is being used as a bootleg way to keep te play area 'alive', as the fish have a tendency to wander.
+   // TODO this is being used as a bootleg way to keep the play area 'alive', as the fish have a tendency to wander.
    // ... perhaps it would be smart to improve their behaviour in general? collision-avoidance? group-behaviours? Staying in bounds?
    [Tooltip("Lifespan in seconds (0 = do not expire)")]
    [SerializeField] float fishLifeMax = 300;
@@ -12,7 +12,7 @@ public class FishPool : MonoBehaviour
    [Tooltip("Allow spawn to populate without a Reset() when true.")]
    [SerializeField] bool dynamicSpawn = false;
 
-   [Space(10)][SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!?
+   [Space(10)][SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
    [Tooltip("Percentage of Spawn Points to Populate.")]
    [Range(0, 100)][SerializeField] int spawnPercent = 50;
 
@@ -81,8 +81,8 @@ public class FishPool : MonoBehaviour
 
    private bool CountFull { get { return (CountActive == SpawnTarget); } }
    private bool CountOver { get { return (CountPool > SpawnTarget); } }
-   private int CountPool { get { return fishes.Length; } }
    private bool CountUnder { get { return (CountActive < SpawnTarget); } } 
+   private int CountPool { get { return fishes.Length; } }
 
    private void CreateFishObject(int index)
    {
