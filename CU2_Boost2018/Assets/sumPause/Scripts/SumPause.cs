@@ -28,7 +28,7 @@ Icons and Audio assets are from the awesome CCO asset creator Kenney - https://k
 License (Creative Commons Zero, CC0) - http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-/// devenote: I have taken many liberties with this sourcefile... go find the original, is my advice.
+/// devenote: I have taken many liberties with this sourcefile... go find the original, is my advice. -Jack
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -42,12 +42,14 @@ public class SumPause : MonoBehaviour {
 
    public delegate void PauseAction(bool paused);
    public static event PauseAction pauseEvent;
+   public static SumPause instance;
 
    static bool status = false;
 
    Image image;
-   private Player player;
    private GlueCam glueCam;
+   private Player player;
+   private MusicPlayer musicPlayer;
 
    /// Sets/Returns current pause state (true for paused, false for normal)
    public static bool Status
@@ -67,7 +69,6 @@ public class SumPause : MonoBehaviour {
       }
    }
 
-   public static SumPause instance;
 
    void Awake ()
    {
@@ -79,16 +80,17 @@ public class SumPause : MonoBehaviour {
       return (instance.image != null && instance.playingSprite != null && instance.pausedSprite != null);
    }
 
-   void Start ()
+   private void Start ()
    {
       if (SumPause.instance == null) SumPause.instance = this;
       else Destroy(this);
 
-      player = FindObjectOfType<Player>();
       glueCam = FindObjectOfType<GlueCam>();
+      musicPlayer = FindObjectOfType<MusicPlayer>();
+      player = FindObjectOfType<Player>();
    }
 
-   void Update()
+   private void Update()
    {
       PollForInput();
    }
@@ -103,8 +105,9 @@ public class SumPause : MonoBehaviour {
    public void TogglePause ()
    {
       Status = !Status; 
-      player.Pause();
       glueCam.Pause();
+      musicPlayer.Pause();
+      player.Pause();
    }
 
    static void OnChange()
