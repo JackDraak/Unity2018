@@ -2,7 +2,6 @@
 
 public class FishDrone : MonoBehaviour
 {
-
    private Animator animator;
    private float changeDelay, changeTime;
    private float correctedSpeed, newSpeed, speed;
@@ -14,7 +13,7 @@ public class FishDrone : MonoBehaviour
    private Vector3 dimensions = Vector3.zero;
    private Vector3 fore, port, starbord;
    private Vector3 startPos;
-   
+
    private const float ANIMATION_SCALING_LARGE = 0.4f;
    private const float ANIMATION_SCALING_MED = 0.7f;
    private const float ANIMATION_SCALING_SMALL = 1.7f;
@@ -22,7 +21,7 @@ public class FishDrone : MonoBehaviour
    private const float CHANGE_TIME_MAX = 10f;
    private const float CHANGE_TIME_MIN = 4f;
    private const float LERP_FACTOR_FOR_SPEED = 0.003f;
-   private const float RAYCAST_CORRECTION_FACTOR = 3.3f;
+   private const float RAYCAST_CORRECTION_FACTOR = 13.3f;
    private const float RAYCAST_DRAWTIME = 10f;
    private const float RAYCAST_MAX_DISTANCE = 1.0f;
    private const float SCALE_MAX = 1.6f;
@@ -51,6 +50,7 @@ public class FishDrone : MonoBehaviour
    private void FixedUpdate()
    {
       BeFishy();
+      //if (Input.GetKeyDown(KeyCode.P)) Reset();
    }
 
    private void Init()
@@ -99,15 +99,17 @@ public class FishDrone : MonoBehaviour
       if (changeTime + changeDelay < Time.time) SetSpeed();
    }
 
-   private void OrientView() // TODO fix this
+   private void OrientView()
    {
+      transform.rotation = Quaternion.LookRotation(transform.forward);
+
       fore = transform.forward;
-      port = starbord = fore;
-      port.z -= 0.6f;
-      starbord.z += 0.6f;
-   //   Debug.DrawRay(transform.position, fore, Color.magenta, 0);
-   //   Debug.DrawRay(transform.position, port, Color.cyan, 0);
-   //   Debug.DrawRay(transform.position, starbord, Color.green, 0);
+      port = (transform.forward - transform.right).normalized;
+      starbord = (transform.forward + transform.right).normalized;
+
+      ///Debug.DrawRay(transform.position, fore, Color.magenta, 0);
+      ///Debug.DrawRay(transform.position, port, Color.cyan, 0);
+      ///Debug.DrawRay(transform.position, starbord, Color.green, 0);
    }
 
    private void PlanPath()
@@ -139,10 +141,10 @@ public class FishDrone : MonoBehaviour
       if (hitPort.distance > 0 && hitStarbord.distance > 0)
       {
          if (hitPort.distance < hitStarbord.distance) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
-         else correctedTurnRate = -turnRate * RAYCAST_CORRECTION_FACTOR;
+         else correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR; // TODO last change
       }
-      else if (hitPort.distance > 0) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR; // TODO finish
-      else if (hitStarbord.distance > 0) correctedTurnRate = -turnRate * RAYCAST_CORRECTION_FACTOR;
+      else if (hitPort.distance > 0) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
+      else if (hitStarbord.distance > 0) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
       else correctedTurnRate = turnRate;
    }
 
