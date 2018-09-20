@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class Records : MonoBehaviour {
 
-   private const int RECORD_LIMIT = 31; // Limit records so the "entire list" can fit on-screen.
+   private const int RECORD_LIMIT = 23; // Limit records so the "entire list" can fit on-screen.
 
    private TextMeshProUGUI readout;
-   public List<string> records = new List<string>();
+   private List<string> records = new List<string>();
    private string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
    private string[] comTwo =     { "Is it even possible? ", "Amazing: ", "Stupendous: ", "Lucky! "};
    private string[] comThree =   { "Remarkable: ", "Off the charts! ", "Better than me... ", "Fantastic: "};
@@ -46,7 +46,7 @@ public class Records : MonoBehaviour {
       {
          if (records[i] != null) readout.text += records[i];
          count++;
-         if (count == RECORD_LIMIT) records.RemoveAt(0);
+         if (count >= RECORD_LIMIT) records.RemoveAt(0);
       }
       if (count > 0) readout.text += "<i>(seconds per canister)</i>";
       else readout.text += "<i>...gather all canisters to see your first record...</i>";
