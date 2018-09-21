@@ -93,13 +93,6 @@ public class PickupTracker : MonoBehaviour {
       complete = false;
    }
 
-   private bool FiftyFifty()
-   {
-      // On average, return 'True' ~half the time, and 'False' ~half the time.
-      if (Mathf.FloorToInt(UnityEngine.Random.Range(0, 2)) == 1) return true;
-      else return false;
-   }
-
    private void FillPosition(Transform position)
    {
       var b = position.transform.position;

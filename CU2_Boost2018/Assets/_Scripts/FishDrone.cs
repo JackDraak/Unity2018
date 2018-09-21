@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿///   FishDrone by JackDraak
+///   July 2018
+///   'changelog' viewable on GitHub.
+///   
+using UnityEngine;
 
 public class FishDrone : MonoBehaviour
 {
@@ -7,6 +11,7 @@ public class FishDrone : MonoBehaviour
    private float correctedSpeed, newSpeed, speed;
    private float correctedTurnRate, turnRate;
    private float roughScale, scaleFactor;
+   private float sleepTime = 0;
    private int layerMask; // = 1 << 8; // Bit shift the index of the layer (8) to get a bit mask
    private Quaternion startQuat;
    private Rigidbody thisRigidbody;
@@ -24,7 +29,9 @@ public class FishDrone : MonoBehaviour
    private const float RAYCAST_CORRECTION_FACTOR = 13.3f;
    private const float RAYCAST_DRAWTIME = 3f;
    private const float RAYCAST_DETECTION_ANGLE = 37.5f;
+   private const float RAYCAST_FRAME_GAP = 0.1f;
    private const float RAYCAST_MAX_DISTANCE = 1.0f;
+   private const float RAYCAST_SLEEP_DELAY = 0.3f;
    private const float SCALE_MAX = 1.6f;
    private const float SCALE_MIN = 0.4f;
    private const float SIZE_LARGE_BREAK = 3f;
@@ -42,10 +49,10 @@ public class FishDrone : MonoBehaviour
       LerpSpeed();
    }
 
-   private bool FiftyFifty() // On average, return 'True' ~half the time, and 'False' ~half the time.
+   // On average, return 'True' ~half the time, and 'False' ~half the time.
+   private bool FiftyFifty
    {
-      if (Mathf.FloorToInt(Random.Range(0, 2)) == 1) return true;
-      else return false;
+      get { return (Mathf.FloorToInt(Random.Range(0, 2)) == 1); }
    }
 
    private void FixedUpdate()
@@ -57,7 +64,7 @@ public class FishDrone : MonoBehaviour
    {
       // Set dynamic turnrate/direction.
       turnRate = Random.Range(TURNRATE_MIN, TURNRATE_MAX);
-      if (FiftyFifty()) turnRate = -turnRate;
+      if (FiftyFifty) turnRate = -turnRate;
 
       // Set dynamic starting orientation in Y dimension.
       Vector3 thisRotation = Vector3.zero;
@@ -101,53 +108,65 @@ public class FishDrone : MonoBehaviour
 
    private void OrientView()
    {
+      // Orient transform with direction of travel.
       transform.rotation = Quaternion.LookRotation(transform.forward); // Not strictly required.
 
+      // Set up whiskers based on current position and facing.
       fore = transform.forward;
       port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
       starbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
-      //port = (transform.forward - transform.right).normalized; // 45* to the left of fore.
-      //starbord = (transform.forward + transform.right).normalized; // 45* to the right of fore.
 
+      // To create a vector on 45 degrees...
+      //left45 = (transform.forward - transform.right).normalized; // 45* to the left of fore.
+      //right45 = (transform.forward + transform.right).normalized; // 45* to the right of fore.
+
+      // Enable these rays to visualize the wiskers in the scene view.
       ///Debug.DrawRay(transform.position, fore, Color.magenta, 0);
       ///Debug.DrawRay(transform.position, port, Color.cyan, 0);
       ///Debug.DrawRay(transform.position, starbord, Color.green, 0);
    }
 
+   // TODO note that the 'background' rocks do not have colliders... this needs to be fixed.
    private void PlanPath()
    {
-      RaycastHit hitPort, hitStarbord;
-
-      // Look ahead.
-      if (Physics.Raycast(transform.position, fore, RAYCAST_MAX_DISTANCE, layerMask))
+      // Sleep for a spell to minimize the costly raycasting calls.
+      if (Time.time > sleepTime)
       {
-         if (correctedSpeed == 0) correctedSpeed = speed;
-         Debug.DrawRay(transform.position, fore, Color.red, RAYCAST_DRAWTIME);
-         correctedSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / correctedSpeed);
-      }
-      else correctedSpeed = speed;
+         sleepTime = Time.time + RAYCAST_SLEEP_DELAY;
+         RaycastHit hitPort, hitStarbord;
 
-      // Look left.
-      if (Physics.Raycast(transform.position, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask))
-      {
-         Debug.DrawRay(transform.position, port, Color.blue, RAYCAST_DRAWTIME);
-      }
+         // Look ahead.
+         if (Physics.Raycast(transform.position, fore, RAYCAST_MAX_DISTANCE, layerMask))
+         {
+            if (correctedSpeed == 0) correctedSpeed = speed;
+            Debug.DrawRay(transform.position, fore, Color.red, RAYCAST_DRAWTIME);
+            correctedSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / correctedSpeed);
+            sleepTime = Time.time + RAYCAST_FRAME_GAP;
+         }
+         else correctedSpeed = speed;
 
-      // Look right.
-      if (Physics.Raycast(transform.position, starbord, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask))
-      {
-         Debug.DrawRay(transform.position, starbord, Color.yellow, RAYCAST_DRAWTIME);
-      }
+         // Look left.
+         if (Physics.Raycast(transform.position, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask))
+         {
+            Debug.DrawRay(transform.position, port, Color.blue, RAYCAST_DRAWTIME);
+            sleepTime = Time.time + RAYCAST_FRAME_GAP;
+         }
 
-      // Select a direction based on path or obstacle detection.
-      if (hitPort.distance > 0 && hitStarbord.distance > 0)
-      {
-         if (hitPort.distance < hitStarbord.distance) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
-         else correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
+         // Look right.
+         if (Physics.Raycast(transform.position, starbord, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask))
+         {
+            Debug.DrawRay(transform.position, starbord, Color.yellow, RAYCAST_DRAWTIME);
+            sleepTime = Time.time + RAYCAST_FRAME_GAP;
+         }
+
+         // Turn more sharply when a neighbour is detected.
+         // TODO when there are neighbors on both sides, if course is toward closer target then invert course.
+         if (hitPort.distance > 0 || hitStarbord.distance > 0)
+         {
+            correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
+         }
+         else correctedTurnRate = turnRate;
       }
-      else if (hitPort.distance > 0) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
-      else if (hitStarbord.distance > 0) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
-      else correctedTurnRate = turnRate;
    }
 
    private void OnCollisionEnter(Collision collision)
