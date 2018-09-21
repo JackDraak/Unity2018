@@ -1,14 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
-public class MusicPlayer : MonoBehaviour {
-
+public class MusicPlayer : MonoBehaviour
+{
    private AudioSource audioSource;
    private bool paused = false;
 
-   private void Start ()
+   private void Start()
    {
       audioSource = GetComponent<AudioSource>();
 	}
@@ -32,10 +30,9 @@ public class MusicPlayer : MonoBehaviour {
       else audioSource.volume = 0f;
    }
 
-   private void Update ()
+   private void Update()
    {
       if (Input.GetKey(KeyCode.LeftBracket)) VolumeDown();
       else if (Input.GetKey(KeyCode.RightBracket)) VolumeUp();
-
    }
 }

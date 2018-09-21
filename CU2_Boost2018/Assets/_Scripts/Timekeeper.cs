@@ -6,7 +6,6 @@ public class Timekeeper : MonoBehaviour {
    public bool running
    {
       get { return started; }
-      set { } // publicly visible, but read-only
    }
 
    private bool debugMode = false;
