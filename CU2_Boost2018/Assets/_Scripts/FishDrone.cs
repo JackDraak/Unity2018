@@ -22,7 +22,8 @@ public class FishDrone : MonoBehaviour
    private const float CHANGE_TIME_MIN = 4f;
    private const float LERP_FACTOR_FOR_SPEED = 0.003f;
    private const float RAYCAST_CORRECTION_FACTOR = 13.3f;
-   private const float RAYCAST_DRAWTIME = 10f;
+   private const float RAYCAST_DRAWTIME = 3f;
+   private const float RAYCAST_DETECTION_ANGLE = 37.5f;
    private const float RAYCAST_MAX_DISTANCE = 1.0f;
    private const float SCALE_MAX = 1.6f;
    private const float SCALE_MIN = 0.4f;
@@ -50,7 +51,6 @@ public class FishDrone : MonoBehaviour
    private void FixedUpdate()
    {
       BeFishy();
-      //if (Input.GetKeyDown(KeyCode.P)) Reset();
    }
 
    private void Init()
@@ -101,11 +101,13 @@ public class FishDrone : MonoBehaviour
 
    private void OrientView()
    {
-      transform.rotation = Quaternion.LookRotation(transform.forward);
+      transform.rotation = Quaternion.LookRotation(transform.forward); // Not strictly required.
 
       fore = transform.forward;
-      port = (transform.forward - transform.right).normalized;
-      starbord = (transform.forward + transform.right).normalized;
+      port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
+      starbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
+      //port = (transform.forward - transform.right).normalized; // 45* to the left of fore.
+      //starbord = (transform.forward + transform.right).normalized; // 45* to the right of fore.
 
       ///Debug.DrawRay(transform.position, fore, Color.magenta, 0);
       ///Debug.DrawRay(transform.position, port, Color.cyan, 0);
@@ -141,7 +143,7 @@ public class FishDrone : MonoBehaviour
       if (hitPort.distance > 0 && hitStarbord.distance > 0)
       {
          if (hitPort.distance < hitStarbord.distance) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
-         else correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR; // TODO last change
+         else correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
       }
       else if (hitPort.distance > 0) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
       else if (hitStarbord.distance > 0) correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
