@@ -286,6 +286,8 @@ public class FishPool : MonoBehaviour
          }
       }
       Debug.Log("FishPool Spawn() RandomFreeTransform's requested: " + spawnCountRFT + 
-         ". Total active count: " + CountActive);
+         ". Total active count: " + CountActive +
+         ". Pool size: " + fishes.Length +
+         ". Available spawn points (net): " + spawnPoints.Length);
    }
 }

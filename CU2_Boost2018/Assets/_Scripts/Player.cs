@@ -31,7 +31,10 @@ public class Player : MonoBehaviour
    [SerializeField] Image thrustcapFill = null;
    [SerializeField] Image thrustFill = null;
 
-   [SerializeField] TextMeshProUGUI thrustcapSlideText;
+   [SerializeField] TextMeshProUGUI gasSlideText;
+   [SerializeField] TextMeshProUGUI goalSlideText;
+   [SerializeField] TextMeshProUGUI powerSlideText;
+   [SerializeField] TextMeshProUGUI powercapSlideText;
    #endregion
 
    #region Private Variables
@@ -188,6 +191,8 @@ public class Player : MonoBehaviour
             Destroy(pickupPop, KILL_TIMER);
             fuelLevel += FUEL_PICKUP_VALUE;
             if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
+            DoGasUpdate();
+            Invoke("DoGoalUpdate", 0.25f);
          }
       }
    }
@@ -205,13 +210,10 @@ public class Player : MonoBehaviour
       timeKeeper = FindObjectOfType<Timekeeper>();
       uiControl = FindObjectOfType<UIcontrol>();
 
-
       cockpit = GameObject.FindGameObjectWithTag("Cockpit");
       thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
       thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
       tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
-
-      //glueCam = GameObject.FindGameObjectWithTag("GlueCam").GetComponent<GlueCam>();
 
       debugMode = Debug.isDebugBuild;
       startPosition = transform.position;
@@ -236,12 +238,13 @@ public class Player : MonoBehaviour
       thrustPowercapSlider.maxValue = 1f;
       thrustPowercapSlider.value = maxPower;
       SetPower(INITIAL_POWER_LEVEL);
-      DoColourForThrustcap();
+      DoThrustcapUpdate();
 
       gasLevelSlider.maxValue = FUEL_MAX;
       gasLevelSlider.minValue = 0;
       gasLevelSlider.value = fuelLevel;
-      DoColourForGasLevel();
+      DoGasUpdate();
+      Invoke("DoGoalUpdate", 0.35f);
    }
 
    private void AdjustEmissionRate(float newRate)
@@ -257,7 +260,7 @@ public class Player : MonoBehaviour
       else if (deltaPlus < THRUST_MIN) thrustPowerSlider.value = THRUST_MIN;
       else thrustPowerSlider.value += delta;
       if (thrustPowerSlider.value > maxPower) thrustPowerSlider.value = maxPower;
-      DoColourForThrustPower();
+      DoThrustPowerUpdate();
    }
 
    private void AutoDeRotate()
@@ -265,10 +268,15 @@ public class Player : MonoBehaviour
       float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
       localEulers = transform.localRotation.eulerAngles;
       float playerTilt = localEulers.z;
-      if (playerTilt >= HALF_ARC &&  playerTilt < TILT_LIMIT_MAX)
+      if (playerTilt >= HALF_ARC && playerTilt < TILT_LIMIT_MAX)
          transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
       else if (playerTilt < HALF_ARC && playerTilt > TILT_LIMIT_MIN)
          transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
+      else
+      {
+         ///Debug.Log("rotate:vector3.up");
+         //transform.Rotate(Vector3.up);
+      }
    }
 
    public float BoostMaxPower(float boost)
@@ -276,7 +284,7 @@ public class Player : MonoBehaviour
       maxPower += boost;
       if (maxPower > 1) maxPower = 1;
       thrustPowercapSlider.value = maxPower;
-      DoColourForThrustcap();
+      DoThrustcapUpdate();
       return maxPower;
    }
 
@@ -294,31 +302,38 @@ public class Player : MonoBehaviour
          deRotationTime = Time.time;
          deRotating = true;
       }
-      else
+      else// if (Time.time - handsOnTime < 5) // TODO recent change
       {
-         AutoDeRotate();
+         if (!Mathf.Approximately(transform.up.x, transform.rotation.x)) AutoDeRotate();
          if (threeControlAxis.z == 0) EndExpulsion();
       }
    }
 
-   private void DoColourForGasLevel()
+   private void DoGasUpdate()
    {
       Color colour;
       float ratio = fuelLevel / FUEL_MAX;
       colour = Vector4.Lerp(gasHigh, gasLow, 1 - ratio);
       cockpit.GetComponent<MeshRenderer>().material.color = gasFill.color = colour;
+      gasSlideText.text = "Gas Level: " + GasPercent + "%";
    }
 
-   private void DoColourForThrustcap()
+   private void DoGoalUpdate()
    {
-      thrustcapSlideText.text = "Thrust Cap: " + Mathf.FloorToInt(maxPower * 100) + "%";
+      goalSlideText.text = "Mini-Goal Progress: " + pickupTracker.PickupPercent() + "%";
+      Debug.Log("DoGoalUpdate @ " + Time.time.ToString() + " %" + pickupTracker.PickupPercent());
+   }
+
+   private void DoThrustcapUpdate()
+   {
+      powercapSlideText.text = "Thrust Cap: " + Mathf.FloorToInt(maxPower * 100) + "%";
       Color colour;
       float ratio = thrustPowercapSlider.value / THRUST_MAX;
       colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
       thrustcapFill.color = colour;
    }
 
-   private void DoColourForThrustPower()
+   private void DoThrustPowerUpdate()
    {
       thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
 
@@ -329,6 +344,7 @@ public class Player : MonoBehaviour
       thrustFill.color = colour;
       if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
       thrusterBell.GetComponent<MeshRenderer>().material.color = thrustLight.GetComponent<Light>().color = colour;
+      powerSlideText.text = "Power Level: " + Mathf.FloorToInt(100 - (100 * ((THRUST_MAX - thrustPowerSlider.value) / THRUST_MAX))) + "%";
    }
 
    private void EndExpulsion()
@@ -349,7 +365,7 @@ public class Player : MonoBehaviour
       {
          fuelLevel -= expulsionRate;
          gasLevelSlider.value = fuelLevel;
-         DoColourForThrustPower();
+         DoThrustPowerUpdate();
          return true;
       }
       else
@@ -359,12 +375,17 @@ public class Player : MonoBehaviour
       }
    }
 
+   private int GasPercent
+   {
+      get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); }
+   }
+
    private void GenerateFuel()
    {
       fuelLevel += Time.fixedDeltaTime * FUEL_GEN_RATE;
       if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
       gasLevelSlider.value = fuelLevel;
-      DoColourForGasLevel();
+      DoGasUpdate();
    }
 
    private void HideTutorial()
@@ -490,6 +511,7 @@ public class Player : MonoBehaviour
       tutorialText.SetActive(true);
       uiControl.visible = false;
       foreach (FishDrone drone in fishDrones) drone.Reset();
+      Invoke("DoGoalUpdate", 0.55f);
    }
 
    private void Rotate(float direction)
@@ -504,7 +526,7 @@ public class Player : MonoBehaviour
    {
       if (power > maxPower) power = maxPower;
       thrustPowerSlider.value = power;
-      DoColourForThrustPower();
+      DoThrustPowerUpdate();
    }
 
    private void Thrust(float force)

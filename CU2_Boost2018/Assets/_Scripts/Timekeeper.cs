@@ -3,10 +3,7 @@ using UnityEngine;
 
 public class Timekeeper : MonoBehaviour {
 
-   public bool running
-   {
-      get { return started; }
-   }
+   public bool running { get { return started; } }
 
    private bool debugMode = false;
    private bool finished = false;

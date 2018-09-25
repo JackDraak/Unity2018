@@ -5,8 +5,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PickupTracker : MonoBehaviour {
-
+public class PickupTracker : MonoBehaviour
+{
    [SerializeField] Color goalHigh = Color.clear;
    [SerializeField] Color goalLow = Color.clear;
    [SerializeField] GameObject bonusPrefab;
@@ -17,10 +17,12 @@ public class PickupTracker : MonoBehaviour {
 
    private bool               complete, debugMode, spawning, task1, task2;
    private float              maxPower;
-   private int                count, highCount;
+   private float              pickupPercent = 0;
+   private int                count = 0;
+   private int                highCount;
    private GameObject[]       pickupsArray;
    private GameObject[]       spawnPointsArray;
-   private List<Collider>     others;
+   private List<Collider>     claimedPickups;
    private List<GameObject>   pickups;
    private TextMeshProUGUI    text_tracker;
    private Timekeeper         timeKeeper;
@@ -33,11 +35,11 @@ public class PickupTracker : MonoBehaviour {
       if (!text_tracker) Debug.Log("FAIL: no text_tracker object variable!!");
 
       spawnPointsArray = GameObject.FindGameObjectsWithTag("Spawn_Good");
-      Debug.Log("FishPool number of Pickup spawn-points: " + spawnPointsArray.Length);
-
+      //Debug.Log("PickupTracker number of Pickup spawn-points: " + spawnPointsArray.Length);
+   
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
 
-      others = new List<Collider>();
+      claimedPickups = new List<Collider>();
    }
 
    private void Start()
@@ -51,10 +53,10 @@ public class PickupTracker : MonoBehaviour {
 
    public bool ClaimPickup(Collider other)
    {
-      if (!others.Contains(other))
+      if (!claimedPickups.Contains(other))
       {
-         count -= 1;
-         others.Add(other);
+         count -= 1; // TODO beter pickup tracking
+         claimedPickups.Add(other);
          text_tracker.text = count.ToString() + " Gas Canisters Remaining";
          return true;
       }
@@ -74,21 +76,21 @@ public class PickupTracker : MonoBehaviour {
 
    private IEnumerator DoSpawn()
    {
-      Debug.Log("Spawntime: " + Time.time.ToString("F2"));
+      //Debug.Log("PickupTracker spawntime: " + Time.time.ToString("F2"));
       spawning = true;
 
       DespawnAll();
       yield return new WaitForSeconds(0.2f);
-      SpawnPercent(33); // TODO decide how to use this dynamically
+      SpawnPercent(33); // TODO decide how to use this dynamically?
       //SpawnAll();
 
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
-      Debug.Log("FishPool number of pickups spawned: " + pickupsArray.Length);
+      //Debug.Log("PickupTracker number of pickups spawned: " + pickupsArray.Length);
 
       text_tracker.text = count.ToString() + " Gas Canisters Remaining";
 
-      others = new List<Collider>();
+      claimedPickups = new List<Collider>();
       spawning = false;
       complete = false;
    }
@@ -100,6 +102,11 @@ public class PickupTracker : MonoBehaviour {
       GameObject spawnedObject = Instantiate(bonusPrefab, b, c) as GameObject;
       spawnedObject.transform.parent = position;
       spawnedObject.SetActive(true);
+   }
+
+   public float PickupPercent()
+   {
+      return pickupPercent;
    }
 
    private GameObject RandomFreePosition()
@@ -127,9 +134,7 @@ public class PickupTracker : MonoBehaviour {
    {
       if (count == 0)
       {
-         complete = true;
-         timeKeeper.Cease(highCount);
-         maxPower = player.BoostMaxPower(0.1f); // 0.1f = 10% boost
+         WinRound();
          if (!task1)
          {
             task1 = true;
@@ -145,7 +150,7 @@ public class PickupTracker : MonoBehaviour {
 
    private void SpawnAll()
    {
-      count = highCount = 0;
+      count = 0;
       do { SpawnRandomSpawnpoint(); count++; }
       while (SpawnPointIsEmpty());
       highCount = count;
@@ -189,7 +194,7 @@ public class PickupTracker : MonoBehaviour {
    private void TrackPickups()
    {
       // Get a hard-count of pickups:
-      count = highCount - (highCount - SpawnTally());
+      ///count = highCount - (highCount - SpawnTally());
 
       // While in play, check tasklist objectives:
       if (!complete && !spawning) ReviewObjectives();
@@ -199,6 +204,8 @@ public class PickupTracker : MonoBehaviour {
       Color fillColor = Vector4.Lerp(goalLow, goalHigh, fillLerp);
       goalFill.color = fillColor;
       goalSlider.value = fillLerp;
+      pickupPercent = Mathf.FloorToInt(fillLerp * 100);
+      ///Debug.Log("TrackPickups @ " + Time.time.ToString() + " %" + pickupPercent);
    }
 
    private void Update()
@@ -206,5 +213,12 @@ public class PickupTracker : MonoBehaviour {
       TrackPickups();
       if (Input.GetKeyDown(KeyCode.N) && debugMode) StartCoroutine("DoSpawn");
       if (Input.GetKeyDown(KeyCode.M) && debugMode) DespawnAll();
+   }
+
+   private void WinRound()
+   {
+      complete = true;
+      timeKeeper.Cease(highCount);
+      maxPower = player.BoostMaxPower(0.1f); // 0.1f = 10% boost
    }
 }
