@@ -2,38 +2,32 @@
 
 public class FishPool : MonoBehaviour
 {
-   // TODO this is being used as a bootleg way to keep the play area 'alive', as the fish have a tendency to wander.
-   // ... perhaps it would be smart to improve their behaviour in general? collision-avoidance? group-behaviours? Staying in bounds?
    [Tooltip("Lifespan in seconds (0 = do not expire)")]
-   [SerializeField] float fishLifeMax = 300;
+   [SerializeField] float fishLifeMax = 0;
    [Tooltip("Time before Fish Life Max when fish *may* expire, in seconds [should be 0 or smaller value than fishLifeMin]")]
-   [SerializeField] float fishLifeWindow = 60;
+   [SerializeField] float fishLifeWindow = 0;
 
    [Tooltip("Allow spawn to populate without a Reset() when true.")]
-   [SerializeField] bool dynamicSpawn = false;
+   [SerializeField] bool dynamicSpawn = true;
 
    [Space(10)][SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
    [Tooltip("Percentage of Spawn Points to Populate.")]
-   [Range(0, 100)][SerializeField] int spawnPercent = 50;
+   [Range(0, 100)][SerializeField] int spawnPercent = 75;
 
    struct Fish
    {
-      public bool on;
-      public float onTime;
+      public bool       on;
+      public float      onTime;
       public GameObject fishObject;
-      public int poolIndex;
-      public Transform xform;
+      public int        poolIndex;
+      public Transform  xform;
+      public Vector3    scale;
    }
 
-   private Fish[] fishes;
-   private FishSpawn[] spawnPoints;
-   private int dynamicPoolSize;
-   private Transform xform;
-
-   private int SpawnTarget
-   {
-      get { return Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f)); }
-   }
+   private Fish[]       fishes;
+   private FishSpawn[]  spawnPoints;
+   private int          dynamicPoolSize;
+   private Transform    xform;
 
    private void Start()
    {
@@ -72,7 +66,8 @@ public class FishPool : MonoBehaviour
 
    private int CountActive
    {
-      get {
+      get
+      {
          int active = 0;
          foreach (Fish fish in fishes) if (fish.on) active++;
          return active;
@@ -240,6 +235,8 @@ public class FishPool : MonoBehaviour
       else fishes[poolIndex].onTime = Time.time;
       fishes[poolIndex].fishObject.transform.parent = xform;
       fishes[poolIndex].fishObject.transform.position = xform.position;
+      // TODO when did the fish stop taking on their scales? Derp.. Do it here?
+      //fishes[poolIndex].fishObject.transform.localScale = 
       fishes[poolIndex].fishObject.SetActive(true);
       fishes[poolIndex].xform = xform;
    }
@@ -289,5 +286,10 @@ public class FishPool : MonoBehaviour
          ". Total active count: " + CountActive +
          ". Pool size: " + fishes.Length +
          ". Available spawn points (net): " + spawnPoints.Length);
+   }
+
+   private int SpawnTarget
+   {
+      get { return Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f)); }
    }
 }

@@ -1,9 +1,9 @@
 ﻿using TMPro;
 using UnityEngine;
 
-public class Timekeeper : MonoBehaviour {
-
-   public bool running { get { return started; } }
+public class Timekeeper : MonoBehaviour
+{
+   public bool Running { get { return started; } }
 
    private bool debugMode = false;
    private bool finished = false;

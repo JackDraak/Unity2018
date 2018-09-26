@@ -1,17 +1,11 @@
 ﻿using UnityEngine;
 
-public class UIcontrol : MonoBehaviour {
-
+public class UIcontrol : MonoBehaviour
+{
    // UI elements to hide when the game is: launched | paused | reset 
    [SerializeField] GameObject[] UIobjects;
 
    private bool deltaStatus, status;
-
-   public bool visible
-   {
-      get { return status; }
-      set { deltaStatus = value; }
-   }
 
    private void SetState()
    {
@@ -30,5 +24,11 @@ public class UIcontrol : MonoBehaviour {
    private void Update()
    {
       if (status != deltaStatus) SetState();
+   }
+
+   public bool Visible
+   {
+      get { return status; }
+      set { deltaStatus = value; }
    }
 }

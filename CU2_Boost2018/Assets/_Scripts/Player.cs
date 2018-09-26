@@ -40,6 +40,7 @@ public class Player : MonoBehaviour
    #region Private Variables
    private const float CLIP_TIME = 0.5f;
    private const float DAMAGE_VALUE = 35f;
+   private const float DELAY_GOAL_UPDATE = 0.35f;
    private const float DEROTATION_RATE = 0.2f;
    private const float EMISSION_RATE_INACTIVE = 1.3f;
    private const float EMISSION_RATE_ROTATION = 20f;
@@ -63,6 +64,7 @@ public class Player : MonoBehaviour
    private const float THRUST_LIGHTRANGE_MAX = 2f;
    private const float THRUST_MAX = 1f;
    private const float THRUST_MIN = 0f;
+   private const float THRUST_POWER_BASE = 0.2f;
    private const float THRUST_POWER_FACTOR = 0.02f;
    private const float VOLUME_COLLISION = 0.4f;
    private const float VOLUME_PICKUP = 0.5f;
@@ -134,6 +136,33 @@ public class Player : MonoBehaviour
    private Vector3 shakeRotInf = new Vector3(2f, 3f, 7f);
    #endregion
 
+   private void AdjustEmissionRate(float newRate)
+   {
+      thrustBubbles.rateOverTime = newRate;
+   }
+
+   private void AdjustThrusterPower(float delta)
+   {
+      delta *= POWER_CONTROLLER_FACTOR;
+      float deltaPlus = delta + thrustPowerSlider.value;
+      if (deltaPlus > THRUST_MAX) thrustPowerSlider.value = THRUST_MAX;
+      else if (deltaPlus < THRUST_MIN + THRUST_POWER_BASE) thrustPowerSlider.value = THRUST_MIN + THRUST_POWER_BASE;
+      else thrustPowerSlider.value += delta;
+      if (thrustPowerSlider.value > maxPower) thrustPowerSlider.value = maxPower;
+      DoPowerUpdate();
+   }
+
+   private void AutoDeRotate()
+   {
+      float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
+      localEulers = transform.localRotation.eulerAngles;
+      float playerTilt = localEulers.z;
+      if (playerTilt >= HALF_ARC && playerTilt < TILT_LIMIT_MAX)
+         transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
+      else if (playerTilt < HALF_ARC && playerTilt > TILT_LIMIT_MIN)
+         transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
+   }
+
    private void Awake()
    {
       // Objects disabled by UIcontrol should be assigned in Awake() to avoid trying to capture them after they've been disabled**.
@@ -146,12 +175,100 @@ public class Player : MonoBehaviour
       thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();
    }
 
-   private void Start ()
+   public float BoostMaxPower(float boost)
    {
-      InitVars();
+      maxPower += boost;
+      if (maxPower > 1) maxPower = 1;
+      thrustPowercapSlider.value = maxPower;
+      DoPowercapUpdate();
+      return maxPower;
+   }
 
-      // just hanging onto a formula someone posted that might be handy when I get to "level 2":
-      // movementFactor = (Mathf.Sin(Time.time * oscillationSpeed)) / 2f + 0.5f;
+   private void DebugControlPoll()
+   {
+      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower(0.025f); // 2.5% boost
+      if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
+      if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
+   }
+
+   private void DeRotate()
+   {
+      if (!deRotating)
+      {
+         deRotationTime = Time.time;
+         deRotating = true;
+      }
+      else
+      {
+         if (!Mathf.Approximately(transform.up.x, transform.rotation.x)) AutoDeRotate();
+         if (threeControlAxis.z == 0) EndExpulsion();
+      }
+   }
+
+   private void DoGasUpdate()
+   {
+      Color colour;
+      float ratio = fuelLevel / FUEL_MAX;
+      colour = Vector4.Lerp(gasHigh, gasLow, 1 - ratio);
+      cockpit.GetComponent<MeshRenderer>().material.color = gasFill.color = colour;
+      gasSlideText.text = "Gas Level: " + GasPercent + "%";
+   }
+
+   public void DoGoalUpdate()
+   {
+      goalSlideText.text = "Mini-Goal Progress: " + pickupTracker.PickupPercent() + "%";
+   }
+
+   private void DoPowercapUpdate()
+   {
+      powercapSlideText.text = "Power Cap: " + Mathf.FloorToInt(maxPower * 100) + "%";
+      Color colour;
+      float ratio = thrustPowercapSlider.value / THRUST_MAX;
+      colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
+      thrustcapFill.color = colour;
+   }
+
+   private void DoPowerUpdate()
+   {
+      thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
+
+      Color colour;
+      float ratio = thrustPowerSlider.value / THRUST_MAX;
+      colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
+
+      thrustFill.color = colour;
+      if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
+      thrusterBell.GetComponent<MeshRenderer>().material.color = thrustLight.GetComponent<Light>().color = colour;
+      // TODO indicate (in text) when at minimum: BASE_POWER?
+      powerSlideText.text = "Power Level: " + Mathf.FloorToInt(100 - (100 * ((THRUST_MAX - thrustPowerSlider.value) / THRUST_MAX))) + "%";
+   }
+
+   private void EndExpulsion()
+   {
+      thrustAudio.Stop();
+      AdjustEmissionRate(EMISSION_RATE_INACTIVE);
+      thrustAudioTimer -= thrustAudioLength;
+      thrustLight.GetComponent<Light>().range = Mathf.Lerp(thrustLight.GetComponent<Light>().range, 0, THRUST_FADE_FACTOR);
+      thrusterBell.GetComponent<MeshRenderer>().material.color = 
+         Vector4.Lerp(thrusterBell.GetComponent<MeshRenderer>().material.color, Color.black, THRUST_FADE_FACTOR);
+   }
+
+   private bool ExpelGas(float rate)
+   {
+      float expulsionRate = 
+         rate * FUEL_USE_RATE * ((thrustPowerSlider.value * FUEL_POWER_FACTOR) * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
+      if (fuelLevel > expulsionRate)
+      {
+         fuelLevel -= expulsionRate;
+         gasLevelSlider.value = fuelLevel;
+         DoPowerUpdate();
+         return true;
+      }
+      else
+      {
+         gasLevelSlider.value = fuelLevel;
+         return false;
+      }
    }
 
    private void FixedUpdate()
@@ -162,39 +279,25 @@ public class Player : MonoBehaviour
       if (debugMode) DebugControlPoll();
    }
 
-   private void OnCollisionEnter(Collision collision)
+   private int GasPercent
    {
-      if (collision.gameObject.tag == "BadObject_01")
-      {
-         if (!invulnerable)
-         {
-            xAudio.PlayOneShot(collisionSound, masterVolume * VOLUME_COLLISION);
-            fuelLevel -= DAMAGE_VALUE;
-            if (fuelLevel < 0) fuelLevel = 0;
-            GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-            shake = CameraShaker.Instance.ShakeOnce(shakeMagnitude, shakeRough, shakeRampUp, shakeRampDown, shakePosInf, shakeRotInf);
-            Destroy(leakDamage, KILL_TIMER);
-         }
-         else Debug.Log("invulnerable: BO-01");
-      }
+      get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); }
    }
 
-   private void OnTriggerEnter(Collider other)
+   private void GenerateFuel()
    {
-      if (other.gameObject.tag == "GoodObject_01")
-      {
-         if (pickupTracker.ClaimPickup(other))
-         {
-            Destroy(other.gameObject, 0.01f);
-            xAudio.PlayOneShot(bonusSound, masterVolume * VOLUME_PICKUP);
-            GameObject pickupPop = (GameObject)Instantiate(pickupEffect, other.transform.position, Quaternion.identity);
-            Destroy(pickupPop, KILL_TIMER);
-            fuelLevel += FUEL_PICKUP_VALUE;
-            if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
-            DoGasUpdate();
-            Invoke("DoGoalUpdate", 0.25f);
-         }
-      }
+      fuelLevel += Time.fixedDeltaTime * FUEL_GEN_RATE;
+      if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
+      gasLevelSlider.value = fuelLevel;
+      DoGasUpdate();
+   }
+
+   private void HideTutorial()
+   {
+      timeKeeper.Begin();
+      tutorialIsVisible = false;
+      tutorialText.SetActive(false);
+      uiControl.Visible = true;
    }
 
    private void InitVars()
@@ -238,168 +341,52 @@ public class Player : MonoBehaviour
       thrustPowercapSlider.maxValue = 1f;
       thrustPowercapSlider.value = maxPower;
       SetPower(INITIAL_POWER_LEVEL);
-      DoThrustcapUpdate();
+      DoPowercapUpdate();
 
       gasLevelSlider.maxValue = FUEL_MAX;
       gasLevelSlider.minValue = 0;
       gasLevelSlider.value = fuelLevel;
       DoGasUpdate();
-      Invoke("DoGoalUpdate", 0.35f);
-   }
-
-   private void AdjustEmissionRate(float newRate)
-   {
-      thrustBubbles.rateOverTime = newRate;
-   }
-
-   private void AdjustThrusterPower(float delta)
-   {
-      delta *= POWER_CONTROLLER_FACTOR;
-      float deltaPlus = delta + thrustPowerSlider.value;
-      if (deltaPlus > THRUST_MAX) thrustPowerSlider.value = THRUST_MAX;
-      else if (deltaPlus < THRUST_MIN) thrustPowerSlider.value = THRUST_MIN;
-      else thrustPowerSlider.value += delta;
-      if (thrustPowerSlider.value > maxPower) thrustPowerSlider.value = maxPower;
-      DoThrustPowerUpdate();
-   }
-
-   private void AutoDeRotate()
-   {
-      float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
-      localEulers = transform.localRotation.eulerAngles;
-      float playerTilt = localEulers.z;
-      if (playerTilt >= HALF_ARC && playerTilt < TILT_LIMIT_MAX)
-         transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
-      else if (playerTilt < HALF_ARC && playerTilt > TILT_LIMIT_MIN)
-         transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
-      else
-      {
-         ///Debug.Log("rotate:vector3.up");
-         //transform.Rotate(Vector3.up);
-      }
-   }
-
-   public float BoostMaxPower(float boost)
-   {
-      maxPower += boost;
-      if (maxPower > 1) maxPower = 1;
-      thrustPowercapSlider.value = maxPower;
-      DoThrustcapUpdate();
-      return maxPower;
-   }
-
-   private void DebugControlPoll()
-   {
-      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower(0.025f); // 2.5% boost
-      if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
-      if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
-   }
-
-   private void DeRotate()
-   {
-      if (!deRotating)
-      {
-         deRotationTime = Time.time;
-         deRotating = true;
-      }
-      else// if (Time.time - handsOnTime < 5) // TODO recent change
-      {
-         if (!Mathf.Approximately(transform.up.x, transform.rotation.x)) AutoDeRotate();
-         if (threeControlAxis.z == 0) EndExpulsion();
-      }
-   }
-
-   private void DoGasUpdate()
-   {
-      Color colour;
-      float ratio = fuelLevel / FUEL_MAX;
-      colour = Vector4.Lerp(gasHigh, gasLow, 1 - ratio);
-      cockpit.GetComponent<MeshRenderer>().material.color = gasFill.color = colour;
-      gasSlideText.text = "Gas Level: " + GasPercent + "%";
-   }
-
-   private void DoGoalUpdate()
-   {
-      goalSlideText.text = "Mini-Goal Progress: " + pickupTracker.PickupPercent() + "%";
-      Debug.Log("DoGoalUpdate @ " + Time.time.ToString() + " %" + pickupTracker.PickupPercent());
-   }
-
-   private void DoThrustcapUpdate()
-   {
-      powercapSlideText.text = "Thrust Cap: " + Mathf.FloorToInt(maxPower * 100) + "%";
-      Color colour;
-      float ratio = thrustPowercapSlider.value / THRUST_MAX;
-      colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
-      thrustcapFill.color = colour;
-   }
-
-   private void DoThrustPowerUpdate()
-   {
-      thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
-
-      Color colour;
-      float ratio = thrustPowerSlider.value / THRUST_MAX;
-      colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
-
-      thrustFill.color = colour;
-      if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
-      thrusterBell.GetComponent<MeshRenderer>().material.color = thrustLight.GetComponent<Light>().color = colour;
-      powerSlideText.text = "Power Level: " + Mathf.FloorToInt(100 - (100 * ((THRUST_MAX - thrustPowerSlider.value) / THRUST_MAX))) + "%";
-   }
-
-   private void EndExpulsion()
-   {
-      thrustAudio.Stop();
-      AdjustEmissionRate(EMISSION_RATE_INACTIVE);
-      thrustAudioTimer -= thrustAudioLength;
-      thrustLight.GetComponent<Light>().range = Mathf.Lerp(thrustLight.GetComponent<Light>().range, 0, THRUST_FADE_FACTOR);
-      thrusterBell.GetComponent<MeshRenderer>().material.color = 
-         Vector4.Lerp(thrusterBell.GetComponent<MeshRenderer>().material.color, Color.black, THRUST_FADE_FACTOR);
-   }
-
-   private bool ExpelGas(float rate)
-   {
-      float expulsionRate = 
-         rate * FUEL_USE_RATE * ((thrustPowerSlider.value * FUEL_POWER_FACTOR) * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
-      if (fuelLevel > expulsionRate)
-      {
-         fuelLevel -= expulsionRate;
-         gasLevelSlider.value = fuelLevel;
-         DoThrustPowerUpdate();
-         return true;
-      }
-      else
-      {
-         gasLevelSlider.value = fuelLevel;
-         return false;
-      }
-   }
-
-   private int GasPercent
-   {
-      get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); }
-   }
-
-   private void GenerateFuel()
-   {
-      fuelLevel += Time.fixedDeltaTime * FUEL_GEN_RATE;
-      if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
-      gasLevelSlider.value = fuelLevel;
-      DoGasUpdate();
-   }
-
-   private void HideTutorial()
-   {
-      timeKeeper.Begin();
-      tutorialIsVisible = false;
-      tutorialText.SetActive(false);
-      uiControl.visible = true;
    }
 
    private void MaintainAlignment()
    {
       transform.position = new Vector3(transform.position.x, transform.position.y, 0.0f); // Lock Z position.
       transform.rotation = Quaternion.Euler(0.0f, 0.0f, transform.rotation.eulerAngles.z); // Lock XY rotation.
+   }
+
+   private void OnCollisionEnter(Collision collision)
+   {
+      if (collision.gameObject.tag == "BadObject_01")
+      {
+         if (!invulnerable)
+         {
+            xAudio.PlayOneShot(collisionSound, masterVolume * VOLUME_COLLISION);
+            fuelLevel -= DAMAGE_VALUE;
+            if (fuelLevel < 0) fuelLevel = 0;
+            GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
+            shake = CameraShaker.Instance.ShakeOnce(shakeMagnitude, shakeRough, shakeRampUp, shakeRampDown, shakePosInf, shakeRotInf);
+            Destroy(leakDamage, KILL_TIMER);
+         }
+         else Debug.Log("invulnerable: BO-01");
+      }
+   }
+
+   private void OnTriggerEnter(Collider other)
+   {
+      if (other.gameObject.tag == "GoodObject_01")
+      {
+         if (pickupTracker.ClaimPickup(other))
+         {
+            Destroy(other.gameObject, 0.01f);
+            xAudio.PlayOneShot(bonusSound, masterVolume * VOLUME_PICKUP);
+            GameObject pickupPop = (GameObject)Instantiate(pickupEffect, other.transform.position, Quaternion.identity);
+            Destroy(pickupPop, KILL_TIMER);
+            fuelLevel += FUEL_PICKUP_VALUE;
+            if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
+            DoGasUpdate();
+         }
+      }
    }
 
    public bool Pause()
@@ -414,7 +401,7 @@ public class Player : MonoBehaviour
          }
          if (xAudio.isPlaying) xAudio.Stop();
          tutorialText.SetActive(true);
-         uiControl.visible = false;
+         uiControl.Visible = false;
       }
       else
       {
@@ -424,10 +411,10 @@ public class Player : MonoBehaviour
             thrustAudioTimer = Time.time;
             thrustAudioTrack = true;
          }
-         if (timeKeeper.running)
+         if (timeKeeper.Running)
          {
             tutorialText.SetActive(false);
-            uiControl.visible = true;
+            uiControl.Visible = true;
          }
       }
       return paused;
@@ -509,24 +496,32 @@ public class Player : MonoBehaviour
       transform.rotation = startRotation;
       tutorialIsVisible = true;
       tutorialText.SetActive(true);
-      uiControl.visible = false;
+      uiControl.Visible = false;
       foreach (FishDrone drone in fishDrones) drone.Reset();
-      Invoke("DoGoalUpdate", 0.55f);
    }
 
    private void Rotate(float direction)
    {
+      float rotationLightLevel = 0.25f; // minimum 25%
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
       if (thrustBubbles.rateOverTime.constant < EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_ROTATION);
-      if (thrustLight.GetComponent<Light>().range < (THRUST_LIGHTRANGE_MAX / 4))
-         thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX / 4;
+      if (thrustLight.GetComponent<Light>().range < (THRUST_LIGHTRANGE_MAX * rotationLightLevel))
+         thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX * rotationLightLevel;
    }
 
    private void SetPower(float power)
    {
       if (power > maxPower) power = maxPower;
       thrustPowerSlider.value = power;
-      DoThrustPowerUpdate();
+      DoPowerUpdate();
+   }
+
+   private void Start()
+   {
+      InitVars();
+
+      // just hanging onto a formula someone posted that might be handy when I get to "level 2":
+      // movementFactor = (Mathf.Sin(Time.time * oscillationSpeed)) / 2f + 0.5f;
    }
 
    private void Thrust(float force)

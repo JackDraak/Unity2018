@@ -6,11 +6,6 @@ public class MusicPlayer : MonoBehaviour
    private AudioSource audioSource;
    private bool paused = false;
 
-   private void Start()
-   {
-      audioSource = GetComponent<AudioSource>();
-	}
-
    public void Pause()
    {
       paused = !paused;
@@ -18,10 +13,15 @@ public class MusicPlayer : MonoBehaviour
       else audioSource.Play();
    }
 
-   private void VolumeUp()
+   private void Start()
    {
-      if (audioSource.volume < .9f) audioSource.volume += .1f * Time.deltaTime;
-      else audioSource.volume = 1f;
+      audioSource = GetComponent<AudioSource>();
+	}
+
+   private void Update()
+   {
+      if (Input.GetKey(KeyCode.LeftBracket)) VolumeDown();
+      else if (Input.GetKey(KeyCode.RightBracket)) VolumeUp();
    }
 
    private void VolumeDown()
@@ -30,9 +30,9 @@ public class MusicPlayer : MonoBehaviour
       else audioSource.volume = 0f;
    }
 
-   private void Update()
+   private void VolumeUp()
    {
-      if (Input.GetKey(KeyCode.LeftBracket)) VolumeDown();
-      else if (Input.GetKey(KeyCode.RightBracket)) VolumeUp();
+      if (audioSource.volume < .9f) audioSource.volume += .1f * Time.deltaTime;
+      else audioSource.volume = 1f;
    }
 }

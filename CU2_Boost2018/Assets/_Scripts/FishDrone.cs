@@ -18,6 +18,7 @@ public class FishDrone : MonoBehaviour
    private Quaternion startQuat;
    private Rigidbody thisRigidbody;
    private Vector3 fore, port, starbord;
+   private Vector3 scale;
    private Vector3 startPos;
 
    private const float ANIMATION_SCALING_LARGE = 0.4f;
@@ -37,8 +38,8 @@ public class FishDrone : MonoBehaviour
    private const float RAYCAST_FRAME_GAP = 0.2f;
    private const float RAYCAST_MAX_DISTANCE = 1.33f;
    private const float RAYCAST_SLEEP_DELAY = 0.33f;
-   private const float SCALE_MAX = 1.6f;
-   private const float SCALE_MIN = 0.4f;
+   private const float SCALE_MAX = 1.8f; // 1.6
+   private const float SCALE_MIN = 0.3f; // .4
    private const float SIZE_LARGE_BREAK = 3.0f;
    private const float SIZE_MID_BREAK = 2.0f;
    private const float SPEED_MAX = 1.2f;
@@ -47,10 +48,10 @@ public class FishDrone : MonoBehaviour
    private const float TURNRATE_MIN = 5.0f;
 
       // Work in progress (avoid nearest neighbor).
-      public float REVERSE_DELAY = 1f;
-      public float FudgeFactor = 20f;
-
-      private float revTime = 0;
+      //public float REVERSE_DELAY = 1f;
+      //public float FudgeFactor = 20f;
+      //
+      //private float revTime = 0;
 
    private void BeFishy()
    {
@@ -68,9 +69,12 @@ public class FishDrone : MonoBehaviour
 
    private void Init()
    {
+      scale = GetNewScale;
+      SetLocalScale(scale);
+      TuneAnimationSpeed(scale);
+
       SetNewTurnRate();
       SetNewOrientation();
-      TuneAnimationSpeed(GetNewScale);
       SetNewRandomSpeed();
       speed = newSpeed;
       if (animator.isActiveAndEnabled) animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
@@ -169,18 +173,6 @@ public class FishDrone : MonoBehaviour
             if (hitPort.distance > 0 && hitStarbord.distance > 0)
             {
                // TODO when there are neighbors on both sides, if course is toward closer target then invert course.
-               var hpd = hitPort.distance;
-               var hsd = hitStarbord.distance;
-               if ((hpd > hsd + FudgeFactor && turnRate < 0) || (hsd > hpd + FudgeFactor && turnRate > 0))
-               {
-                  /// TODO get this working (as desired, i.e. for effective pathfinding) once and for-all. Or don't, and move=on.
-                  if (Time.time > revTime)
-                  {
-                     //turnRate = -turnRate; 
-                     revTime = Time.time + REVERSE_DELAY;
-                     Debug.Log("reverse -- port: " + hitPort.distance + ", starbord: " + hitStarbord.distance);
-                  }
-               }
             }
          }
          else correctedTurnRate = turnRate;
@@ -204,6 +196,11 @@ public class FishDrone : MonoBehaviour
       Vector3 thisRotation = Vector3.zero;
       thisRotation.y = Random.Range(0f, 360f);
       transform.Rotate(thisRotation, Space.Self);
+   }
+
+   private void SetLocalScale(Vector3 scale)
+   {
+      transform.localScale = scale;
    }
 
    private void SetNewRandomSpeed()

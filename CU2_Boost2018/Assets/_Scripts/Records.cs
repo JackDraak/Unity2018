@@ -2,20 +2,20 @@
 using TMPro;
 using UnityEngine;
 
-public class Records : MonoBehaviour {
-
+public class Records : MonoBehaviour
+{
    private const int RECORD_LIMIT = 23; // Limit records so the "entire list" can fit on-screen.
 
    private TextMeshProUGUI readout;
    private List<string> records = new List<string>();
-   private string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
-   private string[] comTwo =     { "Is it even possible? ", "Amazing: ", "Stupendous: ", "Lucky! "};
-   private string[] comThree =   { "Remarkable: ", "Off the charts! ", "Better than me... ", "Fantastic: "};
-   private string[] comFour =    { "Pretty good: ", "Better than average: ", "Hanging in there: ", "Solid: " };
-   private string[] comFive =    { "Not bad: ", "Average: ", "Nominal: ", "Acceptable: " };
-   private string[] comSix =     { "Keep practicing: ", "You're getting there: ", "not bad, but not great: ", "Mediocre: " };
-   private string[] comSeven =   { "I bet you can do better: ", "Practice makes perfect: ", "Details, details... ", "This could be improved: " };
-   private string[] comEight =   { "Are you even trying? ", "SMH: ", "Seriously? ", "Yeup.... " };
+   private readonly string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
+   private readonly string[] comTwo =     { "Is it even possible? ", "Amazing: ", "Stupendous: ", "Lucky! "};
+   private readonly string[] comThree =   { "Remarkable: ", "Off the charts! ", "Better than me... ", "Fantastic: "};
+   private readonly string[] comFour =    { "Pretty good: ", "Better than average: ", "Hanging in there: ", "Solid: " };
+   private readonly string[] comFive =    { "Not bad: ", "Average: ", "Nominal: ", "Acceptable: " };
+   private readonly string[] comSix =     { "Keep practicing: ", "You're getting there: ", "not bad, but not great: ", "Mediocre: " };
+   private readonly string[] comSeven =   { "I bet you can do better: ", "Practice makes perfect: ", "Details, details... ", "This could be improved: " };
+   private readonly string[] comEight =   { "Are you even trying? ", "SMH: ", "Seriously? ", "Yeup.... " };
 
    public void Add(float record)
    {
