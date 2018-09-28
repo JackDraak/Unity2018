@@ -3,8 +3,10 @@ using UnityEngine;
 
 public class FishPool : MonoBehaviour
 {
-   [Space(10)] [SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
-   private int spawnPercent = 75; // TODO fairly pointless to assign this a value now...
+   // TODO -- setup a NavMesh and use it to help define a "spawn area" along with the AI boundary colliders and scenery colliders?
+
+   [SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
+   private int spawnPercent;
 
    struct Fish
    {
@@ -25,19 +27,12 @@ public class FishPool : MonoBehaviour
       spawnPoints = GetComponentsInChildren<FishSpawn>();
       dynamicPoolSize = SpawnTarget;
       fishes = new Fish[SpawnTarget];
-
-      // TODO Clean this area up some.....
-      // Build initial pool & populate.
-      for (int i = 0; i < SpawnTarget; i++) CreateFishObject(i);
       StartCoroutine(TunedSpawn());
-      //CorrectPoolSize();
-      //Spawn();
    }
 
    private void Update()
    {
       PollDebug();
-      ExpireFish(); // TODO make this less needy?
    }
 
    private void CorrectPoolSize()
@@ -70,30 +65,6 @@ public class FishPool : MonoBehaviour
       fishes[index].poolIndex = index;
    }
 
-   private void ExpireFish()
-   {
-      for (int i = 0; i < fishes.Length; i++)
-      {
-         if (!fishes[i].on)
-         {
-            fishes[i].fishObject.transform.parent = this.transform;
-            fishes[i].fishObject.SetActive(false);
-         }
-      }
-   }
-
-   private void Despawn()
-   {
-      int active = CountActive;
-      int targetDelta = active - SpawnTarget;
-      while (targetDelta > 0)
-      {
-         fishes[active].on = false; // ExpireFish() does the rest of the work...
-         active--;
-         targetDelta--;
-      }
-   }
-
    private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
 
    private void GrowPool(int delta)
@@ -109,6 +80,8 @@ public class FishPool : MonoBehaviour
 
       // Create next pool fish(es) in the series.
       for (int i = 0; i < delta; i++) CreateFishObject(i + dynamicPoolSize - delta);
+
+      //Debug info.
       string debugString = "FishPool GrowPool() execution result, +" + delta;
       if (delta == 1) debugString += ". Added fish #: " + dynamicPoolSize;
       else debugString += ". Added fish #'s: " + (dynamicPoolSize - delta + 1) + "-" + dynamicPoolSize;
@@ -188,7 +161,7 @@ public class FishPool : MonoBehaviour
    private void RecycleFish(Transform xform, int poolIndex)
    {
       fishes[poolIndex].on = true;
-      fishes[poolIndex].onTime = Time.time; // else
+      fishes[poolIndex].onTime = Time.time;
       fishes[poolIndex].fishObject.transform.parent = xform;
       fishes[poolIndex].fishObject.transform.position = xform.position;
       fishes[poolIndex].fishObject.SetActive(true);
