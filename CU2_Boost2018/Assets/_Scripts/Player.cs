@@ -279,6 +279,8 @@ public class Player : MonoBehaviour
       if (debugMode) DebugControlPoll();
    }
 
+   private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
+
    private int GasPercent
    {
       get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); }
@@ -353,6 +355,17 @@ public class Player : MonoBehaviour
    {
       transform.position = new Vector3(transform.position.x, transform.position.y, 0.0f); // Lock Z position.
       transform.rotation = Quaternion.Euler(0.0f, 0.0f, transform.rotation.eulerAngles.z); // Lock XY rotation.
+   }
+
+   private void OnGUI()
+   {
+      if (debugMode)
+      {
+         //GUIStyle style = new GUIStyle();
+         //style.richText = true;
+         string guiString = "<color=\"Red\">" + FrameRate + "</color>";
+         GUI.Label(new Rect(0, 0, 100, 100), guiString);
+      }
    }
 
    private void OnCollisionEnter(Collision collision)

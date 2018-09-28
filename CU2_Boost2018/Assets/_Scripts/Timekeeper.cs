@@ -27,7 +27,7 @@ public class Timekeeper : MonoBehaviour
       finished = true;
       float ratio = (elapsed / count) * 100f;
       ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
-      records.Add(ratio);
+      records.AddRecord(ratio);
    }
 
    public void Restart()
@@ -62,6 +62,6 @@ public class Timekeeper : MonoBehaviour
       }
       
       // Debugging tool to throw random records into the game
-      if (debugMode && Input.GetKeyDown(KeyCode.Z)) records.Add(Random.Range(0.9f, 11f));
+      if (debugMode && Input.GetKeyDown(KeyCode.Z)) records.AddRecord(Random.Range(0.9f, 11f));
    }
 }

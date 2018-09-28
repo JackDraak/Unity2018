@@ -17,7 +17,7 @@ public class Records : MonoBehaviour
    private readonly string[] comSeven =   { "I bet you can do better: ", "Practice makes perfect: ", "Details, details... ", "This could be improved: " };
    private readonly string[] comEight =   { "Are you even trying? ", "SMH: ", "Seriously? ", "Yeup.... " };
 
-   public void Add(float record)
+   public void AddRecord(float record)
    {
       string stringRecord = record.ToString("F2");
 
@@ -32,9 +32,9 @@ public class Records : MonoBehaviour
       else if (record > 10) records.Add(comEight[OneOf(comEight)] + stringRecord + "\n");
    }
 
-   private int OneOf(string[] comment)
+   private int OneOf(string[] commentArray)
    {
-      return Mathf.FloorToInt(Random.Range(0, comment.Length));
+      return Mathf.FloorToInt(Random.Range(0, commentArray.Length));
    }
 
    private void PrintRecords()

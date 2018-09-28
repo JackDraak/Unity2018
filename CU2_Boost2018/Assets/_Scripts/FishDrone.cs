@@ -222,17 +222,16 @@ public class FishDrone : MonoBehaviour
       startPos = transform.position;
       startQuat = transform.rotation;
 
-      // TODO Setup for collision-avoidance: layerMask WIP
-      // Bit shift the index of the layer (8) to get a bit mask
-      ///layerMask = 1 << 8; // This would cast rays only against colliders in layer 8.
-      // But we want to collide against everything except layer 8. 
-      ///layerMask = ~layerMask; // The ~ operator inverts the bitmask.
+            // TODO Setup for collision-avoidance: layerMask WIP
+            // Bit shift the index of the layer (8) to get a bit mask
+            ///layerMask = 1 << 8; // This would cast rays only against colliders in layer 8.
+            // But we want to collide against everything except layer 8. 
+            ///layerMask = ~layerMask; // The ~ operator inverts the bitmask.
+            
       int defaultLayer = 0;
       layerMask = 1 << defaultLayer; // Apply a bitshift to create a mask.
 
       Init();
-
-      ///Debug.Log(Scale.ToString() + Scale.ToString() + Scale.ToString() + Scale.ToString() + Scale.ToString() + Scale.ToString());
    }
 
    private void TuneAnimationSpeed(Vector3 scale) // Set dynamic animation speed (~slower for larger fish).

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class FishPool : MonoBehaviour
 {
@@ -7,27 +8,26 @@ public class FishPool : MonoBehaviour
    [Tooltip("Time before Fish Life Max when fish *may* expire, in seconds [should be 0 or smaller value than fishLifeMin]")]
    [SerializeField] float fishLifeWindow = 0;
 
-   [Tooltip("Allow spawn to populate without a Reset() when true.")]
-   [SerializeField] bool dynamicSpawn = true;
+   //[Tooltip("Allow spawn to populate without a Reset() when true.")]
+   //[SerializeField] bool dynamicSpawn = true;
 
-   [Space(10)][SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
+   [Space(10)] [SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
    [Tooltip("Percentage of Spawn Points to Populate.")]
-   [Range(0, 100)][SerializeField] int spawnPercent = 75;
+   [Range(0, 100)] [SerializeField] int spawnPercent = 75;
 
    struct Fish
    {
-      public bool       on;
-      public float      onTime;
+      public bool on;
+      public float onTime;
       public GameObject fishObject;
-      public int        poolIndex;
-      public Transform  xform;
-      public Vector3    scale;
+      public int poolIndex;
    }
 
-   private Fish[]       fishes;
-   private FishSpawn[]  spawnPoints;
-   private int          dynamicPoolSize;
-   private Transform    xform;
+   private Fish[] fishes;
+   private FishSpawn[] spawnPoints;
+   private int dynamicPoolSize;
+   private int updatedFrameRate;
+   private Transform xform;
 
    private void Start()
    {
@@ -45,19 +45,22 @@ public class FishPool : MonoBehaviour
       // Build initial pool & populate.
       for (int i = 0; i < SpawnTarget; i++) CreateFishObject(i);
       //Debug.Log("FishPool Start() Spawn-Points identified: " + CountPool);
-      Spawn();
+      StartCoroutine(TunedSpawn());
+
+      //CorrectPoolSize();
+      //Spawn();
    }
 
    private void Update()
    {
       PollDebug();
       ExpireFish();
-      if (dynamicSpawn && CountUnder) PartialSpawn();
-      if (CountOver) CorrectPoolSize();
+      ///if (dynamicSpawn && CountUnder) PartialSpawn();
+      ///if (CountOver) CorrectPoolSize();
    }
 
    private void CorrectPoolSize()
-   {   
+   {
       int newTarget = SpawnTarget - CountPool;
       if (newTarget > 0) GrowPool(newTarget);
       // TODO shrink overfull pools? i.e. GrowPool but in reverse....
@@ -76,7 +79,7 @@ public class FishPool : MonoBehaviour
 
    private bool CountFull { get { return (CountActive == SpawnTarget); } }
    private bool CountOver { get { return (CountPool > SpawnTarget); } }
-   private bool CountUnder { get { return (CountActive < SpawnTarget); } } 
+   private bool CountUnder { get { return (CountActive < SpawnTarget); } }
    private int CountPool { get { return fishes.Length; } }
 
    private void CreateFishObject(int index)
@@ -86,7 +89,6 @@ public class FishPool : MonoBehaviour
       fishes[index].on = false;
       fishes[index].onTime = 0;
       fishes[index].poolIndex = index;
-      fishes[index].xform = transform;
    }
 
    private void CycleInactive()
@@ -136,6 +138,8 @@ public class FishPool : MonoBehaviour
       CycleLifespan();
       CycleInactive();
    }
+
+   private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
 
    private void GrowPool(int delta)
    {
@@ -235,10 +239,7 @@ public class FishPool : MonoBehaviour
       else fishes[poolIndex].onTime = Time.time;
       fishes[poolIndex].fishObject.transform.parent = xform;
       fishes[poolIndex].fishObject.transform.position = xform.position;
-      // TODO when did the fish stop taking on their scales? Derp.. Do it here?
-      //fishes[poolIndex].fishObject.transform.localScale = 
       fishes[poolIndex].fishObject.SetActive(true);
-      fishes[poolIndex].xform = xform;
    }
 
    public void Reset()
@@ -249,8 +250,7 @@ public class FishPool : MonoBehaviour
    private void Respawn()
    {
       ReclaimAllFish();
-      CorrectPoolSize();
-      Spawn();
+      StartCoroutine(TunedSpawn());
    }
 
    private void ShrinkPool(int delta) // TODO depreciate? still causing problems....
@@ -282,7 +282,7 @@ public class FishPool : MonoBehaviour
             spawnCountRFT++;
          }
       }
-      Debug.Log("FishPool Spawn() RandomFreeTransform's requested: " + spawnCountRFT + 
+      Debug.Log("FishPool Spawn() RandomFreeTransform's requested: " + spawnCountRFT +
          ". Total active count: " + CountActive +
          ". Pool size: " + fishes.Length +
          ". Available spawn points (net): " + spawnPoints.Length);
@@ -292,4 +292,43 @@ public class FishPool : MonoBehaviour
    {
       get { return Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f)); }
    }
+
+   public IEnumerator TunedSpawn()
+   {
+      int tempPercent = spawnPercent;
+      int testCycles = 4;
+      int frameGap = 2;
+      int divisor = testCycles;
+      int averageFR = 0;
+      float spawnFactor = 1.555f;
+
+      while (testCycles > 0)
+      {
+         yield return StartCoroutine(WaitFor.Frames(frameGap));
+         averageFR += FrameRate;
+         testCycles--;
+      }
+      spawnPercent = Mathf.FloorToInt((averageFR/divisor) * spawnFactor);
+      Debug.Log("FishPool.cs:TunedSpawn() spawnPercent = " + spawnPercent + "(" + tempPercent + ")");
+
+      if (spawnPercent > 100) spawnPercent = 100;
+      else if (spawnPercent < 0) spawnPercent = 0;
+                          
+      CorrectPoolSize();
+      Spawn();
+      spawnPercent = tempPercent;
+   }
 }
+
+public static class WaitFor
+{
+   public static IEnumerator Frames(int frameCount)
+   {
+      while (frameCount > 0)
+      {
+         frameCount--;
+         yield return null;
+      }
+   }
+}
+
