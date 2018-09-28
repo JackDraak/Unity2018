@@ -3,17 +3,18 @@ using UnityEngine;
 
 public class FishPool : MonoBehaviour
 {
-   [Tooltip("Lifespan in seconds (0 = do not expire)")]
-   [SerializeField] float fishLifeMax = 0;
-   [Tooltip("Time before Fish Life Max when fish *may* expire, in seconds [should be 0 or smaller value than fishLifeMin]")]
-   [SerializeField] float fishLifeWindow = 0;
+   //[Tooltip("Lifespan in seconds (0 = do not expire)")]
+   //[SerializeField] float fishLifeMax = 0;
+   //[Tooltip("Time before Fish Life Max when fish *may* expire, in seconds [should be 0 or smaller value than fishLifeMin]")]
+   //[SerializeField] float fishLifeWindow = 0;
 
    //[Tooltip("Allow spawn to populate without a Reset() when true.")]
    //[SerializeField] bool dynamicSpawn = true;
 
    [Space(10)] [SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
-   [Tooltip("Percentage of Spawn Points to Populate.")]
-   [Range(0, 100)] [SerializeField] int spawnPercent = 75;
+   //[Tooltip("Percentage of Spawn Points to Populate.")]
+   //[Range(0, 100)] [SerializeField] int spawnPercent = 75;
+   private int spawnPercent = 75;
 
    struct Fish
    {
@@ -31,13 +32,13 @@ public class FishPool : MonoBehaviour
 
    private void Start()
    {
-      if (fishLifeWindow > fishLifeMax)
-      {
-         Debug.Log("FishPool Start() ERROR: fishLifeWindow MUST be a smaller value that fishLifeMax. " +
-            "Setting both to zero. Please correct this issue in the inspector. (FishPool object/script");
-         fishLifeWindow = 0;
-         fishLifeMax = 0;
-      }
+      //if (fishLifeWindow > fishLifeMax)
+      //{
+      //   Debug.LogError("FishPool Start() ERROR: fishLifeWindow MUST be a smaller value that fishLifeMax. " +
+      //      "Setting both to zero. Please correct this issue in the inspector. (FishPool object/script");
+      //   fishLifeWindow = 0;
+      //   fishLifeMax = 0;
+      //}
       spawnPoints = GetComponentsInChildren<FishSpawn>();
       dynamicPoolSize = SpawnTarget;
       fishes = new Fish[SpawnTarget];
@@ -105,20 +106,20 @@ public class FishPool : MonoBehaviour
 
    private void CycleLifespan()
    {
-      if (fishLifeWindow + fishLifeMax != 0)
-      {
-         for (int i = 0; i < fishes.Length; i++)
-         {
-            if (fishes[i].on)
-            {
-               if (Time.time > fishes[i].onTime)
-               {
-                  fishes[i].on = false;
-                  fishes[i].fishObject.SetActive(false);
-               }
-            }
-         }
-      }
+      //if (fishLifeWindow + fishLifeMax != 0)
+      //{
+      //   for (int i = 0; i < fishes.Length; i++)
+      //   {
+      //      if (fishes[i].on)
+      //      {
+      //         if (Time.time > fishes[i].onTime)
+      //         {
+      //            fishes[i].on = false;
+      //            fishes[i].fishObject.SetActive(false);
+      //         }
+      //      }
+      //   }
+      //}
    }
 
    private void Despawn()
@@ -135,7 +136,7 @@ public class FishPool : MonoBehaviour
 
    private void ExpireFish()
    {
-      CycleLifespan();
+      //CycleLifespan();
       CycleInactive();
    }
 
@@ -235,8 +236,8 @@ public class FishPool : MonoBehaviour
    private void RecycleFish(Transform xform, int poolIndex)
    {
       fishes[poolIndex].on = true;
-      if (fishLifeMax + fishLifeWindow != 0) fishes[poolIndex].onTime = Time.time + fishLifeMax - Random.Range(0, fishLifeWindow);
-      else fishes[poolIndex].onTime = Time.time;
+      //if (fishLifeMax + fishLifeWindow != 0) fishes[poolIndex].onTime = Time.time + fishLifeMax - Random.Range(0, fishLifeWindow);
+      fishes[poolIndex].onTime = Time.time; // else
       fishes[poolIndex].fishObject.transform.parent = xform;
       fishes[poolIndex].fishObject.transform.position = xform.position;
       fishes[poolIndex].fishObject.SetActive(true);
@@ -255,19 +256,19 @@ public class FishPool : MonoBehaviour
 
    private void ShrinkPool(int delta) // TODO depreciate? still causing problems....
    {
-      // Place current array in temp storage.
-      Fish[] temp = new Fish[dynamicPoolSize];
-      for (int i = 0; i < dynamicPoolSize; i++) temp[i] = fishes[i];
-      dynamicPoolSize -= delta;
+      //// Place current array in temp storage.
+      //Fish[] temp = new Fish[dynamicPoolSize];
+      //for (int i = 0; i < dynamicPoolSize; i++) temp[i] = fishes[i];
+      //dynamicPoolSize -= delta;
 
-      // Copy from temp into newer, smaller array.
-      fishes = new Fish[dynamicPoolSize];
-      for (int i = 0; i < dynamicPoolSize; i++) fishes[i] = temp[i];
+      //// Copy from temp into newer, smaller array.
+      //fishes = new Fish[dynamicPoolSize];
+      //for (int i = 0; i < dynamicPoolSize; i++) fishes[i] = temp[i];
 
-      string debugString = "FishPool ShrinkPool() Performed, -" + delta;
-      if (delta == 1) debugString += ". Removed fish #: " + (dynamicPoolSize + 1);
-      else debugString += ". Removed fish #'s: " + (dynamicPoolSize - delta) + "-" + (dynamicPoolSize + 1);
-      Debug.Log(debugString);
+      //string debugString = "FishPool ShrinkPool() Performed, -" + delta;
+      //if (delta == 1) debugString += ". Removed fish #: " + (dynamicPoolSize + 1);
+      //else debugString += ". Removed fish #'s: " + (dynamicPoolSize - delta) + "-" + (dynamicPoolSize + 1);
+      //Debug.Log(debugString);
    }
 
    private void Spawn()
@@ -282,10 +283,10 @@ public class FishPool : MonoBehaviour
             spawnCountRFT++;
          }
       }
-      Debug.Log("FishPool Spawn() RandomFreeTransform's requested: " + spawnCountRFT +
-         ". Total active count: " + CountActive +
-         ". Pool size: " + fishes.Length +
-         ". Available spawn points (net): " + spawnPoints.Length);
+      //Debug.Log("FishPool Spawn() RandomFreeTransform's requested: " + spawnCountRFT +
+      //   ". Total active count: " + CountActive +
+      //   ". Pool size: " + fishes.Length +
+      //   ". Available spawn points (net): " + spawnPoints.Length);
    }
 
    private int SpawnTarget
@@ -295,6 +296,7 @@ public class FishPool : MonoBehaviour
 
    public IEnumerator TunedSpawn()
    {
+      // Local setup.
       int tempPercent = spawnPercent;
       int testCycles = 4;
       int frameGap = 2;
@@ -302,14 +304,29 @@ public class FishPool : MonoBehaviour
       int averageFR = 0;
       float spawnFactor = 1.555f;
 
+      // TODO this is to test if a "single sample" has a more preferable resolution compared with the multiple sample method
+         // A/B tests:
+         //60/59
+         //60/48
+         //60/54
+         //65/61
+         //62/55
+         //69/62
+         //60/50
+         // Conclusion: multi-sampling frame-rate is much smoother and more consistent, which seems fairly obvious, but... now we know.
+      float time = Time.time; // Real-time.
+      yield return StartCoroutine(WaitFor.Frames(frameGap * testCycles));
+      time = Time.time - time; // Time since declared..
+      float otherSpawnPercent = Mathf.FloorToInt(((frameGap * testCycles) / time) * spawnFactor); // The "single sample" method.
+
       while (testCycles > 0)
       {
          yield return StartCoroutine(WaitFor.Frames(frameGap));
          averageFR += FrameRate;
          testCycles--;
       }
-      spawnPercent = Mathf.FloorToInt((averageFR/divisor) * spawnFactor);
-      Debug.Log("FishPool.cs:TunedSpawn() spawnPercent = " + spawnPercent + "(" + tempPercent + ")");
+      spawnPercent = Mathf.FloorToInt((averageFR/divisor) * spawnFactor); // The "multiple sample" method.
+      Debug.Log("FishPool.cs:TunedSpawn() spawnPercent = " + spawnPercent + "(" + tempPercent + ", " + otherSpawnPercent + ")");
 
       if (spawnPercent > 100) spawnPercent = 100;
       else if (spawnPercent < 0) spawnPercent = 0;
