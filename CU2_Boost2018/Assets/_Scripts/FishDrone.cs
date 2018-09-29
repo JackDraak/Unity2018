@@ -7,6 +7,7 @@ using UnityEngine;
 public class FishDrone : MonoBehaviour
 {
    private Animator animator;
+   private bool caution;
    private float changeDelay, changeTime;
    private float newSpeed, speed; 
    private float correctedTurnRate, turnRate;
@@ -77,6 +78,7 @@ public class FishDrone : MonoBehaviour
 
       lastContact = 0;
       revTime = 0;
+      caution = false;
    }
 
    private void LerpSpeed()
@@ -102,7 +104,8 @@ public class FishDrone : MonoBehaviour
       if (collision.gameObject.tag == "Player")
       {
          lastContact = Time.time;
-         speed++;
+         speed += SPEED_MAX;
+         newSpeed = speed * .75f;
       }
    }
 
@@ -149,12 +152,17 @@ public class FishDrone : MonoBehaviour
          // Look ahead.
          if (Physics.Raycast(transform.position, fore, RAYCAST_MAX_DISTANCE, layerMask))
          {
+            caution = true;
             Debug.DrawRay(transform.position, fore, Color.red, RAYCAST_DRAWTIME);
             newSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / newSpeed);
             raycastSleepTime = Time.time + RAYCAST_FRAME_GAP;
             lastContact = Time.time;
          }
-         else SetNewRandomSpeed();
+         else if (caution)
+         {
+            caution = false;
+            SetNewRandomSpeed();
+         }
 
          // Look left.
          if (Physics.Raycast(transform.position, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask))
