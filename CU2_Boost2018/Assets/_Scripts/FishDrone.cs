@@ -12,6 +12,7 @@ public class FishDrone : MonoBehaviour
    private float correctedTurnRate, turnRate;
    private float lastContact;
    private float raycastSleepTime;
+   private float revTime;
    private float roughScale, scaleFactor;
    private float speedScaleFactor;
    private int layerMask;
@@ -38,6 +39,7 @@ public class FishDrone : MonoBehaviour
    private const float RAYCAST_FRAME_GAP = 0.2f;
    private const float RAYCAST_MAX_DISTANCE = 1.33f;
    private const float RAYCAST_SLEEP_DELAY = 0.33f;
+   private const float REVERSE_DELAY = 6f;
    private const float SCALE_MAX = 1.8f; // 1.6
    private const float SCALE_MIN = 0.3f; // .4
    private const float SIZE_LARGE_BREAK = 3.0f;
@@ -46,12 +48,6 @@ public class FishDrone : MonoBehaviour
    private const float SPEED_MIN = 0.2f;
    private const float TURNRATE_MAX = 10.0f;
    private const float TURNRATE_MIN = 5.0f;
-
-      // Work in progress (avoid nearest neighbor).
-      //public float REVERSE_DELAY = 1f;
-      //public float FudgeFactor = 20f;
-      //
-      //private float revTime = 0;
 
    private void BeFishy()
    {
@@ -78,7 +74,9 @@ public class FishDrone : MonoBehaviour
       SetNewRandomSpeed();
       speed = newSpeed;
       if (animator.isActiveAndEnabled) animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
+
       lastContact = 0;
+      revTime = 0;
    }
 
    private void LerpSpeed()
@@ -115,7 +113,7 @@ public class FishDrone : MonoBehaviour
       starbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
       //var right45 = (transform.forward + transform.right).normalized; // 45* to the right of fore.
 
-      /// Enable these rays to visualize the wiskers in the scene view.
+      /// Enable these rays to visualize the wiskers in the scene view (or with gizmos enabled).
       //Debug.DrawRay(transform.position, fore, Color.magenta, 0);
       //Debug.DrawRay(transform.position, port, Color.cyan, 0);
       //Debug.DrawRay(transform.position, starbord, Color.green, 0);
@@ -132,22 +130,29 @@ public class FishDrone : MonoBehaviour
 
       if (Time.time > raycastSleepTime)
       {
-         RaycastHit hitFore, hitPort, hitStarbord;
+         RaycastHit hitPort, hitStarbord;
 
          // Sleep for a spell to minimize the costly raycasting calls.
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
 
+         //Vector3 catfishWhiskers = transform.position;
+         //catfishWhiskers.y -= 0.6f; // failed attempt to offset a ray at the base of the fish
+         ////Vector3 catfishWhiskers_Fore = catfishWhiskers.forward;
+         //if (Physics.Raycast(catfishWhiskers, fore, RAYCAST_MAX_DISTANCE, layerMask))
+         //{
+         //   Debug.DrawRay(transform.position, fore, Color.cyan, RAYCAST_DRAWTIME +10);
+         //   newSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / newSpeed);
+         //   raycastSleepTime = Time.time + RAYCAST_FRAME_GAP;
+         //   lastContact = Time.time;
+         //}
+
          // Look ahead.
-         if (Physics.Raycast(transform.position, fore, out hitFore, RAYCAST_MAX_DISTANCE, layerMask))
+         if (Physics.Raycast(transform.position, fore, RAYCAST_MAX_DISTANCE, layerMask))
          {
-            if (hitFore.collider.tag != "Player")
-            {
-               Debug.DrawRay(transform.position, fore, Color.red, RAYCAST_DRAWTIME);
-               newSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / newSpeed);
-               raycastSleepTime = Time.time + RAYCAST_FRAME_GAP;
-               lastContact = Time.time;
-            }
-            else Debug.Log("player at fore");
+            Debug.DrawRay(transform.position, fore, Color.red, RAYCAST_DRAWTIME);
+            newSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / newSpeed);
+            raycastSleepTime = Time.time + RAYCAST_FRAME_GAP;
+            lastContact = Time.time;
          }
          else SetNewRandomSpeed();
 
@@ -172,7 +177,14 @@ public class FishDrone : MonoBehaviour
             correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
             if (hitPort.distance > 0 && hitStarbord.distance > 0)
             {
-               // TODO when there are neighbors on both sides, if course is toward closer target then invert course.
+               // TODO when there are neighbors on both sides, if course is toward closer target then invert course (but not too often).
+               if (((hitPort.distance > hitStarbord.distance && correctedTurnRate > 0) 
+                  || (hitPort.distance < hitStarbord.distance && correctedTurnRate > 0)) 
+                  && revTime < Time.time)
+               {
+                  correctedTurnRate = -correctedTurnRate;
+                  revTime = Time.time + REVERSE_DELAY;
+               }
             }
          }
          else correctedTurnRate = turnRate;
@@ -221,12 +233,6 @@ public class FishDrone : MonoBehaviour
       animator = GetComponent<Animator>();
       startPos = transform.position;
       startQuat = transform.rotation;
-
-            // TODO Setup for collision-avoidance: layerMask WIP
-            // Bit shift the index of the layer (8) to get a bit mask
-            ///layerMask = 1 << 8; // This would cast rays only against colliders in layer 8.
-            // But we want to collide against everything except layer 8. 
-            ///layerMask = ~layerMask; // The ~ operator inverts the bitmask.
             
       int defaultLayer = 0;
       layerMask = 1 << defaultLayer; // Apply a bitshift to create a mask.
