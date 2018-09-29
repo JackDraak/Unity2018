@@ -204,43 +204,47 @@ public class FishPool : MonoBehaviour
    public IEnumerator TunedSpawn()
    {
       // Local setup.
-      int tempPercent = spawnPercent;
-      int testCycles = 4;
-      int frameGap = 2;
-      int divisor = testCycles;
-      int averageFR = 0;
-      float spawnFactor = 1.555f;
+      float spawnFactor = 1.555f;   // Fudge-factor for spawnrate/framerate conversion ratio.
+      int frameGap = 2;             // Must be 1 or greater. # of frames to skip between samples.
+      int testSamples = 4;          // # of sample framerates to use to calculate averageFrameRate.
 
-      // TODO this is to test if a "single sample" has a more preferable resolution compared with the multiple sample method
-         // A/B tests:
-         //60/59
-         //60/48
-         //60/54
-         //65/61
-         //62/55
-         //69/62
-         //60/50
-         // Conclusion: multi-sampling frame-rate is much smoother and more consistent, which seems fairly obvious, but... now we know.
-      float time = Time.time; // Real-time.
-      yield return StartCoroutine(WaitFor.Frames(frameGap * testCycles));
-      time = Time.time - time; // Time since declared..
-      float otherSpawnPercent = Mathf.FloorToInt(((frameGap * testCycles) / time) * spawnFactor); // The "single sample" method.
-
-      while (testCycles > 0)
+      // Loop setup.
+      int averageFrameRate = 0;
+      int divisor = testSamples;
+      while (testSamples > 0)
       {
          yield return StartCoroutine(WaitFor.Frames(frameGap));
-         averageFR += FrameRate;
-         testCycles--;
+         averageFrameRate += FrameRate;
+         testSamples--;
       }
-      spawnPercent = Mathf.FloorToInt((averageFR/divisor) * spawnFactor); // The "multiple sample" method.
-      Debug.Log("FishPool.cs:TunedSpawn() spawnPercent = " + spawnPercent + "(" + tempPercent + ", " + otherSpawnPercent + ")");
-
-      if (spawnPercent > 100) spawnPercent = 100;
-      else if (spawnPercent < 0) spawnPercent = 0;
+      // Will the real spawnRate, please stand up!?
+      spawnPercent = Bound(Mathf.FloorToInt((averageFrameRate/divisor) * spawnFactor)); 
+      Debug.Log("FishPool.cs:TunedSpawn() spawnPercent = " + spawnPercent);
                           
       CorrectPoolSize();
       Spawn();
-      spawnPercent = tempPercent;
+   }
+
+   private int Bound(int test)
+   {
+      if (test > 100) test = 100;
+      else if (test < 0) test = 0;
+      return test;
+   }
+
+   // Some other ways to overload Bound, for fun.. not presently being used
+   private int Bound(int low, int high, int test)
+   {
+      if (test > high) test = high;
+      else if (test < low) test = low;
+      return test;
+   }
+
+   private float Bound(float low, float high, float test)
+   {
+      if (test > high) test = high;
+      else if (test < low) test = low;
+      return test;
    }
 }
 
