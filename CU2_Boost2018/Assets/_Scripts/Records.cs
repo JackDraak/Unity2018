@@ -30,6 +30,8 @@ public class Records : MonoBehaviour
       else if (record > 6 && record <= 8) records.Add(comSix[OneOf(comSix)] + stringRecord + "\n");
       else if (record > 8 && record <= 10) records.Add(comSeven[OneOf(comSeven)] + stringRecord + "\n");
       else if (record > 10) records.Add(comEight[OneOf(comEight)] + stringRecord + "\n");
+
+      PrintRecords();
    }
 
    private int OneOf(string[] commentArray)
@@ -56,10 +58,6 @@ public class Records : MonoBehaviour
    {
       readout = GetComponent<TextMeshProUGUI>();
       records.Clear();
-   }
-
-   private void Update()
-   {
       PrintRecords();
    }
 }
