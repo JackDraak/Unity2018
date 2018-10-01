@@ -1,20 +1,25 @@
 ﻿//
 //    Dev-Notes:
 //
-//    idea fish bopping bonus level: gain extra %'s of Gas Level.
+//    idea fish bopping bonus level: gain extra %'s of Gas Level. (bopping fish add fuel in general? bonus-level increases rate? later levels require fish-bopping to survive?)
 //    
+//    TODO : fix audio issue that cropped-up (bubbles not working right: thrust).
 //    TODO : work on Fog / lighting? work on level 2 ideas?
+//    TODO : design a way to detroy the player.
+//    TODO : improve "Records"; make a leaderboard?
+//    TODO : Move miniGoal slider to bottom right? (change upper-left HUD?) Improve timer aesthetics?
 //
 
 using EZCameraShake;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityStandardAssets.CrossPlatformInput; 
 
 public class Player : MonoBehaviour
 {
    #region Exposed Variables
+   public bool casualMode;
+
    [SerializeField] AudioClip bonusSound; // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ 
    [SerializeField] AudioClip collisionSound;
    [SerializeField] AudioClip thrustSound;
@@ -72,9 +77,6 @@ public class Player : MonoBehaviour
 
    private const int HALF_ARC = 180;
 
-   private const string AXIS_POWER = "Vertical";
-   private const string AXIS_ROTATION = "Horizontal";
-   private const string AXIS_THRUST = "Jump";
    private const string HUD_COLOUR = "\"#FF7070\""; // coral
 
    private AudioSource[] audioSources;
@@ -118,30 +120,12 @@ public class Player : MonoBehaviour
    private Vector3 baseThrust = new Vector3(0, 13000, 0);
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
-   private Vector3 threeControlAxis = Vector3.zero;
-
-   // *Sometimes* compiler's aren't smarter than you.
-   #pragma warning disable 0414
-   private CameraShakeInstance shake = null;
-   #pragma warning restore 0414
-
-   // Properties for CameraShake.
-   private float shakeMagnitude = 1.0f;
-   private float shakeRampDown = 2.0f;
-   private float shakeRampUp = 0.2f;
-   private float shakeRough = 1.0f;
-
-   // 3D positional & rotational influence of CameraShake, as percentage [1 = 100%]).
-   private Vector3 shakePosInf = new Vector3(0.75f, 0.55f, 0.15f);
-   private Vector3 shakeRotInf = new Vector3(2f, 3f, 7f);
+   //private Vector3 currentPosition = Vector3.zero;
    #endregion
 
-   private void AdjustEmissionRate(float newRate)
-   {
-      thrustBubbles.rateOverTime = newRate;
-   }
+   private void AdjustEmissionRate(float newRate) { thrustBubbles.rateOverTime = newRate; }
 
-   private void AdjustThrusterPower(float delta)
+   public void AdjustThrusterPower(float delta)
    {
       delta *= POWER_CONTROLLER_FACTOR;
       float deltaPlus = delta + thrustPowerSlider.value;
@@ -150,6 +134,31 @@ public class Player : MonoBehaviour
       else thrustPowerSlider.value += delta;
       if (thrustPowerSlider.value > maxPower) thrustPowerSlider.value = maxPower;
       DoPowerUpdate();
+   }
+
+   public void ApplyRotation(float rotation)
+   {
+      if (tutorialIsVisible) HideTutorial();
+      if (ExpelGas(EXPEL_RATE_ROTATE))
+      {
+         Rotate(rotation);
+         deRotating = false;
+      }
+   }
+
+   public void ApplyThrust(float thrust)
+   {
+      if (thrust != 0)
+      {
+         if (ExpelGas(EXPEL_RATE_THRUST))
+         {
+            Thrust(thrust);
+            AdjustEmissionRate(EMISSION_RATE_THRUST);
+         }
+         else EndExpulsion();
+         if (tutorialIsVisible) HideTutorial();
+      }
+      else if (thrustAudio.isPlaying) EndExpulsion();
    }
 
    private void AutoDeRotate()
@@ -161,6 +170,16 @@ public class Player : MonoBehaviour
          transform.Rotate(Vector3.forward * (playerTilt * assertion) * Time.deltaTime);
       else if (playerTilt < HALF_ARC && playerTilt > TILT_LIMIT_MIN)
          transform.Rotate(Vector3.back * ((playerTilt + HALF_ARC) * assertion) * Time.deltaTime);
+      else deRotating = false;
+   }
+
+   public void AutoRestart()
+   {
+      if (!casualMode)
+      {
+         Invoke("Restart", 5.0f); // TODO referencify this #?
+         pickupTracker.TriggerCountdown();
+      }
    }
 
    private void Awake()
@@ -184,16 +203,11 @@ public class Player : MonoBehaviour
       return maxPower;
    }
 
-   private void DebugControlPoll()
-   {
-      if (Input.GetKeyDown(KeyCode.B)) BoostMaxPower(0.025f); // 2.5% boost
-      if (Input.GetKeyDown(KeyCode.F)) fuelLevel = FUEL_MAX;
-      if (Input.GetKeyDown(KeyCode.I)) invulnerable = !invulnerable;
-   }
+   public void CasualMode() { casualMode = !casualMode; }
 
-   private void DeRotate()
+   public void DeRotate()
    {
-      if (!deRotating)
+      if (!deRotating && (!Mathf.Approximately(transform.up.x, transform.rotation.x)))
       {
          deRotationTime = Time.time;
          deRotating = true;
@@ -201,7 +215,7 @@ public class Player : MonoBehaviour
       else
       {
          if (!Mathf.Approximately(transform.up.x, transform.rotation.x)) AutoDeRotate();
-         if (threeControlAxis.z == 0) EndExpulsion();
+         EndExpulsion(); // TODO is this the source of woe?
       }
    }
 
@@ -230,6 +244,7 @@ public class Player : MonoBehaviour
 
    private void DoPowerUpdate()
    {
+      string sliderText;
       thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
 
       Color colour;
@@ -239,15 +254,17 @@ public class Player : MonoBehaviour
       thrustFill.color = colour;
       if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
       thrusterBell.GetComponent<MeshRenderer>().material.color = thrustLight.GetComponent<Light>().color = colour;
-      // TODO indicate (in text) when at minimum: BASE_POWER?
-      powerSlideText.text = "Power Level: " + Mathf.FloorToInt(100 - (100 * ((THRUST_MAX - thrustPowerSlider.value) / THRUST_MAX))) + "%";
+      if (Mathf.Approximately(thrustPowerSlider.value, THRUST_MIN)) sliderText = "Power Level (at minimum): ";
+      else sliderText = "Power Level: ";
+      powerSlideText.text = sliderText + Mathf.FloorToInt(100 - (100 * ((THRUST_MAX - thrustPowerSlider.value) / THRUST_MAX))) + "%";
    }
 
    private void EndExpulsion()
    {
       thrustAudio.Stop();
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
-      thrustAudioTimer -= thrustAudioLength;
+      thrustAudioTimer -= thrustAudioLength; // TODO just set to zero for readability?
+      Debug.Log(thrustAudioTimer + " -- Player.cs stopping EndExpulsion (TAL:" + thrustAudioLength + ")");
       thrustLight.GetComponent<Light>().range = Mathf.Lerp(thrustLight.GetComponent<Light>().range, 0, THRUST_FADE_FACTOR);
       thrusterBell.GetComponent<MeshRenderer>().material.color = 
          Vector4.Lerp(thrusterBell.GetComponent<MeshRenderer>().material.color, Color.black, THRUST_FADE_FACTOR);
@@ -256,7 +273,7 @@ public class Player : MonoBehaviour
    private bool ExpelGas(float rate)
    {
       float expulsionRate = 
-         rate * FUEL_USE_RATE * ((thrustPowerSlider.value * FUEL_POWER_FACTOR) * THRUST_POWER_FACTOR) * Time.fixedDeltaTime;
+         rate * FUEL_USE_RATE * thrustPowerSlider.value * FUEL_POWER_FACTOR * THRUST_POWER_FACTOR * Time.fixedDeltaTime;
       if (fuelLevel > expulsionRate)
       {
          fuelLevel -= expulsionRate;
@@ -271,24 +288,18 @@ public class Player : MonoBehaviour
       }
    }
 
-   private void FixedUpdate()
-   {
-      GenerateFuel();
-      PlayerControlPoll();
-      MaintainAlignment();
-      if (debugMode) DebugControlPoll();
-   }
+   //private void FixedUpdate()
+   //{
+   //   GenerateFuel();
+   //   LockZposition();
+   //}
 
    private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
-
-   private int GasPercent
-   {
-      get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); }
-   }
+   private int GasPercent { get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); } }
 
    private void GenerateFuel()
    {
-      fuelLevel += Time.fixedDeltaTime * FUEL_GEN_RATE;
+      fuelLevel += Time.deltaTime * FUEL_GEN_RATE;
       if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
       gasLevelSlider.value = fuelLevel;
       DoGasUpdate();
@@ -330,6 +341,7 @@ public class Player : MonoBehaviour
       thrustAudio = audioSources[0];
       xAudio = audioSources[1];
 
+      casualMode = false;
       deRotating = false;
       invulnerable = false;
       paused = false;
@@ -351,21 +363,16 @@ public class Player : MonoBehaviour
       DoGasUpdate();
    }
 
-   private void MaintainAlignment()
+   public void Invulnerable() { invulnerable = !invulnerable; }
+
+   private void LockZposition()
    {
       transform.position = new Vector3(transform.position.x, transform.position.y, 0.0f); // Lock Z position.
-      transform.rotation = Quaternion.Euler(0.0f, 0.0f, transform.rotation.eulerAngles.z); // Lock XY rotation.
    }
 
-   private void OnGUI()
+   private void lockXYrotation()
    {
-      if (debugMode)
-      {
-         //GUIStyle style = new GUIStyle();
-         //style.richText = true;
-         string guiString = "<color=\"Red\">" + FrameRate + "</color>";
-         GUI.Label(new Rect(0, 0, 100, 100), guiString);
-      }
+      transform.rotation = Quaternion.Euler(0.0f, 0.0f, transform.rotation.eulerAngles.z); // Lock XY rotation.
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -374,15 +381,31 @@ public class Player : MonoBehaviour
       {
          if (!invulnerable)
          {
+            float shakeMagnitude = 1.0f;
+            float shakeRampDown = 2.0f;
+            float shakeRampUp = 0.2f;
+            float shakeRough = 1.0f;
+            Vector3 shakePosInf = new Vector3(0.75f, 0.55f, 0.15f);
+            Vector3 shakeRotInf = new Vector3(2f, 3f, 7f);
+   
             xAudio.PlayOneShot(collisionSound, masterVolume * VOLUME_COLLISION);
             fuelLevel -= DAMAGE_VALUE;
             if (fuelLevel < 0) fuelLevel = 0;
             GameObject leakDamage = (GameObject)Instantiate(collisionEffect, transform.position, Quaternion.identity);
-            shake = CameraShaker.Instance.ShakeOnce(shakeMagnitude, shakeRough, shakeRampUp, shakeRampDown, shakePosInf, shakeRotInf);
             Destroy(leakDamage, KILL_TIMER);
+            CameraShakeInstance shake = 
+               CameraShaker.Instance.ShakeOnce(shakeMagnitude, shakeRough, shakeRampUp, shakeRampDown, shakePosInf, shakeRotInf);
+
+            // code that wont execute that the compiler beieleves will, in order to supress unused reference warning.
+            if (shake == null) Debug.Log(shake.CurrentState); 
          }
          else Debug.Log("invulnerable: BO-01");
       }
+   }
+
+   private void OnGUI()
+   {
+      if (debugMode) GUI.Label(new Rect(0, 0, 100, 100), "<color=\"Red\">" + FrameRate + "</color>");
    }
 
    private void OnTriggerEnter(Collider other)
@@ -421,7 +444,7 @@ public class Player : MonoBehaviour
          if (!thrustAudioTrack)
          {
             thrustAudio.PlayOneShot(thrustSound, masterVolume * VOLUME_THRUST);
-            thrustAudioTimer = Time.time;
+            thrustAudioTimer = Time.time; // TODO for certain? having audio issue....
             thrustAudioTrack = true;
          }
          if (timeKeeper.Running)
@@ -431,70 +454,6 @@ public class Player : MonoBehaviour
          }
       }
       return paused;
-   }
-
-   private void PlayerControlPoll()
-   {
-      PollMisc();
-      PollPower();
-      PollRotation();
-      PollThrust();
-   }
-
-   private void PollMisc()
-   {
-      // SumPause is Polling: Q, R & ESC keys.
-      // PickupTracker is Polling: M, N only for debug purposes.
-      // FishPool is Polling: K, L only for debug purposes.
-
-      // Set power to percentage based on alpha-numeric inputs, 10%-100% 
-      if (Input.GetKeyDown(KeyCode.Alpha0)) SetPower(1.0f);
-      else if (Input.GetKeyDown(KeyCode.Alpha9)) SetPower(0.9f);
-      else if (Input.GetKeyDown(KeyCode.Alpha8)) SetPower(0.8f);
-      else if (Input.GetKeyDown(KeyCode.Alpha7)) SetPower(0.7f);
-      else if (Input.GetKeyDown(KeyCode.Alpha6)) SetPower(0.6f);
-      else if (Input.GetKeyDown(KeyCode.Alpha5)) SetPower(0.5f);
-      else if (Input.GetKeyDown(KeyCode.Alpha4)) SetPower(0.4f);
-      else if (Input.GetKeyDown(KeyCode.Alpha3)) SetPower(0.3f);
-      else if (Input.GetKeyDown(KeyCode.Alpha2)) SetPower(0.2f);
-      else if (Input.GetKeyDown(KeyCode.Alpha1)) SetPower(0.1f);
-   }
-
-   private void PollPower()
-   {
-      threeControlAxis.y = CrossPlatformInputManager.GetAxis(AXIS_POWER);
-      if (threeControlAxis.y != 0) AdjustThrusterPower(threeControlAxis.y);
-   }
-
-   private void PollRotation()
-   {
-      threeControlAxis.x = CrossPlatformInputManager.GetAxis(AXIS_ROTATION);
-      if (threeControlAxis.x != 0)
-      {
-         if (tutorialIsVisible) HideTutorial();
-         if (ExpelGas(EXPEL_RATE_ROTATE))
-         {
-            Rotate(threeControlAxis.x);
-            deRotating = false;
-         }
-      }
-      else DeRotate();
-   }
-
-   private void PollThrust()
-   {
-      threeControlAxis.z = CrossPlatformInputManager.GetAxis(AXIS_THRUST);
-      if (threeControlAxis.z != 0)
-      {
-         if (ExpelGas(EXPEL_RATE_THRUST))
-         {
-            Thrust(threeControlAxis.z);
-            AdjustEmissionRate(EMISSION_RATE_THRUST);
-         }
-         else EndExpulsion();
-         if (tutorialIsVisible) HideTutorial();
-      }
-      else if (thrustAudio.isPlaying) EndExpulsion();
    }
 
    public void Restart()
@@ -522,30 +481,36 @@ public class Player : MonoBehaviour
          thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX * rotationLightLevel;
    }
 
-   private void SetPower(float power)
+   public void SetPower(float power)
    {
       if (power > maxPower) power = maxPower;
       thrustPowerSlider.value = power;
       DoPowerUpdate();
    }
 
-   private void Start()
-   {
-      InitVars();
-
-      // just hanging onto a formula someone posted that might be handy when I get to "level 2":
-      // movementFactor = (Mathf.Sin(Time.time * oscillationSpeed)) / 2f + 0.5f;
-   }
+   private void Start() { InitVars(); }
 
    private void Thrust(float force)
    {
-      Vector3 appliedForce = baseThrust * (thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force); 
+      Vector3 appliedForce = baseThrust * thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force; 
       thisRigidbody.AddRelativeForce(appliedForce);
-      if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
+      if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time) // TODO is this causing the bubble trouble after InputHandler?
       {
          thrustAudio.Stop();
          thrustAudio.PlayOneShot(thrustSound, masterVolume * VOLUME_THRUST);
          thrustAudioTimer = Time.time;
+         Debug.Log(thrustAudioTimer + " -- Player.cs stopping ThrustAudio & restarting (TAL:" + thrustAudioLength + ")");
       }
+   }
+
+   public void TopFuel() { fuelLevel = FUEL_MAX; }
+
+   private void Update()
+   {
+      GenerateFuel();
+      lockXYrotation();
+      LockZposition();
+      //if (Mathf.Approximately(currentPosition.x, transform.position.x) && Mathf.Approximately(currentPosition.y, transform.position.y)) LockZposition();
+      //currentPosition = transform.position;
    }
 }

@@ -30,11 +30,6 @@ public class FishPool : MonoBehaviour
       StartCoroutine(TunedSpawn());
    }
 
-   private void Update()
-   {
-      PollDebug();
-   }
-
    private void CorrectPoolSize()
    {
       int newTarget = SpawnTarget - CountPool;
@@ -85,10 +80,10 @@ public class FishPool : MonoBehaviour
       string debugString = "FishPool GrowPool() execution result, +" + delta;
       if (delta == 1) debugString += ". Added fish #: " + dynamicPoolSize;
       else debugString += ". Added fish #'s: " + (dynamicPoolSize - delta + 1) + "-" + dynamicPoolSize;
-      Debug.Log(debugString);
+      ///Debug.Log(debugString);
    }
 
-   private void PartialSpawn()
+   public void PartialSpawn()
    {
       if (!CountFull) CorrectPoolSize();
 
@@ -114,17 +109,8 @@ public class FishPool : MonoBehaviour
       {
          poolIndex++;
          if (poolIndex >= dynamicPoolSize) poolIndex = 0;
-         // TODO do/don't spawn fish that are "in view"?
-         // maybe have fishdrone script check when it's turned on if it's in view and delay or something....
       }
       RecycleFish(xform, poolIndex);
-   }
-
-   private void PollDebug()
-   {
-      if (Input.GetKeyDown(KeyCode.K) && Debug.isDebugBuild) ReclaimAllFish();
-      if (Input.GetKeyDown(KeyCode.L) && Debug.isDebugBuild) Respawn();
-      if (Input.GetKeyDown(KeyCode.J) && Debug.isDebugBuild) PartialSpawn();
    }
 
    private Transform RandomFreeTransform()
@@ -143,9 +129,8 @@ public class FishPool : MonoBehaviour
       else return null;
    }
 
-   private void ReclaimAllFish()
+   public void ReclaimAllFish()
    {
-      int reclaimCount = 0;
       for (int i = 0; i < fishes.Length; i++)
       {
          if (fishes[i].on)
@@ -153,7 +138,6 @@ public class FishPool : MonoBehaviour
             fishes[i].on = false;
             fishes[i].fishObject.SetActive(false);
             fishes[i].fishObject.transform.parent = this.transform;
-            reclaimCount++;
          }
       }
    }
@@ -172,7 +156,7 @@ public class FishPool : MonoBehaviour
       Respawn();
    }
 
-   private void Respawn()
+   public void Respawn()
    {
       ReclaimAllFish();
       StartCoroutine(TunedSpawn());
@@ -180,20 +164,12 @@ public class FishPool : MonoBehaviour
 
    private void Spawn()
    {
-      int spawnCountRFT = 0;
       for (int i = 0; i < SpawnTarget; i++)
       {
          var rft = RandomFreeTransform();
-         if (rft)
-         {
-            PlaceFish(rft);
-            spawnCountRFT++;
-         }
+         if (rft) PlaceFish(rft);
+         else return;
       }
-      //Debug.Log("FishPool Spawn() RandomFreeTransform's requested: " + spawnCountRFT +
-      //   ". Total active count: " + CountActive +
-      //   ". Pool size: " + fishes.Length +
-      //   ". Available spawn points (net): " + spawnPoints.Length);
    }
 
    private int SpawnTarget
@@ -208,7 +184,7 @@ public class FishPool : MonoBehaviour
       int frameGap = 2;             // Must be 1 or greater. # of frames to skip between samples.
       int testSamples = 4;          // # of sample framerates to use to calculate averageFrameRate.
 
-      // Loop setup.
+      // Set spawnPercent based on FrameRate.
       int averageFrameRate = 0;
       int divisor = testSamples;
       while (testSamples > 0)
@@ -217,10 +193,10 @@ public class FishPool : MonoBehaviour
          averageFrameRate += FrameRate;
          testSamples--;
       }
-      // Will the real spawnRate, please stand up!?
       spawnPercent = Bound(Mathf.FloorToInt((averageFrameRate/divisor) * spawnFactor)); 
       Debug.Log("FishPool.cs:TunedSpawn() spawnPercent = " + spawnPercent);
-                          
+      
+      // Grow pool when needed, and spawn.
       CorrectPoolSize();
       Spawn();
    }

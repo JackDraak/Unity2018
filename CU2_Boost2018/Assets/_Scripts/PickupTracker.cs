@@ -14,8 +14,16 @@ public class PickupTracker : MonoBehaviour
    [SerializeField] Player player;
    [SerializeField] Slider goalSlider;
    [SerializeField] TextMeshProUGUI text_tasklist;
+   [SerializeField] TextMeshProUGUI text_countdown;
+   [SerializeField] TextMeshProUGUI text_subCountdown;
 
-   private bool               complete, debugMode, spawning, task1, task2;
+   private enum task { task_0, task_1, task_2, task_3, task_4, task_5, task_6, task_7 }
+   private enum level { level_0, level_1, level_2, level_3, level_4, level_5, level_6, level_7, bonusLevel_1 }
+
+   private task objective = task.task_0;
+   private level myLevel = level.level_0;
+
+   private bool               complete, spawning; // task1, task2;
    private float              maxPower, priorPercent;
    private float              pickupPercent = 0;
    private int                count = 0;
@@ -29,8 +37,6 @@ public class PickupTracker : MonoBehaviour
 
    private void Awake()
    {
-      debugMode = Debug.isDebugBuild;
-
       text_tracker = GetComponent<TextMeshProUGUI>();
       if (!text_tracker) Debug.Log("FAIL: no text_tracker object reference!!");
 
@@ -53,12 +59,26 @@ public class PickupTracker : MonoBehaviour
       return false;
    }
 
-   private void DespawnAll()
+   public void DespawnAll()
    {
       foreach (GameObject spawnPoint in spawnPointsArray)
       {
-         if (spawnPoint.transform.childCount != 0) { Destroy(spawnPoint.transform.GetChild(0).gameObject);  }
+         if (spawnPoint.transform.childCount != 0) { Destroy(spawnPoint.transform.GetChild(0).gameObject); }
       }
+   }
+
+   private IEnumerator DoCountdown()
+   {
+      int n = 5;
+      text_subCountdown.text = "...toggle into 'C'asual mode to disable automatic progression...";
+      while (n > 0)
+      {
+         text_countdown.text = n.ToString();
+         yield return new WaitForSeconds(0.99f);
+         n--;
+      }
+      text_countdown.text = "";
+      text_subCountdown.text = "";
    }
 
    private IEnumerator DoSpawn()
@@ -69,7 +89,7 @@ public class PickupTracker : MonoBehaviour
       DespawnAll();
       yield return new WaitForSeconds(0.2f);
       //SpawnAll();
-      SpawnPercent(33); // TODO decide how to use this dynamically?
+      SpawnPercent(7); // 33 // TODO decide how to use this dynamically?
 
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
@@ -84,17 +104,14 @@ public class PickupTracker : MonoBehaviour
 
    private void FillPosition(Transform position)
    {
-      var p = position.transform.position;
-      var q = Quaternion.identity;
+      Vector3 p = position.transform.position;
+      Quaternion q = Quaternion.identity;
       GameObject spawnedObject = Instantiate(bonusPrefab, p, q) as GameObject;
       spawnedObject.transform.parent = position;
       spawnedObject.SetActive(true);
    }
 
-   public float PickupPercent()
-   {
-      return pickupPercent;
-   }
+   public float PickupPercent() { return pickupPercent; }
 
    private GameObject RandomFreePosition()
    {
@@ -112,25 +129,25 @@ public class PickupTracker : MonoBehaviour
       else return null;
    }
 
-   public void Restart()
-   {
-      StartCoroutine("DoSpawn");
-   }
+   public void Restart() { StartCoroutine("DoSpawn"); }
 
    private void ReviewObjectives()
    {
       if (count == 0)
       {
          WinRound();
-         if (!task1)
+         if (myLevel == level.level_0)
          {
-            task1 = true;
-            text_tasklist.text = "Goal: Raise Thrust Cap to 60%, 'R'eset and do\nMini-Goal: Collect More Gas Canisters";
-         }
-         if (maxPower >= 0.6f && !task2)
-         {
-            task2 = true;
-            text_tasklist.text = "Level One Complete.\nWatch for future development, thanks for playing!";
+            if (objective == task.task_0)// (!task1)
+            {
+               objective = task.task_1; //task1 = true;
+               text_tasklist.text = "Goal: Raise Thrust Cap to 60%, 'R'eset and do\nMini-Goal: Collect More Gas Canisters";
+            }
+            if (maxPower >= 0.6f && objective == task.task_1)
+            {
+               objective = task.task_2; //task2 = true;
+               text_tasklist.text = "Level One Complete.\nWatch for future development, thanks for playing!"; // TODO update this when apropriate
+            }
          }
       }
    }
@@ -178,9 +195,10 @@ public class PickupTracker : MonoBehaviour
    private void Start()
    {
       timeKeeper = FindObjectOfType<Timekeeper>();
-      complete = spawning = task1 = task2 = false;
+      complete = spawning = false;
       text_tasklist.text = "Goal: Raise Thrust Cap to 60%\nMini-Goal: Collect Gas Canisters";
-
+      text_countdown.text = "";
+      text_subCountdown.text = "";
       StartCoroutine("DoSpawn");
    }
 
@@ -202,17 +220,15 @@ public class PickupTracker : MonoBehaviour
       }
    }
 
-   private void Update()
-   {
-      TrackPickups();
-      if (Input.GetKeyDown(KeyCode.N) && debugMode) StartCoroutine("DoSpawn");
-      if (Input.GetKeyDown(KeyCode.M) && debugMode) DespawnAll();
-   }
+   public void TriggerSpawn() { StartCoroutine("DoSpawn"); }
+   public void TriggerCountdown() { StartCoroutine("DoCountdown");  }
+   private void Update() { TrackPickups(); }
 
    private void WinRound()
    {
       complete = true;
       timeKeeper.Cease(highCount);
       maxPower = player.BoostMaxPower(0.1f); // 0.1f = 10% boost
+      player.AutoRestart();
    }
 }

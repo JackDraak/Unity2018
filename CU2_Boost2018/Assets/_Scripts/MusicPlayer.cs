@@ -18,19 +18,13 @@ public class MusicPlayer : MonoBehaviour
       audioSource = GetComponent<AudioSource>();
 	}
 
-   private void Update()
-   {
-      if (Input.GetKey(KeyCode.LeftBracket)) VolumeDown();
-      else if (Input.GetKey(KeyCode.RightBracket)) VolumeUp();
-   }
-
-   private void VolumeDown()
+   public void VolumeDown()
    {
       if (audioSource.volume > .1f) audioSource.volume -= .1f * Time.deltaTime;
       else audioSource.volume = 0f;
    }
 
-   private void VolumeUp()
+   public void VolumeUp()
    {
       if (audioSource.volume < .9f) audioSource.volume += .1f * Time.deltaTime;
       else audioSource.volume = 1f;
