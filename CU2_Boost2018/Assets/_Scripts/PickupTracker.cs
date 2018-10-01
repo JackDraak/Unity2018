@@ -32,7 +32,7 @@ public class PickupTracker : MonoBehaviour
    private GameObject[]       pickupsArray;
    private GameObject[]       spawnPointsArray;
    private List<Collider>     claimedPickups;
-   private readonly List<GameObject> pickups;
+   //private List<GameObject>   spawnedPickups;
    private TextMeshProUGUI    text_tracker;
    private Timekeeper         timeKeeper;
 
@@ -46,6 +46,7 @@ public class PickupTracker : MonoBehaviour
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
 
       claimedPickups = new List<Collider>();
+      //spawnedPickups = new List<GameObject>();
    }
 
    public bool ClaimPickup(Collider other)
@@ -71,7 +72,9 @@ public class PickupTracker : MonoBehaviour
    private IEnumerator DoCountdown()
    {
       int n = countdownDelay - 1;
-      text_subCountdown.text = "...toggle into casual-mode to cancel next automatic progression...";
+      Debug.Log(player.casualMode);
+      if (player.casualMode) text_subCountdown.text = "...prepare for reset..."; // TODO why isnt this working?
+      else text_subCountdown.text = "...in <i>casual-mode</i> progress manually with a 'R'eset...";
       while (n >= 0)
       {
          text_countdown.text = n.ToString();
@@ -85,9 +88,8 @@ public class PickupTracker : MonoBehaviour
    private IEnumerator DoSpawn()
    {
       spawning = true;
-
       DespawnAll();
-      yield return new WaitForSeconds(0.2f);
+      yield return new WaitForSeconds(0.05f); // TODO too short/long? needed at all?
       SpawnPercent(33); // 33 // TODO decide how to use this dynamically?
       //SpawnAll();
 
@@ -182,7 +184,11 @@ public class PickupTracker : MonoBehaviour
    private void SpawnRandomSpawnpoint()
    {
       GameObject freePos = RandomFreePosition();
-      if (freePos) FillPosition(freePos.transform);
+      if (freePos)
+      {
+         FillPosition(freePos.transform);
+         //spawnedPickups.Add(freePos);
+      }
    }
 
    private int SpawnTally()

@@ -7,6 +7,7 @@ public class InputHandler : MonoBehaviour
    private MusicPlayer musicPlayer;
    private PickupTracker pickupTracker;
    private Player player;
+   private Records records;
 
    private const string AXIS_POWER = "Vertical";
    private const string AXIS_ROTATION = "Horizontal";
@@ -18,6 +19,7 @@ public class InputHandler : MonoBehaviour
       musicPlayer = FindObjectOfType<MusicPlayer>();
       pickupTracker = FindObjectOfType<PickupTracker>();
       player = FindObjectOfType<Player>();
+      records = FindObjectOfType<Records>();
    }
    private void FixedUpdate()
    {
@@ -28,21 +30,22 @@ public class InputHandler : MonoBehaviour
 
    private void DebugControlPoll()
    {
+      // Player: B, I, F
       if (Input.GetKeyDown(KeyCode.B)) player.BoostMaxPower(0.025f); // 2.5% boost
       if (Input.GetKeyDown(KeyCode.F)) player.TopFuel(); 
       if (Input.GetKeyDown(KeyCode.I)) player.Invulnerable();
 
-      // PickupTracker has Polling: M, N only for debug purposes.
+      // PickupTracker: M, N
       if (Input.GetKeyDown(KeyCode.N)) pickupTracker.TriggerSpawn();
       if (Input.GetKeyDown(KeyCode.M)) pickupTracker.DespawnAll();
 
-      // FishPool has Polling: J, K, L only for debug purposes.
-      if (Input.GetKeyDown(KeyCode.K) && Debug.isDebugBuild) fishPool.ReclaimAllFish();
-      if (Input.GetKeyDown(KeyCode.L) && Debug.isDebugBuild) fishPool.Respawn();
-      if (Input.GetKeyDown(KeyCode.J) && Debug.isDebugBuild) fishPool.PartialSpawn();
+      // FishPool: J, K, L
+      if (Input.GetKeyDown(KeyCode.K)) fishPool.ReclaimAllFish();
+      if (Input.GetKeyDown(KeyCode.L)) fishPool.Respawn();
+      if (Input.GetKeyDown(KeyCode.J)) fishPool.PartialSpawn();
 
-      // SumPause is Polling: Q, R & ESC keys.
-      // TimeKeeper is polling Z key.
+      // Records: Z
+      if (Input.GetKeyDown(KeyCode.Z)) records.AddRecord(Random.Range(0.9f, 11f));
    }
 
    private void PlayerControlPoll()
@@ -51,6 +54,9 @@ public class InputHandler : MonoBehaviour
       PollPower();
       PollRotation();
       PollThrust();
+
+      // SumPause is Polling: Q, R & ESC keys. // ESC, Q Only // TODO pull-in ESC & Q monitoring tho this class [low priority].
+      if (Input.GetKeyDown(KeyCode.R)) player.ImmediateRestart();
    }
 
    private void PollAutoPower()

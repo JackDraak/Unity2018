@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Records : MonoBehaviour
 {
-   private const int RECORD_LIMIT = 23; // Limit records so the "entire list" can fit on-screen.
+   private const int RECORD_LIMIT = 21; // Limit records so the "entire list" can fit on-screen.
 
    private TextMeshProUGUI readout;
    private List<string> records = new List<string>();

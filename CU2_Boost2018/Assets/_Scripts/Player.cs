@@ -5,12 +5,14 @@
 //    
 //    TODO : FIXED - fix audio issue that cropped-up (bubbles not working right: thrust).
 //    TODO : FIXED - fix issue where 'R'esetting player while in a countdown gets a bit messy?
+//    TODO : COMPLETE - Move miniGoal slider to bottom right 
+//    TODO : fix pickups arent despawning all of a sudden... wth?
 //    TODO : Casual-mode get's casual music? HUS indicator? both? Something else?
-//    TODO : Improve tasklist format/content
-//    TODO : work on Fog / lighting? work on level 2 ideas?
-//    TODO : design a way to detroy the player.
+//    TODO : Improve tasklist format/content further?
 //    TODO : improve "Records"; make a leaderboard?
-//    TODO : Move miniGoal slider to bottom right? (change upper-left HUD?) Improve timer aesthetics?
+//    TODO : design a way to detroy the player.
+//    TODO : (change upper-left HUD?) Improve timer aesthetics?
+//    TODO : work on Fog / lighting? work on level 2 ideas?
 //
 
 using EZCameraShake;
@@ -177,13 +179,13 @@ public class Player : MonoBehaviour
 
    public void AutoRestart()
    {
-      if (!casualMode)
-      {
+      //if (!casualMode)
+      //{
          restarting = true;
          int triggerDelay = 6; // TODO do something with this
          Invoke("Restart", triggerDelay);
          pickupTracker.TriggerCountdown(triggerDelay);
-      }
+      //}
    }
 
    private void Awake()
@@ -323,13 +325,7 @@ public class Player : MonoBehaviour
       uiControl.Visible = true;
    }
 
-   public void ImmediateRestart()
-   {
-      if (!restarting)
-      {
-         Restart();
-      }
-   }
+   public void ImmediateRestart() { if (!restarting) AutoRestart(); }
 
    private void InitVars()
    {

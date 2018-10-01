@@ -5,7 +5,6 @@ public class Timekeeper : MonoBehaviour
 {
    public bool Running { get { return started; } }
 
-   private bool debugMode = false;
    private bool finished = false;
    private bool started = false;
    private float elapsed = 0f;
@@ -40,7 +39,6 @@ public class Timekeeper : MonoBehaviour
 
    private void Start()
    {
-      debugMode = Debug.isDebugBuild;
       readout = GetComponent<TextMeshProUGUI>();
       records = FindObjectOfType<Records>();
       Restart();
@@ -60,8 +58,5 @@ public class Timekeeper : MonoBehaviour
          elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f; // Get 1 decimal place.
          readout.text = "tap 'R' to retry; your prior run took: " + elapsed.ToString("F1") + " seconds";
       }
-      
-      // Debugging tool to throw random records into the game
-      if (debugMode && Input.GetKeyDown(KeyCode.Z)) records.AddRecord(Random.Range(0.9f, 11f));
    }
 }
