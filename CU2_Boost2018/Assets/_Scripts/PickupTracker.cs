@@ -27,6 +27,7 @@ public class PickupTracker : MonoBehaviour
    private float              maxPower, priorPercent;
    private float              pickupPercent = 0;
    private int                count = 0;
+   private int                countdownDelay;
    private int                highCount;
    private GameObject[]       pickupsArray;
    private GameObject[]       spawnPointsArray;
@@ -69,9 +70,9 @@ public class PickupTracker : MonoBehaviour
 
    private IEnumerator DoCountdown()
    {
-      int n = 5;
-      text_subCountdown.text = "...toggle into 'C'asual mode to disable automatic progression...";
-      while (n > 0)
+      int n = countdownDelay - 1;
+      text_subCountdown.text = "...toggle into casual-mode to cancel next automatic progression...";
+      while (n >= 0)
       {
          text_countdown.text = n.ToString();
          yield return new WaitForSeconds(0.99f);
@@ -83,17 +84,15 @@ public class PickupTracker : MonoBehaviour
 
    private IEnumerator DoSpawn()
    {
-      //Debug.Log("PickupTracker spawntime: " + Time.time.ToString("F2"));
       spawning = true;
 
       DespawnAll();
       yield return new WaitForSeconds(0.2f);
+      SpawnPercent(33); // 33 // TODO decide how to use this dynamically?
       //SpawnAll();
-      SpawnPercent(7); // 33 // TODO decide how to use this dynamically?
 
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
-      //Debug.Log("PickupTracker number of pickups spawned: " + pickupsArray.Length);
 
       text_tracker.text = count.ToString() + " Gas Canisters Remaining";
 
@@ -138,15 +137,16 @@ public class PickupTracker : MonoBehaviour
          WinRound();
          if (myLevel == level.level_0)
          {
+            // "Level 1 Goal: Raise Thrust Cap to 60%\nMini-Goal: Collect a full set of gas canisters\n(for a small boost to Thrust Cap)";
             if (objective == task.task_0)// (!task1)
             {
                objective = task.task_1; //task1 = true;
-               text_tasklist.text = "Goal: Raise Thrust Cap to 60%, 'R'eset and do\nMini-Goal: Collect More Gas Canisters";
+               text_tasklist.text = "Level 1 Goal: Raise Thrust Cap to 60%, 'R'eset and do\n\nMini-Goal: Collect a full set of gas canisters\n(for a small boost to Thrust Cap)";
             }
             if (maxPower >= 0.6f && objective == task.task_1)
             {
                objective = task.task_2; //task2 = true;
-               text_tasklist.text = "Level One Complete.\nWatch for future development, thanks for playing!"; // TODO update this when apropriate
+               text_tasklist.text = "Level One Complete! Congratulations!\n\nPlease 'stay tuned' for future developments, thanks for playing!"; // TODO update this when apropriate
             }
          }
       }
@@ -196,7 +196,7 @@ public class PickupTracker : MonoBehaviour
    {
       timeKeeper = FindObjectOfType<Timekeeper>();
       complete = spawning = false;
-      text_tasklist.text = "Goal: Raise Thrust Cap to 60%\nMini-Goal: Collect Gas Canisters";
+      text_tasklist.text = "Level 1 Goal: Raise Thrust Cap to 60%\n\nMini-Goal: Collect a full set of gas canisters\n(for a small boost to Thrust Cap)";
       text_countdown.text = "";
       text_subCountdown.text = "";
       StartCoroutine("DoSpawn");
@@ -221,7 +221,13 @@ public class PickupTracker : MonoBehaviour
    }
 
    public void TriggerSpawn() { StartCoroutine("DoSpawn"); }
-   public void TriggerCountdown() { StartCoroutine("DoCountdown");  }
+
+   public void TriggerCountdown(int delay)
+   {
+      countdownDelay = delay;
+      StartCoroutine("DoCountdown", delay);
+   }
+
    private void Update() { TrackPickups(); }
 
    private void WinRound()

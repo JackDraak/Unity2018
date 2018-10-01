@@ -19,7 +19,7 @@ public class InputHandler : MonoBehaviour
       pickupTracker = FindObjectOfType<PickupTracker>();
       player = FindObjectOfType<Player>();
    }
-   private void Update()
+   private void FixedUpdate()
    {
       PlayerControlPoll();
       PollMisc();
@@ -42,6 +42,7 @@ public class InputHandler : MonoBehaviour
       if (Input.GetKeyDown(KeyCode.J) && Debug.isDebugBuild) fishPool.PartialSpawn();
 
       // SumPause is Polling: Q, R & ESC keys.
+      // TimeKeeper is polling Z key.
    }
 
    private void PlayerControlPoll()
@@ -88,6 +89,9 @@ public class InputHandler : MonoBehaviour
 
    private void PollThrust()
    {
-      player.ApplyThrust(CrossPlatformInputManager.GetAxis(AXIS_THRUST));
+      float thrust = CrossPlatformInputManager.GetAxis(AXIS_THRUST);
+      player.ApplyThrust(thrust);
+      if (thrust > 0) player.TriggerThrustAudio();
+      else player.CancelThrustAudio();
    }
 }

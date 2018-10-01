@@ -99,7 +99,7 @@ public class SumPause : MonoBehaviour {
    {
       if (detectEscapeKey && Input.GetKeyDown(KeyCode.Escape)) TogglePause();
       if (Input.GetKeyDown(KeyCode.Q)) Application.Quit();
-      if (Input.GetKeyDown(KeyCode.R)) player.Restart();
+      if (Input.GetKeyDown(KeyCode.R)) player.ImmediateRestart();
    }
 
    public void TogglePause ()

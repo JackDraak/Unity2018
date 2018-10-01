@@ -3,7 +3,10 @@
 //
 //    idea fish bopping bonus level: gain extra %'s of Gas Level. (bopping fish add fuel in general? bonus-level increases rate? later levels require fish-bopping to survive?)
 //    
-//    TODO : fix audio issue that cropped-up (bubbles not working right: thrust).
+//    TODO : FIXED - fix audio issue that cropped-up (bubbles not working right: thrust).
+//    TODO : FIXED - fix issue where 'R'esetting player while in a countdown gets a bit messy?
+//    TODO : Casual-mode get's casual music? HUS indicator? both? Something else?
+//    TODO : Improve tasklist format/content
 //    TODO : work on Fog / lighting? work on level 2 ideas?
 //    TODO : design a way to detroy the player.
 //    TODO : improve "Records"; make a leaderboard?
@@ -18,7 +21,7 @@ using UnityEngine.UI;
 public class Player : MonoBehaviour
 {
    #region Exposed Variables
-   public bool casualMode;
+   public bool casualMode, restarting;
 
    [SerializeField] AudioClip bonusSound; // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ 
    [SerializeField] AudioClip collisionSound;
@@ -120,7 +123,6 @@ public class Player : MonoBehaviour
    private Vector3 baseThrust = new Vector3(0, 13000, 0);
    private Vector3 localEulers = Vector3.zero;
    private Vector3 startPosition = Vector3.zero;
-   //private Vector3 currentPosition = Vector3.zero;
    #endregion
 
    private void AdjustEmissionRate(float newRate) { thrustBubbles.rateOverTime = newRate; }
@@ -158,7 +160,7 @@ public class Player : MonoBehaviour
          else EndExpulsion();
          if (tutorialIsVisible) HideTutorial();
       }
-      else if (thrustAudio.isPlaying) EndExpulsion();
+      else EndExpulsion();
    }
 
    private void AutoDeRotate()
@@ -177,8 +179,10 @@ public class Player : MonoBehaviour
    {
       if (!casualMode)
       {
-         Invoke("Restart", 5.0f); // TODO referencify this #?
-         pickupTracker.TriggerCountdown();
+         restarting = true;
+         int triggerDelay = 6; // TODO do something with this
+         Invoke("Restart", triggerDelay);
+         pickupTracker.TriggerCountdown(triggerDelay);
       }
    }
 
@@ -203,6 +207,12 @@ public class Player : MonoBehaviour
       return maxPower;
    }
 
+   public void CancelThrustAudio()
+   {
+      thrustAudio.Stop();
+      thrustAudioTimer = Time.time - thrustAudioLength;
+   }
+
    public void CasualMode() { casualMode = !casualMode; }
 
    public void DeRotate()
@@ -215,7 +225,7 @@ public class Player : MonoBehaviour
       else
       {
          if (!Mathf.Approximately(transform.up.x, transform.rotation.x)) AutoDeRotate();
-         EndExpulsion(); // TODO is this the source of woe?
+         StopRotationBubbles();
       }
    }
 
@@ -263,8 +273,7 @@ public class Player : MonoBehaviour
    {
       thrustAudio.Stop();
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
-      thrustAudioTimer -= thrustAudioLength; // TODO just set to zero for readability?
-      Debug.Log(thrustAudioTimer + " -- Player.cs stopping EndExpulsion (TAL:" + thrustAudioLength + ")");
+      thrustAudioTimer = Time.time - thrustAudioLength; 
       thrustLight.GetComponent<Light>().range = Mathf.Lerp(thrustLight.GetComponent<Light>().range, 0, THRUST_FADE_FACTOR);
       thrusterBell.GetComponent<MeshRenderer>().material.color = 
          Vector4.Lerp(thrusterBell.GetComponent<MeshRenderer>().material.color, Color.black, THRUST_FADE_FACTOR);
@@ -288,11 +297,12 @@ public class Player : MonoBehaviour
       }
    }
 
-   //private void FixedUpdate()
-   //{
-   //   GenerateFuel();
-   //   LockZposition();
-   //}
+   private void FixedUpdate()
+   {
+      GenerateFuel();
+      lockXYrotation();
+      LockZposition();
+   }
 
    private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
    private int GasPercent { get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); } }
@@ -311,6 +321,14 @@ public class Player : MonoBehaviour
       tutorialIsVisible = false;
       tutorialText.SetActive(false);
       uiControl.Visible = true;
+   }
+
+   public void ImmediateRestart()
+   {
+      if (!restarting)
+      {
+         Restart();
+      }
    }
 
    private void InitVars()
@@ -444,7 +462,7 @@ public class Player : MonoBehaviour
          if (!thrustAudioTrack)
          {
             thrustAudio.PlayOneShot(thrustSound, masterVolume * VOLUME_THRUST);
-            thrustAudioTimer = Time.time; // TODO for certain? having audio issue....
+            thrustAudioTimer = Time.time - thrustAudioLength;
             thrustAudioTrack = true;
          }
          if (timeKeeper.Running)
@@ -456,7 +474,7 @@ public class Player : MonoBehaviour
       return paused;
    }
 
-   public void Restart()
+   private void Restart()
    {
       fishPool.Reset();
       fuelLevel = FUEL_MAX;
@@ -470,15 +488,13 @@ public class Player : MonoBehaviour
       tutorialText.SetActive(true);
       uiControl.Visible = false;
       foreach (FishDrone drone in fishDrones) drone.Reset();
+      restarting = false;
    }
 
    private void Rotate(float direction)
    {
-      float rotationLightLevel = 0.25f; // minimum 25%
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
-      if (thrustBubbles.rateOverTime.constant < EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_ROTATION);
-      if (thrustLight.GetComponent<Light>().range < (THRUST_LIGHTRANGE_MAX * rotationLightLevel))
-         thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX * rotationLightLevel;
+      SpewRotationBubbles();
    }
 
    public void SetPower(float power)
@@ -488,29 +504,36 @@ public class Player : MonoBehaviour
       DoPowerUpdate();
    }
 
+   private void SpewRotationBubbles()
+   {
+      float rotationLightLevel = 0.25f; // minimum 25%
+      if (thrustBubbles.rateOverTime.constant < EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_ROTATION);
+      if (thrustLight.GetComponent<Light>().range < (THRUST_LIGHTRANGE_MAX * rotationLightLevel))
+         thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX * rotationLightLevel;
+   }
+
+   private void StopRotationBubbles()
+   {
+      if (thrustBubbles.rateOverTime.constant == EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_INACTIVE);
+   }
+
    private void Start() { InitVars(); }
 
    private void Thrust(float force)
    {
       Vector3 appliedForce = baseThrust * thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force; 
       thisRigidbody.AddRelativeForce(appliedForce);
-      if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time) // TODO is this causing the bubble trouble after InputHandler?
-      {
-         thrustAudio.Stop();
-         thrustAudio.PlayOneShot(thrustSound, masterVolume * VOLUME_THRUST);
-         thrustAudioTimer = Time.time;
-         Debug.Log(thrustAudioTimer + " -- Player.cs stopping ThrustAudio & restarting (TAL:" + thrustAudioLength + ")");
-      }
    }
 
    public void TopFuel() { fuelLevel = FUEL_MAX; }
 
-   private void Update()
+   public void TriggerThrustAudio()
    {
-      GenerateFuel();
-      lockXYrotation();
-      LockZposition();
-      //if (Mathf.Approximately(currentPosition.x, transform.position.x) && Mathf.Approximately(currentPosition.y, transform.position.y)) LockZposition();
-      //currentPosition = transform.position;
+      if (thrustAudioTimer + thrustAudioLength - CLIP_TIME < Time.time)
+      {
+         thrustAudio.Stop();
+         thrustAudio.PlayOneShot(thrustSound, masterVolume * VOLUME_THRUST);
+         thrustAudioTimer = Time.time;
+      }
    }
 }
