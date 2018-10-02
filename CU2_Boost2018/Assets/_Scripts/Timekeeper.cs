@@ -7,11 +7,13 @@ public class Timekeeper : MonoBehaviour
 
    private bool finished = false;
    private bool started = false;
+   private dreamloLeaderBoard leaderboard;
    private float elapsed = 0f;
    private float endTime = 0f;
    private float startTime = 0f;
    private Records records = null;
-   private TextMeshProUGUI readout = null; 
+   private TextMeshProUGUI readout = null;
+   private TMP_InputField inputField;
 
    public void Begin()
    {
@@ -25,7 +27,22 @@ public class Timekeeper : MonoBehaviour
       elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f; // Get 1 decimal place.
       finished = true;
       float ratio = (elapsed / count) * 100f;
+      //leaderboard.LoadScores();
+      //List<dreamloLeaderBoard> scores = new List<dreamloLeaderBoard>();
+      var myScores = leaderboard.ToListHighToLow();
+      foreach (var score in myScores)
+      {
+         string myOut = score.playerName;
+         myOut += " Name: ";
+         myOut += score.score;
+         myOut += " Score: ";
+         Debug.Log(myOut);
+      }
+      int boardScore = 5000 - Mathf.FloorToInt(ratio);
+      if (boardScore < 0) boardScore = 0;
+      Debug.Log(boardScore);
       ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
+      leaderboard.AddScore(inputField.text, boardScore, Mathf.FloorToInt(ratio * 100)); // TODO allow players to enter initials or something
       records.AddRecord(ratio);
    }
 
@@ -39,8 +56,16 @@ public class Timekeeper : MonoBehaviour
 
    private void Start()
    {
+      inputField = FindObjectOfType<TMP_InputField>();
+      inputField.text = "Mr. Bo Demo";
+      inputField.ActivateInputField();
+      inputField.enabled = true;
+      inputField.interactable = true;
+      // get pilot name
+
       readout = GetComponent<TextMeshProUGUI>();
       records = FindObjectOfType<Records>();
+      leaderboard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
       Restart();
    }
 

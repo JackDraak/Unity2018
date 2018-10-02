@@ -6,7 +6,6 @@ public class Records : MonoBehaviour
 {
    private const int RECORD_LIMIT = 21; // Limit records so the "entire list" can fit on-screen.
 
-   private TextMeshProUGUI readout;
    private List<string> records = new List<string>();
    private readonly string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
    private readonly string[] comTwo =     { "Is it even possible? ", "Amazing: ", "Stupendous: ", "Lucky! "};
@@ -16,6 +15,7 @@ public class Records : MonoBehaviour
    private readonly string[] comSix =     { "Keep practicing: ", "You're getting there: ", "not bad, but not great: ", "Mediocre: " };
    private readonly string[] comSeven =   { "I bet you can do better: ", "Practice makes perfect: ", "Details, details... ", "This could be improved: " };
    private readonly string[] comEight =   { "Are you even trying? ", "SMH: ", "Seriously? ", "Yeup.... " };
+   private TextMeshProUGUI readout;
 
    public void AddRecord(float record)
    {
@@ -34,10 +34,7 @@ public class Records : MonoBehaviour
       PrintRecords();
    }
 
-   private int OneOf(string[] commentArray)
-   {
-      return Mathf.FloorToInt(Random.Range(0, commentArray.Length));
-   }
+   private int OneOf(string[] commentArray) { return Mathf.FloorToInt(Random.Range(0, commentArray.Length)); }
 
    private void PrintRecords()
    {

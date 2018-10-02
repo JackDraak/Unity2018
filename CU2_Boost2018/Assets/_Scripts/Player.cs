@@ -45,6 +45,7 @@ public class Player : MonoBehaviour
    [SerializeField] TextMeshProUGUI goalSlideText;
    [SerializeField] TextMeshProUGUI powerSlideText;
    [SerializeField] TextMeshProUGUI powercapSlideText;
+   [SerializeField] TextMeshProUGUI pilotNameText;
    #endregion
 
    #region Private Variables
@@ -82,7 +83,7 @@ public class Player : MonoBehaviour
 
    private const int HALF_ARC = 180;
 
-   private const string HUD_COLOUR = "\"#FF7070\""; // coral
+   private const string HUD_COLOUR = "\"#FF7070\""; // coral /// #2DA8E9 gemstone blue
 
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
@@ -496,6 +497,7 @@ public class Player : MonoBehaviour
    public void SetPower(float power)
    {
       if (power > maxPower) power = maxPower;
+      if (power < THRUST_POWER_BASE) power = THRUST_POWER_BASE;
       thrustPowerSlider.value = power;
       DoPowerUpdate();
    }

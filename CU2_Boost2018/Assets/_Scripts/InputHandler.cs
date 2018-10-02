@@ -3,29 +3,30 @@ using UnityStandardAssets.CrossPlatformInput;
 
 public class InputHandler : MonoBehaviour
 {
-   private FishPool fishPool;
-   private MusicPlayer musicPlayer;
-   private PickupTracker pickupTracker;
-   private Player player;
-   private Records records;
+   private FishPool        fishPool;
+   private MusicPlayer     musicPlayer;
+   private PickupTracker   pickupTracker;
+   private Player          player;
+   private Records         records;
 
-   private const string AXIS_POWER = "Vertical";
-   private const string AXIS_ROTATION = "Horizontal";
-   private const string AXIS_THRUST = "Jump";
+   private const string AXIS_POWER     = "Vertical";
+   private const string AXIS_ROTATION  = "Horizontal";
+   private const string AXIS_THRUST    = "Jump";
 
    private void Start()
    {
-      fishPool = FindObjectOfType<FishPool>();
-      musicPlayer = FindObjectOfType<MusicPlayer>();
-      pickupTracker = FindObjectOfType<PickupTracker>();
-      player = FindObjectOfType<Player>();
-      records = FindObjectOfType<Records>();
+      fishPool       = FindObjectOfType<FishPool>();
+      musicPlayer    = FindObjectOfType<MusicPlayer>();
+      pickupTracker  = FindObjectOfType<PickupTracker>();
+      player         = FindObjectOfType<Player>();
+      records        = FindObjectOfType<Records>();
    }
+
    private void FixedUpdate()
    {
+      if (Debug.isDebugBuild) DebugControlPoll();
       PlayerControlPoll();
       PollMisc();
-      if (Debug.isDebugBuild) DebugControlPoll();
    }
 
    private void DebugControlPoll()
@@ -61,7 +62,7 @@ public class InputHandler : MonoBehaviour
 
    private void PollAutoPower()
    {
-      if (Input.GetKeyDown(KeyCode.Alpha0)) player.SetPower(1.0f);
+      if      (Input.GetKeyDown(KeyCode.Alpha0)) player.SetPower(1.0f);
       else if (Input.GetKeyDown(KeyCode.Alpha9)) player.SetPower(0.9f);
       else if (Input.GetKeyDown(KeyCode.Alpha8)) player.SetPower(0.8f);
       else if (Input.GetKeyDown(KeyCode.Alpha7)) player.SetPower(0.7f);

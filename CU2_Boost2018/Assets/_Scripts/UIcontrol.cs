@@ -21,10 +21,7 @@ public class UIcontrol : MonoBehaviour
       SetState();
    }
 
-   private void Update()
-   {
-      if (status != deltaStatus) SetState();
-   }
+   private void Update() { if (status != deltaStatus) SetState(); }
 
    public bool Visible
    {
