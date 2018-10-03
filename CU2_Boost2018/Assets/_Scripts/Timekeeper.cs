@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
 public class Timekeeper : MonoBehaviour
@@ -29,15 +28,6 @@ public class Timekeeper : MonoBehaviour
       elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f; // Get 1 decimal place.
       finished = true;
       float ratio = (elapsed / count) * 100f;
-      //var myScores = leaderboard.ToListHighToLow();
-      //foreach (var score in myScores)
-      //{
-      //   string myOut = score.playerName;
-      //   myOut += " Name: ";
-      //   myOut += score.score;
-      //   myOut += " Score: ";
-      //   Debug.Log(myOut);
-      //}
       int boardScore = 5000 - Mathf.FloorToInt(ratio);
       if (boardScore < 0) boardScore = 1;
       Debug.Log("New score: " + boardScore);
@@ -59,10 +49,6 @@ public class Timekeeper : MonoBehaviour
    private void Start()
    {
       leaderboard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
-      //List<dreamloLeaderBoard.Score> scores = new List<dreamloLeaderBoard.Score>();
-      //leaderboard.LoadScores();
-      //scores = leaderboard.ToListHighToLow();
-      //foreach (dreamloLeaderBoard.Score score in scores) Debug.Log(score);
       pilot = FindObjectOfType<Pilot>();
       player = FindObjectOfType<Player>();
       readout = GetComponent<TextMeshProUGUI>();

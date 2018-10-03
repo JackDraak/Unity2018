@@ -5,14 +5,16 @@ using UnityEngine;
 
 public class Records : MonoBehaviour
 {
-   private const int RECORD_LIMIT = 11; // Limit personal records to limit clutter.
+   [SerializeField] TextMeshProUGUI highScoreText;
+
+   private const int RECORD_LIMIT = 6; // Limit personal records to limit clutter.
+
    private bool global = false;
    private dreamloLeaderBoard leaderBoard;
+   private List<dreamloLeaderBoard.Score> highScores;
    private Pilot pilot;
    private Pilot_ID_Field pilot_ID_Field;
    private TextMeshProUGUI readout;
-   [SerializeField] TextMeshProUGUI highScoreText;
-   private List<dreamloLeaderBoard.Score> highScores;
 
    private List<string> records = new List<string>();
    private readonly string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
@@ -26,9 +28,8 @@ public class Records : MonoBehaviour
 
    public void AddRecord(float record)
    {
-      string stringRecord = record.ToString("F2");
-
       // Tag each new record with a comment related to how fast it is:
+      string stringRecord = record.ToString("F2");
       if (record <= 1) records.Add(comOne[OneOf(comOne)] + stringRecord + "\n");
       else if (record > 1 && record <= 3) records.Add(comTwo[OneOf(comTwo)] + stringRecord + "\n");
       else if (record > 3 && record <= 4) records.Add(comThree[OneOf(comThree)] + stringRecord + "\n");
@@ -37,8 +38,6 @@ public class Records : MonoBehaviour
       else if (record > 6 && record <= 8) records.Add(comSix[OneOf(comSix)] + stringRecord + "\n");
       else if (record > 8 && record <= 10) records.Add(comSeven[OneOf(comSeven)] + stringRecord + "\n");
       else if (record > 10) records.Add(comEight[OneOf(comEight)] + stringRecord + "\n");
-
-      //PrintRecords();
       Parse();
    }
 
@@ -83,7 +82,7 @@ public class Records : MonoBehaviour
 
    public bool Parse()
    {
-      pilot_ID_Field.UpdateID();
+      pilot_ID_Field.SetID(); // TODO recent change
       StartCoroutine(ParseScores());
       if (HighScore > 0) return true;
       else return false;
@@ -101,17 +100,12 @@ public class Records : MonoBehaviour
          string[] temp = record.playerName.Split('_');
          rank++;
          highStrings[rank] = (rank).ToString() + ". " + temp[0]; //pilot.ID;
-         highStrings[rank] += " " + record.score + "\n";
-         //temp[1]; //pilot.Unique
+         highStrings[rank] += " " + record.score + "\n"; //temp[1]; //pilot.Unique
          if (rank == 10) break;
       }
-
       Debug.Log("Rank: " + rank + " HS: " + HighScore); // TODO do something with rank?
       highScoreText.text = "";
-      foreach (string highScore in highStrings)
-      {
-         highScoreText.text += highScore;
-      }
+      foreach (string highScore in highStrings) { highScoreText.text += highScore; }
    }
 
    private IEnumerator ParseScores()
