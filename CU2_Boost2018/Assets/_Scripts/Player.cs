@@ -10,6 +10,7 @@
 //    TODO : fix pickups arent despawning all of a sudden... wth?
 //    TODO : setup a NavMesh and use it to help define a "spawn area" (for FishPool) along with the AI boundary 
 //           colliders and scenery colliders?
+//    TODO : setup global "top 5"?
 //    TODO : Casual-mode get's casual music? HUS indicator? both? Something else?
 //    TODO : Improve tasklist format/content further?
 //    TODO : improve "Records"; make a leaderboard?

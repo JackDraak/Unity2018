@@ -10,10 +10,10 @@ public class Pilot : MonoBehaviour
    public string  ID        { get { return id; }         set { id = value; } }
    public string  Unique    { get { return unique; }     set { unique = value; } }
 
-   private void Start()
+   private void Awake()
    {
       ID = "Bubblenaut-" + System.Environment.UserName;
       Unique = SystemInfo.deviceUniqueIdentifier;
-      if (Unique == "na") Unique = "WebPlayer";
+      if (Unique == "na" || Unique == null) Unique = "WebPlayer";
    }
 }

@@ -17,11 +17,11 @@ public class PickupTracker : MonoBehaviour
    [SerializeField] TextMeshProUGUI text_countdown;
    [SerializeField] TextMeshProUGUI text_subCountdown;
 
-   private enum task { task_0, task_1, task_2, task_3, task_4, task_5, task_6, task_7 }
-   private enum level { level_0, level_1, level_2, level_3, level_4, level_5, level_6, level_7, bonusLevel_1 }
+   private enum task { _0, _1, _2, k_3, _4, _5, _6, _7 }
+   private enum level { _0, _1, _2, _3, _4, _5, _6, _7, bonusLevel }
 
-   private task objective = task.task_0;
-   private level myLevel = level.level_0;
+   private task objective = task._0;
+   private level myLevel = level._0;
 
    private bool complete, spawning;
    private float maxPower, priorPercent;
@@ -60,7 +60,7 @@ public class PickupTracker : MonoBehaviour
    private IEnumerator Congratulations()
    {
       // TODO update this when apropriate (final player goal)
-      string congratulations = "Level One Complete! Congratulations!\n\nPlease 'stay tuned' for future developments, thanks for playing!"; // TODO update this when apropriate
+      string congratulations = "Level One Complete! Congratulations!\n\nPlease 'stay tuned' for future developments, thanks for playing!";
       for (int n = 0; n < 12; n++) // TODO get rid of magic number
       {
          ApplyColour.Toggle();
@@ -147,18 +147,18 @@ public class PickupTracker : MonoBehaviour
       if (count == 0)
       {
          WinRound();
-         if (myLevel == level.level_0)
+         if (myLevel == level._0)
          {
-            if (objective == task.task_0)
+            if (objective == task._0)
             {
-               objective = task.task_1;
+               objective = task._1;
                text_tasklist.text = "Level 1 Goal: Raise Thrust Cap to 60%, " + 
                   ApplyColour.Green + "R" + ApplyColour.Close + "eset and do:\n" +
                   "   Mini-Goal: Collect a full set of gas canisters\n   (for a small boost to Thrust Cap)";
             }
-            if (maxPower >= 0.6f && objective == task.task_1)
+            if (maxPower >= 0.6f && objective == task._1)
             {
-               objective = task.task_2;
+               objective = task._2;
                StartCoroutine(Congratulations());
                text_tasklist.text = "Level One Complete! Congratulations!\n\n" +
                   "Please 'stay tuned' for future developments, thanks for playing!"; // TODO update this when apropriate

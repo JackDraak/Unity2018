@@ -29,22 +29,21 @@ public class Timekeeper : MonoBehaviour
       elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f; // Get 1 decimal place.
       finished = true;
       float ratio = (elapsed / count) * 100f;
-      var myScores = leaderboard.ToListHighToLow();
-      foreach (var score in myScores)
-      {
-         string myOut = score.playerName;
-         myOut += " Name: ";
-         myOut += score.score;
-         myOut += " Score: ";
-         Debug.Log(myOut);
-      }
+      //var myScores = leaderboard.ToListHighToLow();
+      //foreach (var score in myScores)
+      //{
+      //   string myOut = score.playerName;
+      //   myOut += " Name: ";
+      //   myOut += score.score;
+      //   myOut += " Score: ";
+      //   Debug.Log(myOut);
+      //}
       int boardScore = 5000 - Mathf.FloorToInt(ratio);
       if (boardScore < 0) boardScore = 1;
       Debug.Log("New score: " + boardScore);
       ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
       string customName = pilot.ID + "_" + pilot.Unique;
       leaderboard.AddScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); 
-      //records.NewScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique);
       records.AddRecord(ratio);
       records.Parse();
    }
@@ -60,10 +59,10 @@ public class Timekeeper : MonoBehaviour
    private void Start()
    {
       leaderboard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
-      List<dreamloLeaderBoard.Score> scores = new List<dreamloLeaderBoard.Score>();
-      leaderboard.LoadScores();
-      scores = leaderboard.ToListHighToLow();
-      foreach (dreamloLeaderBoard.Score score in scores) Debug.Log(score);
+      //List<dreamloLeaderBoard.Score> scores = new List<dreamloLeaderBoard.Score>();
+      //leaderboard.LoadScores();
+      //scores = leaderboard.ToListHighToLow();
+      //foreach (dreamloLeaderBoard.Score score in scores) Debug.Log(score);
       pilot = FindObjectOfType<Pilot>();
       player = FindObjectOfType<Player>();
       readout = GetComponent<TextMeshProUGUI>();

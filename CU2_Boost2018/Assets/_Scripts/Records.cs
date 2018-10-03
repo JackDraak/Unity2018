@@ -6,10 +6,13 @@ using UnityEngine;
 public class Records : MonoBehaviour
 {
    private const int RECORD_LIMIT = 11; // Limit personal records to limit clutter.
-
+   private bool global = false;
    private dreamloLeaderBoard leaderBoard;
    private Pilot pilot;
+   private Pilot_ID_Field pilot_ID_Field;
    private TextMeshProUGUI readout;
+   [SerializeField] TextMeshProUGUI highScoreText;
+   private List<dreamloLeaderBoard.Score> highScores;
 
    private List<string> records = new List<string>();
    private readonly string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
@@ -35,7 +38,8 @@ public class Records : MonoBehaviour
       else if (record > 8 && record <= 10) records.Add(comSeven[OneOf(comSeven)] + stringRecord + "\n");
       else if (record > 10) records.Add(comEight[OneOf(comEight)] + stringRecord + "\n");
 
-      PrintRecords();
+      //PrintRecords();
+      Parse();
    }
 
    private int OneOf(string[] commentArray) { return Mathf.FloorToInt(Random.Range(0, commentArray.Length)); }
@@ -61,10 +65,11 @@ public class Records : MonoBehaviour
    {
       leaderBoard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
       pilot = FindObjectOfType<Pilot>();
+      pilot_ID_Field = FindObjectOfType<Pilot_ID_Field>();
       readout = GetComponent<TextMeshProUGUI>();
       records.Clear();
-      PrintRecords();
-      //leaderBoard.LoadScores();
+      leaderBoard.LoadScores();
+      Parse();
    }
 
    private int highScore = 0;
@@ -78,12 +83,36 @@ public class Records : MonoBehaviour
 
    public bool Parse()
    {
+      pilot_ID_Field.UpdateID();
       StartCoroutine(ParseScores());
       if (HighScore > 0) return true;
       else return false;
    }
 
-   private bool global = false;
+   public IEnumerator GetHighScores()
+   {
+      yield return new WaitForSeconds(1.0f); // TODO get rid of magic number
+      highScores = leaderBoard.ToListHighToLow();
+      int rank = 0;
+      string[] highStrings = new string[11];
+      highStrings[0] = ApplyColour.Blue + "#. Top-Ten HighScore" + ApplyColour.Close + "\n";
+      foreach (dreamloLeaderBoard.Score record in highScores)
+      {
+         string[] temp = record.playerName.Split('_');
+         rank++;
+         highStrings[rank] = (rank).ToString() + ". " + temp[0]; //pilot.ID;
+         highStrings[rank] += " " + record.score + "\n";
+         //temp[1]; //pilot.Unique
+         if (rank == 10) break;
+      }
+
+      Debug.Log("Rank: " + rank + " HS: " + HighScore); // TODO do something with rank?
+      highScoreText.text = "";
+      foreach (string highScore in highStrings)
+      {
+         highScoreText.text += highScore;
+      }
+   }
 
    private IEnumerator ParseScores()
    {
@@ -95,6 +124,8 @@ public class Records : MonoBehaviour
       }
       else
       {
+         StartCoroutine(GetHighScores());
+         yield return new WaitForSeconds(1.0f); // TODO get rid of magic number
          int rank = 0;
          foreach (dreamloLeaderBoard.Score record in scores)
          {
@@ -117,7 +148,7 @@ public class Records : MonoBehaviour
          }
          Debug.Log("Rank: " + rank + " HS: " + HighScore); // TODO do something with rank?
       }
-      yield return new WaitForSeconds(1.6f); // TODO get rid of magic number
+      yield return new WaitForSeconds(1.0f); // TODO get rid of magic number, or get rid of thos alltogether
       PrintRecords();
    }
 }
