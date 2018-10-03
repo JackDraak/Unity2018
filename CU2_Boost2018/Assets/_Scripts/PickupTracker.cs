@@ -60,7 +60,7 @@ public class PickupTracker : MonoBehaviour
    private IEnumerator Congratulations()
    {
       // TODO update this when apropriate (final player goal)
-      string congratulations = text_tasklist.text;
+      string congratulations = "Level One Complete! Congratulations!\n\nPlease 'stay tuned' for future developments, thanks for playing!"; // TODO update this when apropriate
       for (int n = 0; n < 12; n++) // TODO get rid of magic number
       {
          ApplyColour.Toggle();

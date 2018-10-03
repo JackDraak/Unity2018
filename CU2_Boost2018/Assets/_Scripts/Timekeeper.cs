@@ -14,7 +14,6 @@ public class Timekeeper : MonoBehaviour
    private float startTime = 0f;
    private Records records = null;
    private TextMeshProUGUI readout = null;
-   //private TMP_InputField inputField;
    private Pilot pilot;
    private Player player;
 
@@ -40,11 +39,13 @@ public class Timekeeper : MonoBehaviour
          Debug.Log(myOut);
       }
       int boardScore = 5000 - Mathf.FloorToInt(ratio);
-      if (boardScore < 0) boardScore = 0;
-      Debug.Log(boardScore);
+      if (boardScore < 0) boardScore = 1;
+      Debug.Log("New score: " + boardScore);
       ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
-      leaderboard.AddScore(pilot.ID, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); // TODO allow players to enter initials or something?
+      string customName = pilot.ID + "_" + pilot.Unique;
+      leaderboard.AddScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); // TODO finish: compound unique with pilotID to protect scores (use random unique if unavailable)
       records.AddRecord(ratio);
+      records.Parse();
    }
 
    public void Restart()
@@ -57,14 +58,6 @@ public class Timekeeper : MonoBehaviour
 
    private void Start()
    {
-      // TODO work in progress for custom pilot names for leaderboards
-      //inputField = FindObjectOfType<TMP_InputField>();
-      //inputField.text = "Mr. Bo Demo";
-      //inputField.ActivateInputField();
-      //inputField.enabled = true;
-      //inputField.interactable = true;
-      // get pilot name
-
       leaderboard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
       List<dreamloLeaderBoard.Score> scores = new List<dreamloLeaderBoard.Score>();
       leaderboard.LoadScores();
