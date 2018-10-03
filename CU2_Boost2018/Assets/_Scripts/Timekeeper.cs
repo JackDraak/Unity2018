@@ -43,7 +43,8 @@ public class Timekeeper : MonoBehaviour
       Debug.Log("New score: " + boardScore);
       ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
       string customName = pilot.ID + "_" + pilot.Unique;
-      leaderboard.AddScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); // TODO finish: compound unique with pilotID to protect scores (use random unique if unavailable)
+      leaderboard.AddScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); 
+      //records.NewScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique);
       records.AddRecord(ratio);
       records.Parse();
    }

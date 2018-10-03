@@ -7,6 +7,10 @@ public class Records : MonoBehaviour
 {
    private const int RECORD_LIMIT = 11; // Limit personal records to limit clutter.
 
+   private dreamloLeaderBoard leaderBoard;
+   private Pilot pilot;
+   private TextMeshProUGUI readout;
+
    private List<string> records = new List<string>();
    private readonly string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
    private readonly string[] comTwo =     { "Is it even possible? ", "Amazing: ", "Stupendous: ", "Lucky! "};
@@ -16,10 +20,6 @@ public class Records : MonoBehaviour
    private readonly string[] comSix =     { "Keep practicing: ", "You're getting there: ", "not bad, but not great: ", "Mediocre: " };
    private readonly string[] comSeven =   { "I bet you can do better: ", "Practice makes perfect: ", "Details, details... ", "This could be improved: " };
    private readonly string[] comEight =   { "Are you even trying? ", "SMH: ", "Seriously? ", "Yeup.... " };
-   private TextMeshProUGUI readout;
-
-   private dreamloLeaderBoard leaderBoard;
-   private Pilot pilot;
 
    public void AddRecord(float record)
    {
@@ -64,7 +64,7 @@ public class Records : MonoBehaviour
       readout = GetComponent<TextMeshProUGUI>();
       records.Clear();
       PrintRecords();
-      leaderBoard.LoadScores();
+      //leaderBoard.LoadScores();
    }
 
    private int highScore = 0;
@@ -95,10 +95,10 @@ public class Records : MonoBehaviour
       }
       else
       {
-         int count = 0;
+         int rank = 0;
          foreach (dreamloLeaderBoard.Score record in scores)
          {
-            count++;
+            rank++;
             string[] temp = record.playerName.Split('_');
             if (!global) // capture global high
             {
@@ -108,14 +108,14 @@ public class Records : MonoBehaviour
                global = true;
                //Debug.Log("temp[0] == pilot.ID || " + temp[0] + " == " + pilot.ID);
             }
-            if (temp[0] == pilot.ID)
+            if (temp[0] == pilot.ID && temp[1] == pilot.Unique)
             {
                Debug.Log(temp[0] + " <-> " + record.score);
                HighScore = record.score;
                break;
             }
          }
-         Debug.Log("Records: " + count + " HS: " + HighScore);
+         Debug.Log("Rank: " + rank + " HS: " + HighScore); // TODO do something with rank?
       }
       yield return new WaitForSeconds(1.6f); // TODO get rid of magic number
       PrintRecords();

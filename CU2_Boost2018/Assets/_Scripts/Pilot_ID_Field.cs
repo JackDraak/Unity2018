@@ -5,7 +5,6 @@ public class Pilot_ID_Field : MonoBehaviour
 {
    [SerializeField] TextMeshProUGUI tmpUGUI;
 
-   //Player player;
    Pilot pilot;
    Records records;
 
@@ -13,7 +12,6 @@ public class Pilot_ID_Field : MonoBehaviour
 
    private void Start()
    {
-      //player = FindObjectOfType<Player>();
       pilot = FindObjectOfType<Pilot>();
       records = FindObjectOfType<Records>();
    }
