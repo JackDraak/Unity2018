@@ -96,24 +96,20 @@ public class Records : MonoBehaviour
       else
       {
          int count = 0;
-         string test = "";
          foreach (dreamloLeaderBoard.Score record in scores)
          {
             count++;
+            string[] temp = record.playerName.Split('_');
             if (!global) // capture global high
             {
                GlobalHighScore = record.score;
-               string[] temp = record.playerName.Split('_');
                foreach (string str in temp) Debug.Log(str);
                GlobalScorer = temp[0];
-               test = temp[0];
-               Debug.Log("test = " + test);
                global = true;
-               Debug.Log("test == pilot.ID || " + test + " == " + pilot.ID);
+               //Debug.Log("temp[0] == pilot.ID || " + temp[0] + " == " + pilot.ID);
             }
-            if (test == pilot.ID)
+            if (temp[0] == pilot.ID)
             {
-               string[] temp = record.playerName.Split('_');
                Debug.Log(temp[0] + " <-> " + record.score);
                HighScore = record.score;
                break;

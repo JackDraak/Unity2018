@@ -18,7 +18,7 @@ public class Pilot : MonoBehaviour
 
    private void Start()
    {
-      ID = "Pilot_" + System.Environment.UserName;
+      ID = "Bubbler_" + System.Environment.UserName;
       Unique = SystemInfo.deviceUniqueIdentifier;
       Debug.Log(ID);
       scores = new List<int>();
