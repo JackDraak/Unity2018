@@ -138,6 +138,7 @@ public class FishDrone : MonoBehaviour
          // Sleep for a spell to minimize the costly raycasting calls.
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
 
+         // TODO work in progress on using one or more 'whiskers' from the low plane of the fish for better object avoidance (and ground avoidance).
          //Vector3 catfishWhiskers = transform.position;
          //catfishWhiskers.y -= 0.6f; // failed attempt to offset a ray at the base of the fish
          ////Vector3 catfishWhiskers_Fore = catfishWhiskers.forward;

@@ -1,12 +1,15 @@
-﻿//
-//    Dev-Notes:
+﻿//    Dev-Notes:
 //
-//    idea fish bopping bonus level: gain extra %'s of Gas Level. (bopping fish add fuel in general? bonus-level increases rate? later levels require fish-bopping to survive?)
+//    idea fish bopping bonus level: gain extra %'s of Gas Level. 
+//           (bopping fish add fuel in general? bonus-level increases rate?
+//           later levels require fish-bopping to survive?)
 //    
 //    TODO : FIXED - fix audio issue that cropped-up (bubbles not working right: thrust).
 //    TODO : FIXED - fix issue where 'R'esetting player while in a countdown gets a bit messy?
 //    TODO : COMPLETE - Move miniGoal slider to bottom right 
 //    TODO : fix pickups arent despawning all of a sudden... wth?
+//    TODO : setup a NavMesh and use it to help define a "spawn area" (for FishPool) along with the AI boundary 
+//           colliders and scenery colliders?
 //    TODO : Casual-mode get's casual music? HUS indicator? both? Something else?
 //    TODO : Improve tasklist format/content further?
 //    TODO : improve "Records"; make a leaderboard?
@@ -14,7 +17,6 @@
 //    TODO : (change upper-left HUD?) Improve timer aesthetics?
 //    TODO : work on Fog / lighting? work on level 2 ideas?
 //
-
 using EZCameraShake;
 using TMPro;
 using UnityEngine;
@@ -25,22 +27,24 @@ public class Player : MonoBehaviour
    #region Exposed Variables
    public bool casualMode, restarting;
 
-   [SerializeField] AudioClip bonusSound; // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ 
-   [SerializeField] AudioClip collisionSound;
-   [SerializeField] AudioClip thrustSound;
+   // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ : bonusSound
+   [SerializeField] AudioClip       bonusSound; 
+   [SerializeField] AudioClip       collisionSound;
+   [SerializeField] AudioClip       thrustSound;
 
-   [SerializeField] Color gasHigh = Color.clear;
-   [SerializeField] Color gasLow = Color.clear;
-   [SerializeField] Color thrustHigh = Color.clear;
-   [SerializeField] Color thrustLow = Color.clear;
+   [SerializeField] Color           gasHigh = Color.clear;
+   [SerializeField] Color           gasLow = Color.clear;
+   [SerializeField] Color           thrustHigh = Color.clear;
+   [SerializeField] Color           thrustLow = Color.clear;
 
-   [SerializeField] GameObject collisionEffect;
-   [SerializeField] GameObject pickupEffect;
+   [SerializeField] GameObject      collisionEffect;
+   [SerializeField] GameObject      pickupEffect;
 
-   [SerializeField] Image gasFill = null;
-   [SerializeField] Image thrustcapFill = null;
-   [SerializeField] Image thrustFill = null;
+   [SerializeField] Image           gasFill = null;
+   [SerializeField] Image           thrustcapFill = null;
+   [SerializeField] Image           thrustFill = null;
 
+   [SerializeField] TextMeshProUGUI casualModeIndicatorText;
    [SerializeField] TextMeshProUGUI gasSlideText;
    [SerializeField] TextMeshProUGUI goalSlideText;
    [SerializeField] TextMeshProUGUI powerSlideText;
@@ -81,9 +85,8 @@ public class Player : MonoBehaviour
    private const float VOLUME_PICKUP = 0.5f;
    private const float VOLUME_THRUST = 0.2f;
 
+   private const int DELAY_PROGRESS = 6;
    private const int HALF_ARC = 180;
-
-   private const string HUD_COLOUR = "\"#FF7070\""; // coral /// #2DA8E9 gemstone blue
 
    private AudioSource[] audioSources;
    private AudioSource xAudio, thrustAudio;
@@ -110,6 +113,8 @@ public class Player : MonoBehaviour
    private ParticleSystem.EmissionModule thrustBubbles;
 
    private PickupTracker pickupTracker;
+
+   private Pilot pilot;
 
    private Quaternion startRotation;
 
@@ -180,13 +185,9 @@ public class Player : MonoBehaviour
 
    public void AutoRestart()
    {
-      //if (!casualMode)
-      //{
-         restarting = true;
-         int triggerDelay = 6; // TODO do something with this
-         Invoke("Restart", triggerDelay);
-         pickupTracker.TriggerCountdown(triggerDelay);
-      //}
+      restarting = true;
+      Invoke("Restart", DELAY_PROGRESS);
+      pickupTracker.TriggerCountdown(DELAY_PROGRESS);
    }
 
    private void Awake()
@@ -216,7 +217,11 @@ public class Player : MonoBehaviour
       thrustAudioTimer = Time.time - thrustAudioLength;
    }
 
-   public void CasualMode() { casualMode = !casualMode; }
+   public void CasualMode()
+   {
+      casualMode = !casualMode;
+      IndicateMode();
+   }
 
    public void DeRotate()
    {
@@ -238,17 +243,17 @@ public class Player : MonoBehaviour
       float ratio = fuelLevel / FUEL_MAX;
       colour = Vector4.Lerp(gasHigh, gasLow, 1 - ratio);
       cockpit.GetComponent<MeshRenderer>().material.color = gasFill.color = colour;
-      gasSlideText.text = "Gas Level: " + GasPercent + "%";
+      gasSlideText.text = "Gas Level: " + ApplyColour.Green + GasPercent + "%" + ApplyColour.Close;
    }
 
    public void DoGoalUpdate()
    {
-      goalSlideText.text = "Mini-Goal Progress: " + pickupTracker.PickupPercent() + "%";
+      goalSlideText.text = "Mini-Goal Progress: " + ApplyColour.Green + pickupTracker.PickupPercent() + "%" + ApplyColour.Close;
    }
 
    private void DoPowercapUpdate()
    {
-      powercapSlideText.text = "Power Cap: " + Mathf.FloorToInt(maxPower * 100) + "%";
+      powercapSlideText.text = "Power Cap: " + ApplyColour.Green + Mathf.FloorToInt(maxPower * 100) + "%" + ApplyColour.Close;
       Color colour;
       float ratio = thrustPowercapSlider.value / THRUST_MAX;
       colour = Vector4.Lerp(thrustHigh, thrustLow, 1 - ratio);
@@ -267,9 +272,10 @@ public class Player : MonoBehaviour
       thrustFill.color = colour;
       if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
       thrusterBell.GetComponent<MeshRenderer>().material.color = thrustLight.GetComponent<Light>().color = colour;
-      if (Mathf.Approximately(thrustPowerSlider.value, THRUST_MIN)) sliderText = "Power Level (at minimum): ";
+      if (thrustPowerSlider.value == THRUST_POWER_BASE) sliderText = "Power Level"+ ApplyColour.Blue + "(at minimum)" + ApplyColour.Close + ": ";
       else sliderText = "Power Level: ";
-      powerSlideText.text = sliderText + Mathf.FloorToInt(100 - (100 * ((THRUST_MAX - thrustPowerSlider.value) / THRUST_MAX))) + "%";
+      int currentPercent = Mathf.FloorToInt(100 - (100 * ((THRUST_MAX - thrustPowerSlider.value) / THRUST_MAX)));
+      powerSlideText.text = sliderText + ApplyColour.Green + currentPercent + "%" + ApplyColour.Close;
    }
 
    private void EndExpulsion()
@@ -326,42 +332,53 @@ public class Player : MonoBehaviour
       uiControl.Visible = true;
    }
 
-   public void ImmediateRestart() { if (!restarting) AutoRestart(); }
+   public void ImmediateRestart() { if (!restarting && casualMode) AutoRestart(); }
+
+   private void IndicateMode()
+   {
+      if (!casualMode)
+      {
+         casualModeIndicatorText.text = "";
+         if (pickupTracker.Count == 0 && !restarting && Time.time > 1) AutoRestart();
+      }
+      else casualModeIndicatorText.text = ApplyColour.Green + "~" + ApplyColour.Close + " Casual Mode " + ApplyColour.Green + "~" + ApplyColour.Close;
+   }
 
    private void InitVars()
    {
-      audioSources = GetComponents<AudioSource>();
-      thisRigidbody = GetComponent<Rigidbody>();
-      thrustParticleSystem = GetComponent<ParticleSystem>();
+      audioSources            = GetComponents<AudioSource>();
+      thisRigidbody           = GetComponent<Rigidbody>();
+      thrustParticleSystem    = GetComponent<ParticleSystem>();
 
-      fishDrones = FindObjectsOfType<FishDrone>();
-      fishPool = FindObjectOfType<FishPool>();
-      glueCam = FindObjectOfType<GlueCam>();
-      pickupTracker = FindObjectOfType<PickupTracker>();
-      timeKeeper = FindObjectOfType<Timekeeper>();
-      uiControl = FindObjectOfType<UIcontrol>();
+      fishDrones              = FindObjectsOfType<FishDrone>();
+      fishPool                = FindObjectOfType<FishPool>();
+      glueCam                 = FindObjectOfType<GlueCam>();
+      pickupTracker           = FindObjectOfType<PickupTracker>();
+      pilot                   = FindObjectOfType<Pilot>();
+      timeKeeper              = FindObjectOfType<Timekeeper>();
+      uiControl               = FindObjectOfType<UIcontrol>();
 
-      cockpit = GameObject.FindGameObjectWithTag("Cockpit");
-      thrusterBell = GameObject.FindGameObjectWithTag("Thruster_Bell");
-      thrustLight = GameObject.FindGameObjectWithTag("Thruster_Light");
-      tutorialText = GameObject.FindGameObjectWithTag("Tutorial_Text");
+      cockpit                 = GameObject.FindGameObjectWithTag("Cockpit");
+      thrusterBell            = GameObject.FindGameObjectWithTag("Thruster_Bell");
+      thrustLight             = GameObject.FindGameObjectWithTag("Thruster_Light");
+      tutorialText            = GameObject.FindGameObjectWithTag("Tutorial_Text");
 
-      debugMode = Debug.isDebugBuild;
-      startPosition = transform.position;
-      startRotation = transform.rotation;
-      thrustAudioLength = thrustSound.length;
-      thrustAudioTimer = 0 - thrustAudioLength;
-      thrustBubbles = thrustParticleSystem.emission;
+      debugMode               = Debug.isDebugBuild;
+      startPosition           = transform.position;
+      startRotation           = transform.rotation;
+      thrustAudioLength       = thrustSound.length;
+      thrustAudioTimer        = 0 - thrustAudioLength;
+      thrustBubbles           = thrustParticleSystem.emission;
 
-      thrustAudio = audioSources[0];
-      xAudio = audioSources[1];
+      thrustAudio             = audioSources[0];
+      xAudio                  = audioSources[1];
 
-      casualMode = false;
-      deRotating = false;
-      invulnerable = false;
-      paused = false;
-      thrustAudioTrack = true;
-      tutorialIsVisible = true;
+      casualMode              = false;
+      deRotating              = false;
+      invulnerable            = false;
+      paused                  = false;
+      thrustAudioTrack        = true;
+      tutorialIsVisible       = true;
 
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
       thrustPowerSlider.maxValue = THRUST_MAX;
@@ -376,6 +393,9 @@ public class Player : MonoBehaviour
       gasLevelSlider.minValue = 0;
       gasLevelSlider.value = fuelLevel;
       DoGasUpdate();
+
+      pilotNameText.text = pilot.ID;
+      IndicateMode();
    }
 
    public void Invulnerable() { invulnerable = !invulnerable; }

@@ -5,7 +5,7 @@ public class GlueCam : MonoBehaviour
    [SerializeField] GameObject player;
 
    private bool paused = false;
-   private float elasticity = 0.07f; // 1 = infinite glue, 0 = infinite elasticity... therefore: 0.015f --> correct position by 1.5%, each frame.
+   private float elasticity = 0.07f; // 1 = infinite glue, 0 = infinite elasticity... therefore: 0.07f --> correct position by 7%, each frame.
    private Vector3 initialPosition;
    private Vector3 offset;
 

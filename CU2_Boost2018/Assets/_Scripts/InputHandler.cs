@@ -56,12 +56,15 @@ public class InputHandler : MonoBehaviour
       PollRotation();
       PollThrust();
 
-      // SumPause is Polling: Q, R & ESC keys. // ESC, Q Only // TODO pull-in ESC & Q monitoring tho this class [low priority].
+      // Player: R. 
       if (Input.GetKeyDown(KeyCode.R)) player.ImmediateRestart();
+
+      //SumPause is Polling: Q & ESC keys. // TODO pull-in ESC & Q monitoring tho this class [low priority].
    }
 
    private void PollAutoPower()
    {
+      // Player: 0, 1, 2... 9
       if      (Input.GetKeyDown(KeyCode.Alpha0)) player.SetPower(1.0f);
       else if (Input.GetKeyDown(KeyCode.Alpha9)) player.SetPower(0.9f);
       else if (Input.GetKeyDown(KeyCode.Alpha8)) player.SetPower(0.8f);
@@ -76,19 +79,23 @@ public class InputHandler : MonoBehaviour
 
    private void PollMisc()
    {
+      // Misc: C, [, ], H
       if (Input.GetKeyDown(KeyCode.C)) player.CasualMode();
+      if (Input.GetKeyDown(KeyCode.H)) ApplyColour.Toggle();
       if (Input.GetKey(KeyCode.LeftBracket)) musicPlayer.VolumeDown();
       else if (Input.GetKey(KeyCode.RightBracket)) musicPlayer.VolumeUp();
    }
 
    private void PollPower()
    {
+      // Player: Vertical
       float power = CrossPlatformInputManager.GetAxis(AXIS_POWER);
       if (power != 0) player.AdjustThrusterPower(power);
    }
 
    private void PollRotation()
    {
+      // Player: Horizontal
       float rotation = CrossPlatformInputManager.GetAxis(AXIS_ROTATION);
       if (rotation != 0) player.ApplyRotation(rotation);
       else player.DeRotate();
@@ -96,9 +103,30 @@ public class InputHandler : MonoBehaviour
 
    private void PollThrust()
    {
+      // Player: Jump
       float thrust = CrossPlatformInputManager.GetAxis(AXIS_THRUST);
       player.ApplyThrust(thrust);
       if (thrust > 0) player.TriggerThrustAudio();
       else player.CancelThrustAudio();
    }
+}
+
+public static class ApplyColour
+{
+   private static int hudIndex = 0;
+   private static string[] colour = { "#FF7070", "#28B3D1", "#2DE9A8", };
+
+   public static string Blue { get { return "<color=" + colour[1] + ">"; } }
+   public static string Coral { get { return "<color=" + colour[0] + ">"; } }
+   public static string Green { get { return "<color=" + colour[2] + ">"; } }
+   public static string Colour { get { return "<color=" + colour[hudIndex] + ">"; } }
+   public static string Open { get { return "<color=" + Colour + ">"; } }
+   public static string Close { get { return "</color>"; } }
+   public static string RTFify(string text)
+   {
+      string header = "<color=" + Colour + ">";
+      string footer = "</color>";
+      return header + text + footer;
+   }
+   public static void Toggle() { hudIndex++; if (hudIndex >= colour.Length) hudIndex = 0; }
 }

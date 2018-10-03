@@ -23,24 +23,24 @@ public class PickupTracker : MonoBehaviour
    private task objective = task.task_0;
    private level myLevel = level.level_0;
 
-   private bool               complete, spawning;
-   private float              maxPower, priorPercent;
-   private float              pickupPercent = 0;
-   private int                count = 0;
-   private int                countdownDelay;
-   private int                highCount;
-   private GameObject[]       pickupsArray;
-   private GameObject[]       spawnPointsArray;
-   private List<Collider>     claimedPickups;
-   private TextMeshProUGUI    text_tracker;
-   private Timekeeper         timeKeeper;
+   private bool complete, spawning;
+   private float maxPower, priorPercent;
+   private float pickupPercent = 0;
+   private int count = 0;
+   private int countdownDelay;
+   private int highCount;
+   private GameObject[] pickupsArray;
+   private GameObject[] spawnPointsArray;
+   private List<Collider> claimedPickups;
+   private TextMeshProUGUI text_tracker;
+   private Timekeeper timeKeeper;
 
    private void Awake()
    {
       text_tracker = GetComponent<TextMeshProUGUI>();
-         if (!text_tracker) Debug.LogError("PickupTracker FAIL: no text_tracker component reference!!");
+      if (!text_tracker) Debug.LogError("PickupTracker FAIL: no text_tracker component reference!!");
       spawnPointsArray = GameObject.FindGameObjectsWithTag("Spawn_Good");
-         if (spawnPointsArray.Length == 0) Debug.LogError("PickupTracker FAIL: no Spawn_Good tags found in scene!!");
+      if (spawnPointsArray.Length == 0) Debug.LogError("PickupTracker FAIL: no Spawn_Good tags found in scene!!");
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01"); // this will be empty until there is a Spawn.
       claimedPickups = new List<Collider>();
    }
@@ -51,11 +51,25 @@ public class PickupTracker : MonoBehaviour
       {
          count -= 1;
          claimedPickups.Add(other);
-         text_tracker.text = count.ToString() + " Gas Canisters Remaining";
+         text_tracker.text = ApplyColour.Green + count + ApplyColour.Close + " Gas Canisters Remaining";
          return true;
       }
       return false;
    }
+
+   private IEnumerator Congratulations()
+   {
+      // TODO update this when apropriate (final player goal)
+      string congratulations = text_tasklist.text;
+      for (int n = 0; n < 12; n++) // TODO get rid of magic number
+      {
+         ApplyColour.Toggle();
+         text_tasklist.text = ApplyColour.Colour + congratulations + ApplyColour.Close;
+         yield return new WaitForSeconds(0.666f); // TODO get rid of magic number
+      }
+   }
+
+   public int Count { get { return count; } }
 
    public void DespawnAll()
    {
@@ -66,9 +80,10 @@ public class PickupTracker : MonoBehaviour
    private IEnumerator DoCountdown()
    {
       int n = countdownDelay - 1;
-      Debug.Log("Casual-mode: " + player.casualMode);
-      if (player.casualMode) text_subCountdown.text = "...prepare for reset..."; // TODO why isnt this working correctly?
-      else text_subCountdown.text = "...in <i>casual-mode</i> progress manually with a 'R'eset...";
+      if (player.casualMode) text_subCountdown.text = "...prepare for reset...";
+      else text_subCountdown.text = "To stop automatic progression, switch to <i>" + ApplyColour.Green + "C" 
+            + ApplyColour.Close + "asual-mode</i>\nand progress manually with a " + ApplyColour.Green 
+            + "R" + ApplyColour.Close + "eset...";
       while (n >= 0)
       {
          text_countdown.text = n.ToString();
@@ -83,15 +98,15 @@ public class PickupTracker : MonoBehaviour
    {
       spawning = true;
       DespawnAll();
-      //yield return new WaitForSeconds(0.05f); // TODO too short/long? ///needed at all?///
-      yield return WaitFor.Frames(1);
-      SpawnPercent(33); // 33 // TODO decide how to use this dynamically?
+      yield return StartCoroutine(WaitFor.Frames(2)); // TODO too short/long? ///needed at all?///
+
+      SpawnPercent(33); // TODO decide how to use this dynamically?
       //SpawnAll();
 
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
 
-      text_tracker.text = count.ToString() + " Gas Canisters Remaining";
+      text_tracker.text = ApplyColour.Green + count + ApplyColour.Close + " Gas Canisters Remaining";
 
       claimedPickups = new List<Collider>();
       spawning = false;
@@ -137,12 +152,14 @@ public class PickupTracker : MonoBehaviour
             if (objective == task.task_0)
             {
                objective = task.task_1;
-               text_tasklist.text = "Level 1 Goal: Raise Thrust Cap to 60%, 'R'eset and do\n\n" +
-                  "Mini-Goal: Collect a full set of gas canisters\n(for a small boost to Thrust Cap)";
+               text_tasklist.text = "Level 1 Goal: Raise Thrust Cap to 60%, " + 
+                  ApplyColour.Green + "R" + ApplyColour.Close + "eset and do:\n" +
+                  "   Mini-Goal: Collect a full set of gas canisters\n   (for a small boost to Thrust Cap)";
             }
             if (maxPower >= 0.6f && objective == task.task_1)
             {
                objective = task.task_2;
+               StartCoroutine(Congratulations());
                text_tasklist.text = "Level One Complete! Congratulations!\n\n" +
                   "Please 'stay tuned' for future developments, thanks for playing!"; // TODO update this when apropriate
             }
@@ -238,6 +255,6 @@ public class PickupTracker : MonoBehaviour
       complete = true;
       timeKeeper.Cease(highCount);
       maxPower = player.BoostMaxPower(0.1f); // 0.1f = 10% boost
-      player.AutoRestart();
+      if (!player.casualMode) player.AutoRestart();
    }
 }

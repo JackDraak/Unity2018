@@ -3,36 +3,34 @@ using UnityEngine;
 
 public class FishPool : MonoBehaviour
 {
-   // TODO -- setup a NavMesh and use it to help define a "spawn area" along with the AI boundary colliders and scenery colliders?
-
    [SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
-   private int spawnPercent;
-
-   struct Fish
-   {
-      public bool on;
-      public float onTime;
-      public GameObject fishObject;
-      public int poolIndex;
-   }
 
    private Fish[] fishes;
    private FishSpawn[] spawnPoints;
    private int dynamicPoolSize;
+   private int spawnPercent;
    private int updatedFrameRate;
    private Transform xform;
+
+   private struct Fish
+   {
+      public bool on;
+      public float onTime;
+      public GameObject fishObject;
+      public int poolIndex; // TODO depreciate this?
+   }
 
    private void Start()
    {
       spawnPoints = GetComponentsInChildren<FishSpawn>();
-      dynamicPoolSize = SpawnTarget;
-      fishes = new Fish[SpawnTarget];
+      dynamicPoolSize = SpawnCap;
+      fishes = new Fish[SpawnCap];
       StartCoroutine(TunedSpawn());
    }
 
    private void CorrectPoolSize()
    {
-      int newTarget = SpawnTarget - CountPool;
+      int newTarget = SpawnCap - CountPool;
       if (newTarget > 0) GrowPool(newTarget);
    }
 
@@ -46,9 +44,9 @@ public class FishPool : MonoBehaviour
       }
    }
 
-   private bool CountFull { get { return (CountActive == SpawnTarget); } }
-   private bool CountOver { get { return (CountPool > SpawnTarget); } }
-   private bool CountUnder { get { return (CountActive < SpawnTarget); } }
+   private bool CountFull { get { return (CountActive == SpawnCap); } }
+   private bool CountOver { get { return (CountPool > SpawnCap); } }
+   private bool CountUnder { get { return (CountActive < SpawnCap); } }
    private int CountPool { get { return fishes.Length; } }
 
    private void CreateFishObject(int index)
@@ -87,7 +85,7 @@ public class FishPool : MonoBehaviour
    {
       if (!CountFull) CorrectPoolSize();
 
-      int delta = CountActive - SpawnTarget;
+      int delta = CountActive - SpawnCap;
       while (delta < 0)
       {
          var rft = RandomFreeTransform();
@@ -102,7 +100,7 @@ public class FishPool : MonoBehaviour
 
    private void PlaceFish(Transform xform)
    {
-      if (SpawnTarget == CountActive) return;
+      if (SpawnCap == CountActive) return;
 
       int poolIndex = 0;
       while (fishes[poolIndex].on)
@@ -151,10 +149,7 @@ public class FishPool : MonoBehaviour
       fishes[poolIndex].fishObject.SetActive(true);
    }
 
-   public void Reset()
-   {
-      Respawn();
-   }
+   public void Reset() { Respawn(); }
 
    public void Respawn()
    {
@@ -164,7 +159,7 @@ public class FishPool : MonoBehaviour
 
    private void Spawn()
    {
-      for (int i = 0; i < SpawnTarget; i++)
+      for (int i = 0; i < SpawnCap; i++)
       {
          var rft = RandomFreeTransform();
          if (rft) PlaceFish(rft);
@@ -172,10 +167,7 @@ public class FishPool : MonoBehaviour
       }
    }
 
-   private int SpawnTarget
-   {
-      get { return Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f)); }
-   }
+   private int SpawnCap { get { return Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f)); } }
 
    public IEnumerator TunedSpawn()
    {
@@ -224,7 +216,7 @@ public class FishPool : MonoBehaviour
    }
 }
 
-public static class WaitFor // TODO put this in a more appropriate place
+public static class WaitFor
 {
    public static IEnumerator Frames(int frameCount)
    {
@@ -235,4 +227,3 @@ public static class WaitFor // TODO put this in a more appropriate place
       }
    }
 }
-

@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class Timekeeper : MonoBehaviour
@@ -13,7 +14,9 @@ public class Timekeeper : MonoBehaviour
    private float startTime = 0f;
    private Records records = null;
    private TextMeshProUGUI readout = null;
-   private TMP_InputField inputField;
+   //private TMP_InputField inputField;
+   private Pilot pilot;
+   private Player player;
 
    public void Begin()
    {
@@ -27,8 +30,6 @@ public class Timekeeper : MonoBehaviour
       elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f; // Get 1 decimal place.
       finished = true;
       float ratio = (elapsed / count) * 100f;
-      //leaderboard.LoadScores();
-      //List<dreamloLeaderBoard> scores = new List<dreamloLeaderBoard>();
       var myScores = leaderboard.ToListHighToLow();
       foreach (var score in myScores)
       {
@@ -42,7 +43,7 @@ public class Timekeeper : MonoBehaviour
       if (boardScore < 0) boardScore = 0;
       Debug.Log(boardScore);
       ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
-      leaderboard.AddScore(inputField.text, boardScore, Mathf.FloorToInt(ratio * 100)); // TODO allow players to enter initials or something
+      leaderboard.AddScore(pilot.ID, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); // TODO allow players to enter initials or something?
       records.AddRecord(ratio);
    }
 
@@ -56,32 +57,43 @@ public class Timekeeper : MonoBehaviour
 
    private void Start()
    {
-      inputField = FindObjectOfType<TMP_InputField>();
-      inputField.text = "Mr. Bo Demo";
-      inputField.ActivateInputField();
-      inputField.enabled = true;
-      inputField.interactable = true;
+      // TODO work in progress for custom pilot names for leaderboards
+      //inputField = FindObjectOfType<TMP_InputField>();
+      //inputField.text = "Mr. Bo Demo";
+      //inputField.ActivateInputField();
+      //inputField.enabled = true;
+      //inputField.interactable = true;
       // get pilot name
 
+      leaderboard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
+      List<dreamloLeaderBoard.Score> scores = new List<dreamloLeaderBoard.Score>();
+      leaderboard.LoadScores();
+      scores = leaderboard.ToListHighToLow();
+      foreach (dreamloLeaderBoard.Score score in scores) Debug.Log(score);
+      pilot = FindObjectOfType<Pilot>();
+      player = FindObjectOfType<Player>();
       readout = GetComponent<TextMeshProUGUI>();
       records = FindObjectOfType<Records>();
-      leaderboard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
       Restart();
    }
 
    private void Update()
    {
-      if (!started && !finished) readout.text = "Touching the Controls Will Start the Timer: 0.0 seconds";
+      if (!started && !finished) readout.text = "Touching the Controls Will Start the Timer: " + ApplyColour.Green + "0.0 seconds" + ApplyColour.Close;
       else if (started && !finished)
       {
          float elapsed = (Mathf.FloorToInt((Time.time - startTime) * 10)) / 10f; // Get 1 decimal place.
-         readout.text = elapsed.ToString("F1");
+         readout.text = ApplyColour.Green + elapsed.ToString("F1") + ApplyColour.Close; ;
          readout.text += " seconds (Elapsed time)";
       }
       else if (finished)
       {
          elapsed = (Mathf.FloorToInt((endTime - startTime) * 10)) / 10f; // Get 1 decimal place.
-         readout.text = "tap 'R' to retry; your prior run took: " + elapsed.ToString("F1") + " seconds";
+         if (player.casualMode)
+            readout.text = "tap " + ApplyColour.Green + "R" + ApplyColour.Close + " to retry; your prior run took: "
+            + ApplyColour.Green + elapsed.ToString("F1") + ApplyColour.Close + " seconds";
+         else
+            readout.text = "Your prior run took: " + ApplyColour.Green + elapsed.ToString("F1") + ApplyColour.Close + " seconds";
       }
    }
 }
