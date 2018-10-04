@@ -17,7 +17,7 @@ public class PickupTracker : MonoBehaviour
    [SerializeField] TextMeshProUGUI text_countdown;
    [SerializeField] TextMeshProUGUI text_subCountdown;
 
-   private enum task { _0, _1, _2, k_3, _4, _5, _6, _7 }
+   private enum task { _0, _1, _2, _3, _4, _5, _6, _7 }
    private enum level { _0, _1, _2, _3, _4, _5, _6, _7, bonusLevel }
 
    private task objective = task._0;
@@ -98,7 +98,8 @@ public class PickupTracker : MonoBehaviour
    {
       spawning = true;
       DespawnAll();
-      yield return StartCoroutine(WaitFor.Frames(2)); // TODO too short/long? ///needed at all?///
+      //yield return StartCoroutine(WaitFor.Frames(2)); // TODO too short/long? ///needed at all?/// doesn't using StartCoroutine ... start a different thread?
+      yield return WaitFor.Frames(2);
 
       SpawnPercent(33); // TODO decide how to use this dynamically?
       //SpawnAll();

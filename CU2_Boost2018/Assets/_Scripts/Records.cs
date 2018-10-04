@@ -8,6 +8,7 @@ public class Records : MonoBehaviour
    [SerializeField] TextMeshProUGUI highScoreText;
 
    private const int RECORD_LIMIT = 6; // Limit personal records to limit clutter.
+   private const int NETWORK_DELAY = 1;
 
    private bool global = false;
    private dreamloLeaderBoard leaderBoard;
@@ -15,6 +16,7 @@ public class Records : MonoBehaviour
    private Pilot pilot;
    private Pilot_ID_Field pilot_ID_Field;
    private TextMeshProUGUI readout;
+   private Timekeeper timeKeeper;
 
    private List<string> records = new List<string>();
    private readonly string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
@@ -66,6 +68,8 @@ public class Records : MonoBehaviour
       pilot = FindObjectOfType<Pilot>();
       pilot_ID_Field = FindObjectOfType<Pilot_ID_Field>();
       readout = GetComponent<TextMeshProUGUI>();
+      timeKeeper = FindObjectOfType<Timekeeper>();
+
       records.Clear();
       leaderBoard.LoadScores();
       Parse();
@@ -90,14 +94,23 @@ public class Records : MonoBehaviour
 
    public IEnumerator GetHighScores()
    {
-      yield return new WaitForSeconds(1.0f); // TODO get rid of magic number
+      yield return WaitFor.Frames(15);
+      global = false;
       highScores = leaderBoard.ToListHighToLow();
       int rank = 0;
       string[] highStrings = new string[11];
       highStrings[0] = ApplyColour.Blue + "#. Top-Ten HighScore" + ApplyColour.Close + "\n";
       foreach (dreamloLeaderBoard.Score record in highScores)
       {
-         string[] temp = record.playerName.Split('_');
+         string[] temp = record.playerName.Split(timeKeeper.Splitter); // TODO deal with code duplication
+         if (!global) // capture global high
+         {
+            GlobalHighScore = record.score;
+            //foreach (string str in temp) Debug.Log(str);
+            GlobalScorer = temp[0];
+            global = true;
+         }
+
          rank++;
          highStrings[rank] = (rank).ToString() + ". " + temp[0]; //pilot.ID;
          highStrings[rank] += " " + record.score + "\n"; //temp[1]; //pilot.Unique
@@ -119,20 +132,19 @@ public class Records : MonoBehaviour
       else
       {
          StartCoroutine(GetHighScores());
-         yield return new WaitForSeconds(1.0f); // TODO get rid of magic number
+         yield return new WaitForSeconds(NETWORK_DELAY); // TODO get rid of this alltogether?
          int rank = 0;
          foreach (dreamloLeaderBoard.Score record in scores)
          {
             rank++;
-            string[] temp = record.playerName.Split('_');
-            if (!global) // capture global high
-            {
-               GlobalHighScore = record.score;
-               foreach (string str in temp) Debug.Log(str);
-               GlobalScorer = temp[0];
-               global = true;
-               //Debug.Log("temp[0] == pilot.ID || " + temp[0] + " == " + pilot.ID);
-            }
+            string[] temp = record.playerName.Split(timeKeeper.Splitter);
+            //if (!global) // capture global high
+            //{
+            //   GlobalHighScore = record.score;
+            //   foreach (string str in temp) Debug.Log(str);
+            //   GlobalScorer = temp[0];
+            //   global = true;
+            //}
             if (temp[0] == pilot.ID && temp[1] == pilot.Unique)
             {
                Debug.Log(temp[0] + " <-> " + record.score);
@@ -142,7 +154,7 @@ public class Records : MonoBehaviour
          }
          Debug.Log("Rank: " + rank + " HS: " + HighScore); // TODO do something with rank?
       }
-      yield return new WaitForSeconds(1.0f); // TODO get rid of magic number, or get rid of thos alltogether
+      yield return new WaitForSeconds(NETWORK_DELAY); // TODO get rid of this alltogether?
       PrintRecords();
    }
 }

@@ -181,7 +181,7 @@ public class FishPool : MonoBehaviour
       int divisor = testSamples;
       while (testSamples > 0)
       {
-         yield return StartCoroutine(WaitFor.Frames(frameGap));
+         yield return WaitFor.Frames(frameGap);
          averageFrameRate += FrameRate;
          testSamples--;
       }

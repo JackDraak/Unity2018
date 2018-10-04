@@ -5,13 +5,19 @@ public class Pilot_ID_Field : MonoBehaviour
 {
    [SerializeField] TextMeshProUGUI tmpUGUI;
 
-   Pilot pilot;
-
    public string PilotID { get { return tmpUGUI.text;  } set { tmpUGUI.text = value; } }
 
-   public void SetID() { pilot.ID = PilotID; }
+   private void GetID() { pilot.ID = PilotID; Debug.Log(pilot.ID); }
 
-   private void Start() { pilot = FindObjectOfType<Pilot>(); }
+   public void SetID() { GetID(); } 
 
-   //public void UpdateID() { pilot.ID = tmpUGUI.text; }
+   private Pilot pilot;
+
+   private void Awake() // changed from Start due to odd missing reference errors from SetID
+   {
+      pilot = FindObjectOfType<Pilot>();
+      if (!pilot) Debug.LogWarning("Pilot_ID no Pilot Reference");
+      if (!tmpUGUI) Debug.LogWarning("Pilot_ID no tmpUGUI Reference");
+      Debug.Log(PilotID);
+   }
 }
