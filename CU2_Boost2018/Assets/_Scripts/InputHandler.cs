@@ -22,11 +22,15 @@ public class InputHandler : MonoBehaviour
       records        = FindObjectOfType<Records>();
    }
 
-   private void FixedUpdate()
+   private void Update()
    {
       if (Debug.isDebugBuild) DebugControlPoll();
-      PlayerControlPoll();
       PollMisc();
+   }
+
+   private void FixedUpdate()
+   {
+      PlayerControlPoll();
    }
 
    private void DebugControlPoll()

@@ -14,6 +14,6 @@ public class Pilot : MonoBehaviour
    {
       ID = "Bubblenaut-" + System.Environment.UserName;
       Unique = SystemInfo.deviceUniqueIdentifier;
-      if (Unique == "na" || Unique == null) Unique = "WebPlayer"; // TODO solution for this?
+      //if (Unique == "na" || Unique == null) Unique = "WebPlayer";
    }
 }

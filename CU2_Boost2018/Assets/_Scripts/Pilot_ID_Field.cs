@@ -7,14 +7,16 @@ public class Pilot_ID_Field : MonoBehaviour
 
    public string PilotID { get { return tmpUGUI.text;  } set { tmpUGUI.text = value; } }
 
-   private void GetID() { pilot.ID = PilotID; Debug.Log(pilot.ID); }
+   private void GetID() { pilot.ID = PilotID; records.Parse(); Debug.Log(pilot.ID); }
 
    public void SetID() { GetID(); } 
 
    private Pilot pilot;
+   private Records records;
 
    private void Awake() // changed from Start due to odd missing reference errors from SetID
    {
+      records = FindObjectOfType<Records>();
       pilot = FindObjectOfType<Pilot>();
       if (!pilot) Debug.LogWarning("Pilot_ID no Pilot Reference");
       if (!tmpUGUI) Debug.LogWarning("Pilot_ID no tmpUGUI Reference");

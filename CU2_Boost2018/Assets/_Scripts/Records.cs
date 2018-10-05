@@ -8,15 +8,26 @@ public class Records : MonoBehaviour
    [SerializeField] TextMeshProUGUI highScoreText;
 
    private const int RECORD_LIMIT = 6; // Limit personal records to limit clutter.
-   private const int NETWORK_DELAY = 1;
 
    private bool global = false;
    private dreamloLeaderBoard leaderBoard;
+   private int playerRank;
+   private int totalRankings;
    private List<dreamloLeaderBoard.Score> highScores;
    private Pilot pilot;
    private Pilot_ID_Field pilot_ID_Field;
+   private string[] highStrings;
    private TextMeshProUGUI readout;
    private Timekeeper timeKeeper;
+
+   private int playerHighScore = 0;
+   public int PlayerHighScore { get { return playerHighScore; } set { playerHighScore = value; } }
+
+   private int globalHighScore = 0;
+   public int GlobalHighScore { get { return globalHighScore; } set { globalHighScore = value; } }
+
+   private string globalScorer = null;
+   public string GlobalScorer { get { return globalScorer; } set { globalScorer = value; } }
 
    private List<string> records = new List<string>();
    private readonly string[] comOne =     { "Cheater! ", "I don't believe it: ", "riiiiiight: ", "That's one for the record books! " };
@@ -40,7 +51,8 @@ public class Records : MonoBehaviour
       else if (record > 6 && record <= 8) records.Add(comSix[OneOf(comSix)] + stringRecord + "\n");
       else if (record > 8 && record <= 10) records.Add(comSeven[OneOf(comSeven)] + stringRecord + "\n");
       else if (record > 10) records.Add(comEight[OneOf(comEight)] + stringRecord + "\n");
-      Parse();
+      //Parse();
+      PrintRecords();
    }
 
    private int OneOf(string[] commentArray) { return Mathf.FloorToInt(Random.Range(0, commentArray.Length)); }
@@ -58,8 +70,12 @@ public class Records : MonoBehaviour
       }
       if (count > 0) readout.text += "<i>(seconds per canister)</i>\n";
       else readout.text += "<i>...gather all canisters to see your first record...</i>\n";
+      string rankText;
+      if (playerRank == 0) rankText = "Unranked";
+      else rankText = playerRank.ToString();
       readout.text += "Global High Score: " + ApplyColour.Blue + GlobalHighScore + ApplyColour.Close + " by: " + GlobalScorer;
-      readout.text += "\nPersonal High Score: " + ApplyColour.Blue + HighScore + ApplyColour.Close;
+      readout.text += "\nPersonal High Score: " + ApplyColour.Blue + PlayerHighScore + ApplyColour.Close + " (rank: " 
+         + ApplyColour.Blue + rankText + ApplyColour.Close + " of " + ApplyColour.Blue + totalRankings + ApplyColour.Close + ")";
    }
 
    private void Start()
@@ -72,89 +88,50 @@ public class Records : MonoBehaviour
 
       records.Clear();
       leaderBoard.LoadScores();
+      pilot_ID_Field.PilotID = pilot.ID;
       Parse();
    }
 
-   private int highScore = 0;
-   public int HighScore { get { return highScore; } set { highScore = value; } }
-
-   private int globalHighScore = 0;
-   public int GlobalHighScore { get { return globalHighScore; } set { globalHighScore = value; } }
-
-   private string globalScorer = null;
-   public string GlobalScorer { get { return globalScorer; } set { globalScorer = value; } }
-
-   public bool Parse()
+   public void Parse()
    {
-      pilot_ID_Field.SetID(); // TODO recent change
-      StartCoroutine(ParseScores());
-      if (HighScore > 0) return true;
-      else return false;
+      //pilot_ID_Field.SetID();
+      StartCoroutine(GetHighScores());
    }
 
    public IEnumerator GetHighScores()
    {
-      yield return WaitFor.Frames(15);
-      global = false;
+      yield return new WaitForSeconds(0.5f);
       highScores = leaderBoard.ToListHighToLow();
+      global = false;
       int rank = 0;
-      string[] highStrings = new string[11];
+      highStrings = new string[11];
+
       highStrings[0] = ApplyColour.Blue + "#. Top-Ten HighScore" + ApplyColour.Close + "\n";
       foreach (dreamloLeaderBoard.Score record in highScores)
       {
-         string[] temp = record.playerName.Split(timeKeeper.Splitter); // TODO deal with code duplication
-         if (!global) // capture global high
+         rank++;
+         string[] temp = record.playerName.Split(timeKeeper.Splitter);
+         if (!global)
          {
             GlobalHighScore = record.score;
-            //foreach (string str in temp) Debug.Log(str);
             GlobalScorer = temp[0];
             global = true;
          }
-
-         rank++;
-         highStrings[rank] = (rank).ToString() + ". " + temp[0]; //pilot.ID;
-         highStrings[rank] += " " + record.score + "\n"; //temp[1]; //pilot.Unique
-         if (rank == 10) break;
+         if (temp[0] == pilot.ID && temp[1] == pilot.Unique)
+         {
+            PlayerHighScore = record.score;
+            playerRank = rank;
+         }
+         if (rank <= 10)
+         {
+            highStrings[rank] = (rank).ToString() + ". " + temp[0];
+            highStrings[rank] += " " + record.score + "\n";
+         }
       }
-      Debug.Log("Rank: " + rank + " HS: " + HighScore); // TODO do something with rank?
+      Debug.Log("Scores ranked: " + rank + " playerHigh: " + PlayerHighScore + ", Player Rank #" + playerRank); // TODO do something fun or useful with rank?
+      totalRankings = rank;
       highScoreText.text = "";
       foreach (string highScore in highStrings) { highScoreText.text += highScore; }
-   }
-
-   private IEnumerator ParseScores()
-   {
-      List<dreamloLeaderBoard.Score> scores = leaderBoard.ToListHighToLow();
-      if (scores == null)
-      {
-         HighScore = -1;
-         Debug.Log("null scores");
-      }
-      else
-      {
-         StartCoroutine(GetHighScores());
-         yield return new WaitForSeconds(NETWORK_DELAY); // TODO get rid of this alltogether?
-         int rank = 0;
-         foreach (dreamloLeaderBoard.Score record in scores)
-         {
-            rank++;
-            string[] temp = record.playerName.Split(timeKeeper.Splitter);
-            //if (!global) // capture global high
-            //{
-            //   GlobalHighScore = record.score;
-            //   foreach (string str in temp) Debug.Log(str);
-            //   GlobalScorer = temp[0];
-            //   global = true;
-            //}
-            if (temp[0] == pilot.ID && temp[1] == pilot.Unique)
-            {
-               Debug.Log(temp[0] + " <-> " + record.score);
-               HighScore = record.score;
-               break;
-            }
-         }
-         Debug.Log("Rank: " + rank + " HS: " + HighScore); // TODO do something with rank?
-      }
-      yield return new WaitForSeconds(NETWORK_DELAY); // TODO get rid of this alltogether?
       PrintRecords();
    }
 }
