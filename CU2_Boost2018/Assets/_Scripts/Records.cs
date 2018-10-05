@@ -11,7 +11,6 @@ public class Records : MonoBehaviour
 
    private bool global = false;
    private dreamloLeaderBoard leaderBoard;
-   private int playerRank;
    private int totalRankings;
    private List<dreamloLeaderBoard.Score> highScores;
    private Pilot pilot;
@@ -19,9 +18,6 @@ public class Records : MonoBehaviour
    private string[] highStrings;
    private TextMeshProUGUI readout;
    private Timekeeper timeKeeper;
-
-   private int playerHighScore = 0;
-   public int PlayerHighScore { get { return playerHighScore; } set { playerHighScore = value; } }
 
    private int globalHighScore = 0;
    public int GlobalHighScore { get { return globalHighScore; } set { globalHighScore = value; } }
@@ -51,7 +47,6 @@ public class Records : MonoBehaviour
       else if (record > 6 && record <= 8) records.Add(comSix[OneOf(comSix)] + stringRecord + "\n");
       else if (record > 8 && record <= 10) records.Add(comSeven[OneOf(comSeven)] + stringRecord + "\n");
       else if (record > 10) records.Add(comEight[OneOf(comEight)] + stringRecord + "\n");
-      //Parse();
       PrintRecords();
    }
 
@@ -71,10 +66,10 @@ public class Records : MonoBehaviour
       if (count > 0) readout.text += "<i>(seconds per canister)</i>\n";
       else readout.text += "<i>...gather all canisters to see your first record...</i>\n";
       string rankText;
-      if (playerRank == 0) rankText = "Unranked";
-      else rankText = playerRank.ToString();
+      if (pilot.Rank == 0) rankText = "Unranked";
+      else rankText = pilot.Rank.ToString();
       readout.text += "Global High Score: " + ApplyColour.Blue + GlobalHighScore + ApplyColour.Close + " by: " + GlobalScorer;
-      readout.text += "\nPersonal High Score: " + ApplyColour.Blue + PlayerHighScore + ApplyColour.Close + " (rank: " 
+      readout.text += "\nPersonal High Score: " + ApplyColour.Blue + pilot.HighScore + ApplyColour.Close + " (rank: " 
          + ApplyColour.Blue + rankText + ApplyColour.Close + " of " + ApplyColour.Blue + totalRankings + ApplyColour.Close + ")";
    }
 
@@ -89,28 +84,29 @@ public class Records : MonoBehaviour
       records.Clear();
       leaderBoard.LoadScores();
       pilot_ID_Field.PilotID = pilot.ID;
-      Parse();
+      pilot_ID_Field.SetID(); // triggers a parse
    }
 
-   public void Parse()
-   {
-      //pilot_ID_Field.SetID();
-      StartCoroutine(GetHighScores());
-   }
+   // Called-by: Timekeeper.Cease() & Pilot_ID_Field.SetID()
+   public void Parse() { StartCoroutine(GetHighScores()); }
 
    public IEnumerator GetHighScores()
    {
       yield return new WaitForSeconds(0.5f);
       highScores = leaderBoard.ToListHighToLow();
-      global = false;
-      int rank = 0;
       highStrings = new string[11];
-
       highStrings[0] = ApplyColour.Blue + "#. Top-Ten HighScore" + ApplyColour.Close + "\n";
+      int rank = 0;
+      global = false;
+      GlobalHighScore = 0;
+      GlobalScorer = "";
+      pilot.HighScore = 0;
+      pilot.Rank = 0;
+
       foreach (dreamloLeaderBoard.Score record in highScores)
       {
-         rank++;
          string[] temp = record.playerName.Split(timeKeeper.Splitter);
+         rank++;
          if (!global)
          {
             GlobalHighScore = record.score;
@@ -119,8 +115,8 @@ public class Records : MonoBehaviour
          }
          if (temp[0] == pilot.ID && temp[1] == pilot.Unique)
          {
-            PlayerHighScore = record.score;
-            playerRank = rank;
+            pilot.HighScore = record.score;
+            pilot.Rank = rank;
          }
          if (rank <= 10)
          {
@@ -128,7 +124,7 @@ public class Records : MonoBehaviour
             highStrings[rank] += " " + record.score + "\n";
          }
       }
-      Debug.Log("Scores ranked: " + rank + " playerHigh: " + PlayerHighScore + ", Player Rank #" + playerRank); // TODO do something fun or useful with rank?
+      Debug.Log("Records:GetHighScores() ranked: " + rank + " playerHigh: " + pilot.HighScore + ", Player Rank #" + pilot.Rank);
       totalRankings = rank;
       highScoreText.text = "";
       foreach (string highScore in highStrings) { highScoreText.text += highScore; }

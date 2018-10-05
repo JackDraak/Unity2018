@@ -4,12 +4,10 @@ using TMPro;
 public class Pilot_ID_Field : MonoBehaviour
 {
    [SerializeField] TextMeshProUGUI tmpUGUI;
-
    public string PilotID { get { return tmpUGUI.text;  } set { tmpUGUI.text = value; } }
-
-   private void GetID() { pilot.ID = PilotID; records.Parse(); Debug.Log(pilot.ID); }
-
    public void SetID() { GetID(); } 
+
+   private void GetID() { pilot.ID = PilotID; records.Parse(); Debug.Log("(GetID)Pilot_ID_Field "+ pilot.ID + " assigned from _Field to Pilot.ID"); }
 
    private Pilot pilot;
    private Records records;
@@ -20,6 +18,6 @@ public class Pilot_ID_Field : MonoBehaviour
       pilot = FindObjectOfType<Pilot>();
       if (!pilot) Debug.LogWarning("Pilot_ID no Pilot Reference");
       if (!tmpUGUI) Debug.LogWarning("Pilot_ID no tmpUGUI Reference");
-      Debug.Log(PilotID);
+      //Debug.Log("(Awake)Pilot_ID_Field: " + PilotID);
    }
 }

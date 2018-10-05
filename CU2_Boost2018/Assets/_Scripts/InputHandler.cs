@@ -25,12 +25,14 @@ public class InputHandler : MonoBehaviour
    private void Update()
    {
       if (Debug.isDebugBuild) DebugControlPoll();
+      PollAutoPower();
+      PollPower();
       PollMisc();
    }
 
    private void FixedUpdate()
    {
-      PlayerControlPoll();
+      PlayerPhysicsPoll();
    }
 
    private void DebugControlPoll()
@@ -53,17 +55,10 @@ public class InputHandler : MonoBehaviour
       if (Input.GetKeyDown(KeyCode.Z)) records.AddRecord(Random.Range(0.9f, 11f));
    }
 
-   private void PlayerControlPoll()
+   private void PlayerPhysicsPoll()
    {
-      PollAutoPower();
-      PollPower();
       PollRotation();
       PollThrust();
-
-      // Player: R. 
-      if (Input.GetKeyDown(KeyCode.R)) player.ImmediateRestart();
-
-      //SumPause is Polling: Q & ESC keys. // TODO pull-in ESC & Q monitoring tho this class [low priority].
    }
 
    private void PollAutoPower()
@@ -88,6 +83,11 @@ public class InputHandler : MonoBehaviour
       if (Input.GetKeyDown(KeyCode.H)) ApplyColour.Toggle();
       if (Input.GetKey(KeyCode.LeftBracket)) musicPlayer.VolumeDown();
       else if (Input.GetKey(KeyCode.RightBracket)) musicPlayer.VolumeUp();
+
+      // Player: R. 
+      if (Input.GetKeyDown(KeyCode.R)) player.ImmediateRestart();
+
+      //SumPause is Polling: Q & ESC keys. // TODO pull-in ESC & Q monitoring tho this class [low priority].
    }
 
    private void PollPower()
