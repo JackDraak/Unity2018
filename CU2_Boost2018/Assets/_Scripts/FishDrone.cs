@@ -1,8 +1,4 @@
-﻿///   FishDrone by JackDraak
-///   July 2018
-///   'changelog' viewable on GitHub.
-///   
-using UnityEngine;
+﻿using UnityEngine;
 
 public class FishDrone : MonoBehaviour
 {
@@ -124,7 +120,7 @@ public class FishDrone : MonoBehaviour
 
    private void PlanPath()
    {
-      // Consider changing direction.
+      // Consider 'randomnly' changing direction.
       if (Time.time > lastContact + CHANGE_TURN_DELAY)
       {
          lastContact = Time.time;
@@ -138,17 +134,7 @@ public class FishDrone : MonoBehaviour
          // Sleep for a spell to minimize the costly raycasting calls.
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
 
-         // TODO work in progress on using one or more 'whiskers' from the low plane of the fish for better object avoidance (and ground avoidance).
-         //Vector3 catfishWhiskers = transform.position;
-         //catfishWhiskers.y -= 0.6f; // failed attempt to offset a ray at the base of the fish
-         ////Vector3 catfishWhiskers_Fore = catfishWhiskers.forward;
-         //if (Physics.Raycast(catfishWhiskers, fore, RAYCAST_MAX_DISTANCE, layerMask))
-         //{
-         //   Debug.DrawRay(transform.position, fore, Color.cyan, RAYCAST_DRAWTIME +10);
-         //   newSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / newSpeed);
-         //   raycastSleepTime = Time.time + RAYCAST_FRAME_GAP;
-         //   lastContact = Time.time;
-         //}
+         // TODO work in one or more 'whiskers' from the low plane of the fish for better object avoidance (and ground avoidance).
 
          // Look ahead.
          if (Physics.Raycast(transform.position, fore, RAYCAST_MAX_DISTANCE, layerMask))
@@ -186,7 +172,7 @@ public class FishDrone : MonoBehaviour
             correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
             if (hitPort.distance > 0 && hitStarbord.distance > 0)
             {
-               // TODO when there are neighbors on both sides, if course is toward closer target then invert course (but not too often).
+               // When there are neighbors on both sides, if course is toward closer target then invert course (but not too often).
                if (((hitPort.distance > hitStarbord.distance && correctedTurnRate > 0) 
                   || (hitPort.distance < hitStarbord.distance && correctedTurnRate > 0)) 
                   && revTime < Time.time)

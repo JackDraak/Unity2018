@@ -98,7 +98,6 @@ public class PickupTracker : MonoBehaviour
    {
       spawning = true;
       DespawnAll();
-      //yield return StartCoroutine(WaitFor.Frames(2)); // TODO too short/long? ///needed at all?/// doesn't using StartCoroutine ... start a different thread?
       yield return WaitFor.Frames(2);
 
       SpawnPercent(33); // TODO decide how to use this dynamically?
@@ -198,10 +197,7 @@ public class PickupTracker : MonoBehaviour
    private void SpawnRandomSpawnpoint()
    {
       GameObject freePos = RandomFreePosition();
-      if (freePos)
-      {
-         FillPosition(freePos.transform);
-      }
+      if (freePos) { FillPosition(freePos.transform); }
    }
 
    private int SpawnTally()

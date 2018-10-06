@@ -92,7 +92,7 @@ public class Records : MonoBehaviour
 
    public IEnumerator GetHighScores()
    {
-      yield return new WaitForSeconds(0.5f);
+      yield return new WaitForSeconds(1.0f);
       highScores = leaderBoard.ToListHighToLow();
       highStrings = new string[11];
       highStrings[0] = ApplyColour.Blue + "#. Top-Ten HighScore" + ApplyColour.Close + "\n";

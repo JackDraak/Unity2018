@@ -4,20 +4,28 @@ using TMPro;
 public class Pilot_ID_Field : MonoBehaviour
 {
    [SerializeField] TextMeshProUGUI tmpUGUI;
-   public string PilotID { get { return tmpUGUI.text;  } set { tmpUGUI.text = value; } }
-   public void SetID() { GetID(); } 
-
-   private void GetID() { pilot.ID = PilotID; records.Parse(); Debug.Log("(GetID)Pilot_ID_Field "+ pilot.ID + " assigned from _Field to Pilot.ID"); }
 
    private Pilot pilot;
    private Records records;
+   private TMP_InputField inputField;
 
-   private void Awake() // changed from Start due to odd missing reference errors from SetID
+   private void Awake()
    {
+      inputField = GetComponent<TMP_InputField>();
       records = FindObjectOfType<Records>();
       pilot = FindObjectOfType<Pilot>();
-      if (!pilot) Debug.LogWarning("Pilot_ID no Pilot Reference");
-      if (!tmpUGUI) Debug.LogWarning("Pilot_ID no tmpUGUI Reference");
-      //Debug.Log("(Awake)Pilot_ID_Field: " + PilotID);
    }
+
+   public bool Enable { set { inputField.interactable = value; } get { return inputField.interactable; } }
+
+   public string PilotID { get { return tmpUGUI.text;  } set { tmpUGUI.text = value; } }
+
+   public void SetID()
+   {
+      pilot.ID = PilotID;
+      records.Parse();
+      Enable = false;
+   }
+
+   public void Toggle() { inputField.interactable = !inputField.interactable; }
 }

@@ -10,7 +10,7 @@ public class Pilot : MonoBehaviour
    public int    HighScore { get { return highScore; }  set { highScore = value; } }
    public int    Rank      { get { return rank; }       set { rank = value; } }
    public string ID        { get { return id; }         set { id = value; } }
-   public string Unique    { get { return unique; }     set { unique = value; } }
+   public string Unique    { get { return unique; }     set { } }
 
    private void Awake()
    {

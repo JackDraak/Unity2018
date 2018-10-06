@@ -333,8 +333,6 @@ public class Player : MonoBehaviour
       uiControl.Visible = true;
    }
 
-   public void ImmediateRestart() { if (!restarting && casualMode) AutoRestart(); }
-
    private void IndicateMode()
    {
       if (!casualMode)
@@ -545,6 +543,8 @@ public class Player : MonoBehaviour
    }
 
    public void TopFuel() { fuelLevel = FUEL_MAX; }
+
+   public void TriggerRestart() { if (!restarting && casualMode) AutoRestart(); }
 
    public void TriggerThrustAudio()
    {

@@ -17,7 +17,7 @@ public class FishPool : MonoBehaviour
       public bool on;
       public float onTime;
       public GameObject fishObject;
-      public int poolIndex; // TODO depreciate this?
+      //public int poolIndex; // TODO depreciate this?
    }
 
    private void Start()
@@ -55,7 +55,7 @@ public class FishPool : MonoBehaviour
       fishes[index].fishObject.SetActive(false);
       fishes[index].on = false;
       fishes[index].onTime = 0;
-      fishes[index].poolIndex = index;
+      //fishes[index].poolIndex = index;
    }
 
    private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
