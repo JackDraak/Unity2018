@@ -249,7 +249,7 @@ public class Player : MonoBehaviour
 
    public void DoGoalUpdate()
    {
-      goalSlideText.text = "Mini-Goal Progress: " + ApplyColour.Green + pickupTracker.PickupPercent() + "%" + ApplyColour.Close;
+      goalSlideText.text = "Mini-Goal Progress: " + ApplyColour.Green + pickupTracker.PickupPercent + "%" + ApplyColour.Close;
    }
 
    private void DoPowercapUpdate()

@@ -10,6 +10,7 @@ public class Records : MonoBehaviour
    private const int RECORD_LIMIT = 6; // Limit personal records to limit clutter.
 
    private bool global = false;
+   private bool webGL = false;
    private dreamloLeaderBoard leaderBoard;
    private int totalRankings;
    private List<dreamloLeaderBoard.Score> highScores;
@@ -50,7 +51,54 @@ public class Records : MonoBehaviour
       PrintRecords();
    }
 
+   public IEnumerator GetHighScores()
+   {
+      yield return new WaitForSeconds(1.0f);
+      highStrings = new string[11];
+      int rank = 0;
+      if (!webGL)
+      {
+         highScores = leaderBoard.ToListHighToLow();
+         highStrings[0] = ApplyColour.Blue + "#. Top-Ten HighScore" + ApplyColour.Close + "\n";
+         global = false;
+         GlobalHighScore = 0;
+         GlobalScorer = "";
+         pilot.HighScore = 0;
+         pilot.Rank = 0;
+         foreach (dreamloLeaderBoard.Score record in highScores)
+         {
+            string[] temp = record.playerName.Split(timeKeeper.Splitter);
+            rank++;
+            if (!global)
+            {
+               GlobalHighScore = record.score;
+               GlobalScorer = temp[0];
+               global = true;
+            }
+            if (temp[0] == pilot.ID && temp[1] == pilot.Unique)
+            {
+               pilot.HighScore = record.score;
+               pilot.Rank = rank;
+            }
+            if (rank <= 10)
+            {
+               highStrings[rank] = (rank).ToString() + ". " + temp[0];
+               highStrings[rank] += " " + record.score + "\n";
+            }
+         }
+         Debug.Log("Records:GetHighScores() ranked: " + rank + " playerHigh: " + pilot.HighScore + ", Player Rank #" + pilot.Rank);
+         totalRankings = rank;
+      }
+      else highStrings[0] = "No Global Leader Board\nin WebGL Version";
+      highScoreText.text = "";
+      foreach (string highScore in highStrings) highScoreText.text += highScore;
+      PrintRecords();
+   }
+
    private int OneOf(string[] commentArray) { return Mathf.FloorToInt(Random.Range(0, commentArray.Length)); }
+
+   // Called-by: Timekeeper.Cease() & Pilot_ID_Field.SetID()
+   public void Parse() { StartCoroutine(GetHighScores()); }
 
    private void PrintRecords()
    {
@@ -68,9 +116,13 @@ public class Records : MonoBehaviour
       string rankText;
       if (pilot.Rank == 0) rankText = "Unranked";
       else rankText = pilot.Rank.ToString();
-      readout.text += "Global High Score: " + ApplyColour.Blue + GlobalHighScore + ApplyColour.Close + " by: " + GlobalScorer;
-      readout.text += "\nPersonal High Score: " + ApplyColour.Blue + pilot.HighScore + ApplyColour.Close + " (rank: " 
-         + ApplyColour.Blue + rankText + ApplyColour.Close + " of " + ApplyColour.Blue + totalRankings + ApplyColour.Close + ")";
+      if (!webGL)
+      {
+         readout.text += "Global High Score: " + ApplyColour.Blue + GlobalHighScore + ApplyColour.Close + " by: " + GlobalScorer;
+         readout.text += "\nPersonal High Score: " + ApplyColour.Blue + pilot.HighScore + ApplyColour.Close + " (rank: "
+            + ApplyColour.Blue + rankText + ApplyColour.Close + " of " + ApplyColour.Blue + totalRankings + ApplyColour.Close + ")";
+      }
+      else readout.text += "Global Rankings Disabled for WebGL Version.";
    }
 
    private void Start()
@@ -81,53 +133,11 @@ public class Records : MonoBehaviour
       readout = GetComponent<TextMeshProUGUI>();
       timeKeeper = FindObjectOfType<Timekeeper>();
 
+      if (Application.platform == RuntimePlatform.WebGLPlayer) webGL = true;
+      else leaderBoard.LoadScores();
+
       records.Clear();
-      leaderBoard.LoadScores();
       pilot_ID_Field.PilotID = pilot.ID;
       pilot_ID_Field.SetID(); // triggers a parse
-   }
-
-   // Called-by: Timekeeper.Cease() & Pilot_ID_Field.SetID()
-   public void Parse() { StartCoroutine(GetHighScores()); }
-
-   public IEnumerator GetHighScores()
-   {
-      yield return new WaitForSeconds(1.0f);
-      highScores = leaderBoard.ToListHighToLow();
-      highStrings = new string[11];
-      highStrings[0] = ApplyColour.Blue + "#. Top-Ten HighScore" + ApplyColour.Close + "\n";
-      int rank = 0;
-      global = false;
-      GlobalHighScore = 0;
-      GlobalScorer = "";
-      pilot.HighScore = 0;
-      pilot.Rank = 0;
-
-      foreach (dreamloLeaderBoard.Score record in highScores)
-      {
-         string[] temp = record.playerName.Split(timeKeeper.Splitter);
-         rank++;
-         if (!global)
-         {
-            GlobalHighScore = record.score;
-            GlobalScorer = temp[0];
-            global = true;
-         }
-         if (temp[0] == pilot.ID && temp[1] == pilot.Unique)
-         {
-            pilot.HighScore = record.score;
-            pilot.Rank = rank;
-         }
-         if (rank <= 10)
-         {
-            highStrings[rank] = (rank).ToString() + ". " + temp[0];
-            highStrings[rank] += " " + record.score + "\n";
-         }
-      }
-      Debug.Log("Records:GetHighScores() ranked: " + rank + " playerHigh: " + pilot.HighScore + ", Player Rank #" + pilot.Rank);
-      totalRankings = rank;
-      highScoreText.text = "";
-      foreach (string highScore in highStrings) { highScoreText.text += highScore; }
-      PrintRecords();
    }
 }

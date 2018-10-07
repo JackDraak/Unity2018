@@ -17,15 +17,28 @@ public class FishPool : MonoBehaviour
       public bool on;
       public float onTime;
       public GameObject fishObject;
-      //public int poolIndex; // TODO depreciate this?
    }
 
-   private void Start()
+   private int Bound(int test)
    {
-      spawnPoints = GetComponentsInChildren<FishSpawn>();
-      dynamicPoolSize = SpawnCap;
-      fishes = new Fish[SpawnCap];
-      StartCoroutine(TunedSpawn());
+      if (test > 100) test = 100;
+      else if (test < 0) test = 0;
+      return test;
+   }
+
+   // Some other ways to overload Bound, for fun.. not presently being used
+   private int Bound(int low, int high, int test)
+   {
+      if (test > high) test = high;
+      else if (test < low) test = low;
+      return test;
+   }
+
+   private float Bound(float low, float high, float test)
+   {
+      if (test > high) test = high;
+      else if (test < low) test = low;
+      return test;
    }
 
    private void CorrectPoolSize()
@@ -46,8 +59,8 @@ public class FishPool : MonoBehaviour
 
    private bool CountFull { get { return (CountActive == SpawnCap); } }
    private bool CountOver { get { return (CountPool > SpawnCap); } }
-   private bool CountUnder { get { return (CountActive < SpawnCap); } }
    private int CountPool { get { return fishes.Length; } }
+   private bool CountUnder { get { return (CountActive < SpawnCap); } }
 
    private void CreateFishObject(int index)
    {
@@ -55,7 +68,6 @@ public class FishPool : MonoBehaviour
       fishes[index].fishObject.SetActive(false);
       fishes[index].on = false;
       fishes[index].onTime = 0;
-      //fishes[index].poolIndex = index;
    }
 
    private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
@@ -169,6 +181,14 @@ public class FishPool : MonoBehaviour
 
    private int SpawnCap { get { return Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f)); } }
 
+   private void Start()
+   {
+      spawnPoints = GetComponentsInChildren<FishSpawn>();
+      dynamicPoolSize = SpawnCap;
+      fishes = new Fish[SpawnCap];
+      StartCoroutine(TunedSpawn());
+   }
+
    public IEnumerator TunedSpawn()
    {
       // Local setup.
@@ -191,28 +211,6 @@ public class FishPool : MonoBehaviour
       // Grow pool when needed, and spawn.
       CorrectPoolSize();
       Spawn();
-   }
-
-   private int Bound(int test)
-   {
-      if (test > 100) test = 100;
-      else if (test < 0) test = 0;
-      return test;
-   }
-
-   // Some other ways to overload Bound, for fun.. not presently being used
-   private int Bound(int low, int high, int test)
-   {
-      if (test > high) test = high;
-      else if (test < low) test = low;
-      return test;
-   }
-
-   private float Bound(float low, float high, float test)
-   {
-      if (test > high) test = high;
-      else if (test < low) test = low;
-      return test;
    }
 }
 

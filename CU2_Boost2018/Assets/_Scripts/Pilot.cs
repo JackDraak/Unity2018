@@ -7,17 +7,29 @@ public class Pilot : MonoBehaviour
    private static string    id;
    private static string    unique;
 
-   public int    HighScore { get { return highScore; }  set { highScore = value; } }
-   public int    Rank      { get { return rank; }       set { rank = value; } }
-   public string ID        { get { return id; }         set { id = value; } }
-   public string Unique    { get { return unique; }     set { } }
-
    private void Awake()
    {
       highScore = 0;
       rank = 0;
       id = "Bubblenaut-" + System.Environment.UserName;
       unique = SystemInfo.deviceUniqueIdentifier;
-      if (unique.Length < 16) unique = "Error_Generating_Device_Unique_Identifier"; 
+      if (Application.platform == RuntimePlatform.WebGLPlayer) unique = "WebGL_Player_NOID";
+      else if (unique.Length < 16) unique = "Error_Generating_Device_Unique_Identifier"; 
    }
+
+   public int HighScore { get { return highScore; } set { highScore = value; } }
+
+   public string ID
+   {
+      get { return id; }
+      set
+      {
+         if (value == "") return;
+         id = value;
+      }
+   }
+
+   public int Rank { get { return rank; } set { rank = value; } }
+
+   public string Unique { get { return unique; } }
 }

@@ -27,7 +27,6 @@ public class PickupTracker : MonoBehaviour
    private float maxPower, priorPercent;
    private float pickupPercent = 0;
    private int count = 0;
-   private int countdownDelay;
    private int highCount;
    private GameObject[] pickupsArray;
    private GameObject[] spawnPointsArray;
@@ -74,12 +73,12 @@ public class PickupTracker : MonoBehaviour
    public void DespawnAll()
    {
       foreach (GameObject spawnPoint in spawnPointsArray)
-         if (spawnPoint.transform.childCount != 0)  { Destroy(spawnPoint.transform.GetChild(0).gameObject); }
+         if (spawnPoint.transform.childCount != 0) Destroy(spawnPoint.transform.GetChild(0).gameObject); 
    }
 
-   private IEnumerator DoCountdown()
+   private IEnumerator DoCountdown(int downCount)
    {
-      int n = countdownDelay - 1;
+      int n = downCount - 1;
       if (player.casualMode) text_subCountdown.text = "...prepare for reset...";
       else text_subCountdown.text = "To stop automatic progression, switch to <i>" + ApplyColour.Green + "C" 
             + ApplyColour.Close + "asual-mode</i>\nand progress manually with a " + ApplyColour.Green 
@@ -122,7 +121,7 @@ public class PickupTracker : MonoBehaviour
       spawnedObject.SetActive(true);
    }
 
-   public float PickupPercent() { return pickupPercent; }
+   public float PickupPercent { get { return pickupPercent; } }
 
    private GameObject RandomFreePosition()
    {
@@ -140,7 +139,7 @@ public class PickupTracker : MonoBehaviour
       else return null;
    }
 
-   public void Restart() { StartCoroutine("DoSpawn"); }
+   public void Restart() { StartCoroutine(DoSpawn()); }
 
    private void ReviewObjectives()
    {
@@ -197,13 +196,13 @@ public class PickupTracker : MonoBehaviour
    private void SpawnRandomSpawnpoint()
    {
       GameObject freePos = RandomFreePosition();
-      if (freePos) { FillPosition(freePos.transform); }
+      if (freePos) FillPosition(freePos.transform); 
    }
 
    private int SpawnTally()
    {
       int spawnTally = 0;
-      foreach (GameObject spawnPoint in spawnPointsArray) { if (spawnPoint.transform.childCount > 0) spawnTally++; }
+      foreach (GameObject spawnPoint in spawnPointsArray) if (spawnPoint.transform.childCount > 0) spawnTally++;
       return spawnTally;
    }
 
@@ -216,7 +215,7 @@ public class PickupTracker : MonoBehaviour
          "(for a small boost to Thrust Cap)";
       text_countdown.text = "";
       text_subCountdown.text = "";
-      StartCoroutine("DoSpawn");
+      StartCoroutine(DoSpawn());
    }
 
    private void TrackPickups()
@@ -237,13 +236,9 @@ public class PickupTracker : MonoBehaviour
       }
    }
 
-   public void TriggerSpawn() { StartCoroutine("DoSpawn"); }
+   public void TriggerSpawn() { StartCoroutine(DoSpawn()); }
 
-   public void TriggerCountdown(int delay)
-   {
-      countdownDelay = delay;
-      StartCoroutine("DoCountdown", delay);
-   }
+   public void TriggerCountdown(int delay) { StartCoroutine(DoCountdown(delay)); }
 
    private void Update() { TrackPickups(); }
 

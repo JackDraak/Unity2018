@@ -16,12 +16,15 @@ public class Pilot_ID_Field : MonoBehaviour
       pilot = FindObjectOfType<Pilot>();
    }
 
-   public bool Enable { set { inputField.interactable = value; } get { return inputField.interactable; } }
+   public bool Enable { get { return inputField.interactable; } set { inputField.interactable = value; } }
 
    public string PilotID { get { return tmpUGUI.text;  } set { tmpUGUI.text = value; } }
 
    public void SetID()
    {
+      // TODO deal with profanity
+      // TODO deal w/ empty player names more gracefully
+      if (PilotID == "") PilotID = "TheUnknownComic";
       pilot.ID = PilotID;
       records.Parse();
       Enable = false;

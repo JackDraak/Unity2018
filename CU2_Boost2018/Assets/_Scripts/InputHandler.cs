@@ -17,31 +17,11 @@ public class InputHandler : MonoBehaviour
    private const string AXIS_ROTATION  = "Horizontal";
    private const string AXIS_THRUST    = "Jump";
 
-   private void Start()
-   {
-      fishPool       = FindObjectOfType<FishPool>();
-      musicPlayer    = FindObjectOfType<MusicPlayer>();
-      pickupTracker  = FindObjectOfType<PickupTracker>();
-      pilot_ID_Field = FindObjectOfType<Pilot_ID_Field>();
-      player         = FindObjectOfType<Player>();
-      records        = FindObjectOfType<Records>();
-   }
-
-   private void FixedUpdate() { PlayerPhysicsPoll(); }
-
-   private void Update()
-   {
-      if (Debug.isDebugBuild) DebugControlPoll();
-      PollAutoPower();
-      PollPower();
-      PollMisc();
-   }
-
    private void DebugControlPoll()
    {
       // Player: B, F, I.
       if (Input.GetKeyDown(KeyCode.B)) player.BoostMaxPower(0.025f); // 2.5% boost
-      if (Input.GetKeyDown(KeyCode.F)) player.TopFuel(); 
+      if (Input.GetKeyDown(KeyCode.F)) player.TopFuel();
       if (Input.GetKeyDown(KeyCode.I)) player.Invulnerable();
 
       // PickupTracker: M, N.
@@ -56,6 +36,8 @@ public class InputHandler : MonoBehaviour
       // Records: Z.
       if (Input.GetKeyDown(KeyCode.Z)) records.AddRecord(Random.Range(0.9f, 11f));
    }
+
+   private void FixedUpdate() { PlayerPhysicsPoll(); }
 
    private void PlayerPhysicsPoll()
    {
@@ -90,7 +72,8 @@ public class InputHandler : MonoBehaviour
       // Player: R. 
       if (Input.GetKeyDown(KeyCode.R)) player.TriggerRestart();
 
-      //SumPause is Polling: Q & ESC keys. // TODO pull-in ESC & Q monitoring tho this class [low priority].
+      //SumPause is Polling: Q & ESC keys. 
+      // TODO pull-in ESC & Q monitoring to this class [low priority].
    }
 
    private void PollPower()
@@ -116,6 +99,24 @@ public class InputHandler : MonoBehaviour
       if (thrust > 0) player.TriggerThrustAudio();
       else player.CancelThrustAudio();
    }
+
+   private void Start()
+   {
+      fishPool = FindObjectOfType<FishPool>();
+      musicPlayer = FindObjectOfType<MusicPlayer>();
+      pickupTracker = FindObjectOfType<PickupTracker>();
+      pilot_ID_Field = FindObjectOfType<Pilot_ID_Field>();
+      player = FindObjectOfType<Player>();
+      records = FindObjectOfType<Records>();
+   }
+
+   private void Update()
+   {
+      if (Debug.isDebugBuild) DebugControlPoll();
+      PollAutoPower();
+      PollPower();
+      PollMisc();
+   }
 }
 
 public static class ApplyColour // RTF helper.
@@ -124,11 +125,11 @@ public static class ApplyColour // RTF helper.
    private static string[] colour = { "#FF7070", "#28B3D1", "#2DE9A8", };
 
    public static string Blue { get { return "<color=" + colour[1] + ">"; } }
+   public static string Close { get { return "</color>"; } }
+   public static string Colour { get { return "<color=" + colour[hudIndex] + ">"; } }
    public static string Coral { get { return "<color=" + colour[0] + ">"; } }
    public static string Green { get { return "<color=" + colour[2] + ">"; } }
-   public static string Colour { get { return "<color=" + colour[hudIndex] + ">"; } }
    public static string Open { get { return "<color=" + Colour + ">"; } }
-   public static string Close { get { return "</color>"; } }
    public static string RTFify(string text)
    {
       string header = "<color=" + Colour + ">";

@@ -34,7 +34,7 @@ public class Timekeeper : MonoBehaviour
       Debug.Log("New score: " + boardScore);
       ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
       string customName = pilot.ID + Splitter + pilot.Unique;
-      leaderboard.AddScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); 
+      if (Application.platform != RuntimePlatform.WebGLPlayer) leaderboard.AddScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); 
       records.AddRecord(ratio);
       records.Parse();
    }
