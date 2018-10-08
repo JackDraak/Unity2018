@@ -121,7 +121,8 @@ public class InputHandler : MonoBehaviour
 
 public static class ApplyColour // RTF helper.
 {
-   private static int hudIndex = 0;
+   private static int hudIndex = 1;
+   private static int nextIndex = -1;
    private static string[] colour = { "#FF7070", "#28B3D1", "#2DE9A8", };
 
    public static string Blue { get { return "<color=" + colour[1] + ">"; } }
@@ -129,6 +130,7 @@ public static class ApplyColour // RTF helper.
    public static string Colour { get { return "<color=" + colour[hudIndex] + ">"; } }
    public static string Coral { get { return "<color=" + colour[0] + ">"; } }
    public static string Green { get { return "<color=" + colour[2] + ">"; } }
+   public static string NextColour {  get { return NextColourString(); } }
    public static string Open { get { return "<color=" + Colour + ">"; } }
    public static string RTFify(string text)
    {
@@ -137,4 +139,10 @@ public static class ApplyColour // RTF helper.
       return header + text + footer;
    }
    public static void Toggle() { hudIndex++; if (hudIndex >= colour.Length) hudIndex = 0; }
+
+   private static string NextColourString()
+   {
+      nextIndex++; if (nextIndex >= colour.Length) nextIndex = 0;
+      return "<color=" + colour[nextIndex] + ">";
+   }
 }

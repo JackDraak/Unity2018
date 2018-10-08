@@ -2,11 +2,13 @@
 
 public class FishDrone : MonoBehaviour
 {
+   public bool enhancedLogging; 
+
    private Animator animator;
    private bool caution;
    private float changeDelay, changeTime;
    private float newSpeed, speed; 
-   private float correctedTurnRate, turnRate;
+   private float correctedTurnRate, lerpTurnRate, turnRate;
    private float lastContact;
    private float raycastSleepTime;
    private float revTime;
@@ -26,7 +28,8 @@ public class FishDrone : MonoBehaviour
    private const float CHANGE_TIME_MAX = 16.0f;
    private const float CHANGE_TIME_MIN = 4.0f;
    private const float CHANGE_TURN_DELAY = 5.0f;
-   private const float LERP_FACTOR_FOR_SPEED = 0.03f; 
+   private const float LERP_FACTOR_FOR_SPEED = 0.09f;
+   private const float LERP_FACTOR_FOR_TURN = 0.18f;
    private const float MOTIVATION_SCALING_LARGE = 1.0f;
    private const float MOTIVATION_SCALING_MED = 0.9f;
    private const float MOTIVATION_SCALING_SMALL = 0.8f;
@@ -146,13 +149,24 @@ public class FishDrone : MonoBehaviour
       {
          speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
          animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
+         if (enhancedLogging) Debug.Log(speed + " :speed | newSpeed: " + newSpeed);
+      }
+   }
+
+   private void LerpTurn()
+   {
+      if (!(Mathf.Approximately(correctedTurnRate, lerpTurnRate)))
+      {
+         lerpTurnRate = Mathf.Lerp(lerpTurnRate, correctedTurnRate, LERP_FACTOR_FOR_TURN);
+         //if (enhancedLogging) Debug.Log(lerpTurnRate + " :lerpTurnRate | correctedTurnRate: " + correctedTurnRate);
       }
    }
 
    private void Motivate()
    {
       Vector3 dimensions = Vector3.zero;
-      dimensions.y = Time.deltaTime * correctedTurnRate; // TODO LERP the turnRate?
+      LerpTurn();
+      dimensions.y = Time.deltaTime * lerpTurnRate; // TODO LERP the turnRate? done correctly?
       transform.Rotate(dimensions, Space.Self); // Turn.
       transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed * speedScaleFactor, Space.Self); // Propel.
       if (changeTime + changeDelay < Time.time) SetNewRandomSpeed();
@@ -164,7 +178,7 @@ public class FishDrone : MonoBehaviour
       {
          lastContact = Time.time;
          speed += SPEED_MAX;
-         newSpeed = speed * .75f;
+         newSpeed = speed * 0.75f;
       }
    }
 
@@ -226,6 +240,7 @@ public class FishDrone : MonoBehaviour
    {
       turnRate = Random.Range(TURNRATE_MIN, TURNRATE_MAX);
       if (FiftyFifty) turnRate = -turnRate;
+      correctedTurnRate = turnRate;
    }
 
    private void Start()

@@ -59,7 +59,7 @@ public class Records : MonoBehaviour
       if (!webGL)
       {
          highScores = leaderBoard.ToListHighToLow();
-         highStrings[0] = ApplyColour.Blue + "#. Top-Ten HighScore" + ApplyColour.Close + "\n";
+         highStrings[0] = ApplyColour.Blue + "Rank - Name - Score" + ApplyColour.Close + "\n";
          global = false;
          GlobalHighScore = 0;
          GlobalScorer = "";

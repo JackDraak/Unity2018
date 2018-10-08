@@ -17,11 +17,11 @@ public class PickupTracker : MonoBehaviour
    [SerializeField] TextMeshProUGUI text_countdown;
    [SerializeField] TextMeshProUGUI text_subCountdown;
 
-   private enum task { _0, _1, _2, _3, _4, _5, _6, _7 }
-   private enum level { _0, _1, _2, _3, _4, _5, _6, _7, bonusLevel }
+   private enum Task { _0, _1, _2, _3, _4, _5, _6, _7 }
+   private enum Level { _0, _1, _2, _3, _4, _5, _6, _7, bonusLevel }
 
-   private task objective = task._0;
-   private level myLevel = level._0;
+   private Task task = Task._0;
+   private Level level = Level._0;
 
    private bool complete, spawning;
    private float maxPower, priorPercent;
@@ -37,11 +37,9 @@ public class PickupTracker : MonoBehaviour
    private void Awake()
    {
       text_tracker = GetComponent<TextMeshProUGUI>();
-      if (!text_tracker) Debug.LogError("PickupTracker FAIL: no text_tracker component reference!!");
       spawnPointsArray = GameObject.FindGameObjectsWithTag("Spawn_Good");
-      if (spawnPointsArray.Length == 0) Debug.LogError("PickupTracker FAIL: no Spawn_Good tags found in scene!!");
-      pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01"); // this will be empty until there is a Spawn.
-      claimedPickups = new List<Collider>();
+      pickupsArray = new GameObject[0];
+      claimedPickups = null;
    }
 
    public bool ClaimPickup(Collider other)
@@ -56,15 +54,18 @@ public class PickupTracker : MonoBehaviour
       return false;
    }
 
+   // TODO update this when apropriate
    private IEnumerator Congratulations()
    {
-      // TODO update this when apropriate (final player goal)
-      string congratulations = "Level One Complete! Congratulations!\n\nPlease 'stay tuned' for future developments, thanks for playing!";
-      for (int n = 0; n < 12; n++) // TODO get rid of magic number
+      int flashCycles = 12;
+      float flashPause = 0.666f;
+      for (int n = 0; n < flashCycles; n++)
       {
+         string congratulations = "Level One Complete! Congratulations!\n\nPlease " +
+            ApplyColour.NextColour + "'stay tuned'" + ApplyColour.Close + " for future developments, thanks for playing!";
          ApplyColour.Toggle();
          text_tasklist.text = ApplyColour.Colour + congratulations + ApplyColour.Close;
-         yield return new WaitForSeconds(0.666f); // TODO get rid of magic number
+         yield return new WaitForSeconds(flashPause);
       }
    }
 
@@ -97,16 +98,11 @@ public class PickupTracker : MonoBehaviour
    {
       spawning = true;
       DespawnAll();
-      yield return WaitFor.Frames(2);
-
-      SpawnPercent(33); // TODO decide how to use this dynamically?
-      //SpawnAll();
-
+      yield return null; // Let Despawn() complete, wait one frame.
+      SpawnPercent(33); //SpawnAll();
       Array.Clear(pickupsArray, 0, pickupsArray.Length);
       pickupsArray = GameObject.FindGameObjectsWithTag("GoodObject_01");
-
       text_tracker.text = ApplyColour.Green + count + ApplyColour.Close + " Gas Canisters Remaining";
-
       claimedPickups = new List<Collider>();
       spawning = false;
       complete = false;
@@ -146,18 +142,18 @@ public class PickupTracker : MonoBehaviour
       if (count == 0)
       {
          WinRound();
-         if (myLevel == level._0)
+         if (level == Level._0)
          {
-            if (objective == task._0)
+            if (task == Task._0)
             {
-               objective = task._1;
+               task = Task._1;
                text_tasklist.text = "Level 1 Goal: Raise Thrust Cap to 60%, " + 
                   ApplyColour.Green + "R" + ApplyColour.Close + "eset and do:\n" +
                   "   Mini-Goal: Collect a full set of gas canisters\n   (for a small boost to Thrust Cap)";
             }
-            if (maxPower >= 0.6f && objective == task._1)
+            if (maxPower >= 0.6f && task == Task._1)
             {
-               objective = task._2;
+               task = Task._2;
                StartCoroutine(Congratulations());
                text_tasklist.text = "Level One Complete! Congratulations!\n\n" +
                   "Please 'stay tuned' for future developments, thanks for playing!"; // TODO update this when apropriate
@@ -196,7 +192,8 @@ public class PickupTracker : MonoBehaviour
    private void SpawnRandomSpawnpoint()
    {
       GameObject freePos = RandomFreePosition();
-      if (freePos) FillPosition(freePos.transform); 
+      if (freePos) FillPosition(freePos.transform);
+      else Debug.LogWarning("PickupTracker:SpawnRandomSpawnpoint: unable to find freePos for FillPosition().");
    }
 
    private int SpawnTally()
