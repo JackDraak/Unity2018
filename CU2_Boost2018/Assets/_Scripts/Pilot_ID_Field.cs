@@ -22,8 +22,9 @@ public class Pilot_ID_Field : MonoBehaviour
 
    public void SetID()
    {
-      // TODO deal with profanity
       // TODO deal w/ empty player names more gracefully
+      // TODO deal with profanity?
+      // TODO need to fix reversion to 'Pilot ID' when changign resolultion?
       if (PilotID == "") PilotID = "TheUnknownComic";
       pilot.ID = PilotID;
       records.Parse();

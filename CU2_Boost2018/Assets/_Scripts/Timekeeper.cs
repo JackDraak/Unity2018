@@ -34,14 +34,16 @@ public class Timekeeper : MonoBehaviour
       Debug.Log("New score: " + boardScore);
       ratio = Mathf.FloorToInt(ratio) / 100f; // Get 2 decimal places.
       string customName = pilot.ID + Splitter + pilot.Unique;
-      if (Application.platform != RuntimePlatform.WebGLPlayer) leaderboard.AddScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); 
+      if (Application.platform != RuntimePlatform.WebGLPlayer)
+         leaderboard.AddScore(customName, boardScore, Mathf.FloorToInt(ratio * 100), pilot.Unique); 
       records.AddRecord(ratio);
       records.Parse();
    }
 
    private void DoTimerUpdate()
    {
-      if (!started && !finished) timerText.text = "Touching the Controls Will Start the Timer: " + ApplyColour.Green + "0.0 seconds" + ApplyColour.Close;
+      if (!started && !finished) timerText.text = 
+            "Touching the Controls Will Start the Timer: " + ApplyColour.Green + "0.0 seconds" + ApplyColour.Close;
       else if (started && !finished)
       {
          float elapsed = (Mathf.FloorToInt((Time.time - startTime) * 10)) / 10f; // Get 1 decimal place.

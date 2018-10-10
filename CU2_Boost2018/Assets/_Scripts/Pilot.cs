@@ -12,9 +12,9 @@ public class Pilot : MonoBehaviour
       highScore = 0;
       rank = 0;
       id = "Bubblenaut-" + System.Environment.UserName;
-      unique = SystemInfo.deviceUniqueIdentifier;
       if (Application.platform == RuntimePlatform.WebGLPlayer) unique = "WebGL_Player_NOID";
-      else if (unique.Length < 16) unique = "Error_Generating_Device_Unique_Identifier"; 
+      else unique = SystemInfo.deviceUniqueIdentifier;
+      if (unique.Length < 16) unique = "Error_Generating_Device_Unique_Identifier"; 
    }
 
    public int HighScore { get { return highScore; } set { highScore = value; } }

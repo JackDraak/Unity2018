@@ -67,7 +67,9 @@ public class InputHandler : MonoBehaviour
       if (Input.GetKeyDown(KeyCode.H)) ApplyColour.Toggle();
       if (Input.GetKey(KeyCode.LeftBracket)) musicPlayer.VolumeDown();
       else if (Input.GetKey(KeyCode.RightBracket)) musicPlayer.VolumeUp();
-      if ((Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.LeftControl)) && Input.GetKeyDown(KeyCode.E)) pilot_ID_Field.Toggle();
+      if ((Input.GetKey(KeyCode.RightControl) 
+         || Input.GetKey(KeyCode.LeftControl)) 
+         && Input.GetKeyDown(KeyCode.E)) pilot_ID_Field.Toggle();
 
       // Player: R. 
       if (Input.GetKeyDown(KeyCode.R)) player.TriggerRestart();

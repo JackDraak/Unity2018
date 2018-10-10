@@ -5,13 +5,16 @@ public class GlueCam : MonoBehaviour
    [SerializeField] GameObject player;
 
    private bool paused = false;
-   private float elasticity = 0.07f; // 1 = infinite glue, 0 = infinite elasticity... therefore: 0.07f --> correct position by 7%, each frame.
+   // 1 = infinite glue, 0 = infinite elasticity... 
+   // therefore: 0.07f --> correct position by 7%, each frame.
+   private float elasticity = 0.07f; 
    private Vector3 initialPosition;
    private Vector3 offset;
 
    private void LateUpdate()
    {
-      if (!paused) transform.position = Vector3.Lerp(transform.position, player.transform.position + offset, elasticity);
+      if (!paused) transform.position = 
+            Vector3.Lerp(transform.position, player.transform.position + offset, elasticity);
    }
 
    public void Pause() { paused = !paused; }

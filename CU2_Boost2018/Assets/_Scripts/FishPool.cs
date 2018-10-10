@@ -26,21 +26,6 @@ public class FishPool : MonoBehaviour
       return test;
    }
 
-   // Some other ways to overload Bound, for fun.. not presently being used
-   private int Bound(int low, int high, int test)
-   {
-      if (test > high) test = high;
-      else if (test < low) test = low;
-      return test;
-   }
-
-   private float Bound(float low, float high, float test)
-   {
-      if (test > high) test = high;
-      else if (test < low) test = low;
-      return test;
-   }
-
    private void CorrectPoolSize()
    {
       int newTarget = SpawnCap - CountPool;

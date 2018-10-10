@@ -63,7 +63,7 @@ public class Player : MonoBehaviour
    private const float EMISSION_RATE_THRUST = 60f;
    private const float EXPEL_RATE_ROTATE = 0.5f;
    private const float EXPEL_RATE_THRUST = 1f;
-   private const float FUEL_GEN_RATE = 25f; // 40
+   private const float FUEL_GEN_RATE = 25f; // 40 // need to find a balance where sinking is inevitable at any power level, based on gen alone
    private const float FUEL_MAX = 1000f;
    private const float FUEL_PICKUP_VALUE = 200f;
    private const float FUEL_POWER_FACTOR = 0.75f;
@@ -141,7 +141,8 @@ public class Player : MonoBehaviour
       delta *= POWER_CONTROLLER_FACTOR;
       float deltaPlus = delta + thrustPowerSlider.value;
       if (deltaPlus > THRUST_MAX) thrustPowerSlider.value = THRUST_MAX;
-      else if (deltaPlus < THRUST_MIN + THRUST_POWER_BASE) thrustPowerSlider.value = THRUST_MIN + THRUST_POWER_BASE;
+      else if (deltaPlus < THRUST_MIN + THRUST_POWER_BASE)
+         thrustPowerSlider.value = THRUST_MIN + THRUST_POWER_BASE;
       else thrustPowerSlider.value += delta;
       if (thrustPowerSlider.value > maxPower) thrustPowerSlider.value = maxPower;
       DoPowerUpdate();
@@ -193,11 +194,6 @@ public class Player : MonoBehaviour
 
    private void Awake()
    {
-      // Objects disabled by UIcontrol should be assigned in Awake() to avoid trying to capture them after they've been disabled**.
-      // *The other 2 objects under UIcontrol are manually assigned to PickupTracker.cs in the inspector.
-      // **Originally UIcontrol.cs was designed to be used from Player.cs through public methods. It still is, but for unknown
-      //   reasons, it was failing to enforce that control in the local Start() method (intermittently, no-less), thus the functionality
-      //   being moved into UIcontrol.cs:Start()
       gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
       thrustPowercapSlider = GameObject.FindGameObjectWithTag("Slider_Powercap").GetComponent<Slider>();
       thrustPowerSlider = GameObject.FindGameObjectWithTag("Slider_Power").GetComponent<Slider>();

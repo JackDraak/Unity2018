@@ -147,11 +147,12 @@ public class PickupTracker : MonoBehaviour
             if (task == Task._0)
             {
                task = Task._1;
-               text_tasklist.text = "Level 1 Goal: Raise Thrust Cap to 60%, " + 
+               text_tasklist.text = "Level 1 Goal: Raise Thrust Cap to 45%, " + 
                   ApplyColour.Green + "R" + ApplyColour.Close + "eset and do:\n" +
-                  "   Mini-Goal: Collect a full set of gas canisters\n   (for a small boost to Thrust Cap)";
+                  "   Mini-Goal: Collect a full set of gas canisters\n" +
+                  "   (for a small boost to Thrust Cap)";
             }
-            if (maxPower >= 0.6f && task == Task._1)
+            if (maxPower >= 0.45f && task == Task._1)
             {
                task = Task._2;
                StartCoroutine(Congratulations());
@@ -243,7 +244,7 @@ public class PickupTracker : MonoBehaviour
    {
       complete = true;
       timeKeeper.Cease(highCount);
-      maxPower = player.BoostMaxPower(0.1f); // 0.1f = 10% boost
+      maxPower = player.BoostMaxPower(0.05f); // 0.05f = 5% power-cap boost per win
       if (!player.casualMode) player.AutoRestart();
    }
 }
