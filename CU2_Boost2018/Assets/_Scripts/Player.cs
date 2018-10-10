@@ -63,7 +63,7 @@ public class Player : MonoBehaviour
    private const float EMISSION_RATE_THRUST = 60f;
    private const float EXPEL_RATE_ROTATE = 0.5f;
    private const float EXPEL_RATE_THRUST = 1f;
-   private const float FUEL_GEN_RATE = 40f;
+   private const float FUEL_GEN_RATE = 25f; // 40
    private const float FUEL_MAX = 1000f;
    private const float FUEL_PICKUP_VALUE = 200f;
    private const float FUEL_POWER_FACTOR = 0.75f;
@@ -80,7 +80,7 @@ public class Player : MonoBehaviour
    private const float THRUST_LIGHTRANGE_MAX = 2f;
    private const float THRUST_MAX = 1f;
    private const float THRUST_MIN = 0f;
-   private const float THRUST_POWER_BASE = 0.2f;
+   private const float THRUST_POWER_BASE = 0.15f; 
    private const float THRUST_POWER_FACTOR = 0.02f;
    private const float VOLUME_COLLISION = 0.4f;
    private const float VOLUME_PICKUP = 0.5f;

@@ -2,11 +2,12 @@
 
 public class FishDrone : MonoBehaviour
 {
-   public bool enhancedLogging; 
+   public bool enhancedLogging;
 
    private Animator animator;
    private bool caution;
    private float changeDelay, changeTime;
+   private float dropOffset = 0.15f;
    private float newSpeed, speed; 
    private float correctedTurnRate, lerpTurnRate, turnRate;
    private float lastContact;
@@ -35,10 +36,9 @@ public class FishDrone : MonoBehaviour
    private const float MOTIVATION_SCALING_SMALL = 0.8f;
    private const float RAYCAST_CORRECTION_FACTOR = 9.0f;
    private const float RAYCAST_DRAWTIME = 3.0f;
-   private const float RAYCAST_DETECTION_ANGLE = 18.0f;
-   private const float RAYCAST_FRAME_GAP = 0.2f;
+   private const float RAYCAST_DETECTION_ANGLE = 23.0f;
    private const float RAYCAST_MAX_DISTANCE = 1.33f;
-   private const float RAYCAST_SLEEP_DELAY = 0.33f;
+   private const float RAYCAST_SLEEP_DELAY = 0.4f;
    private const float REVERSE_DELAY = 6f;
    private const float SCALE_MAX = 1.8f;
    private const float SCALE_MIN = 0.3f;
@@ -57,39 +57,49 @@ public class FishDrone : MonoBehaviour
       LerpSpeed();
    }
 
-   private void DetectNeighbors(out RaycastHit hitPort, out RaycastHit hitStarbord)
+   private void DetectNeighbors(out RaycastHit hitPort, out RaycastHit hitPortLow, out RaycastHit hitStarbord, out RaycastHit hitStarbordLow)
    {
+      Vector3 lowPos = transform.position;
+      lowPos.y -= dropOffset * roughScale;
+
       // Look ahead.
-      if (Physics.Raycast(transform.position, fore, RAYCAST_MAX_DISTANCE, layerMask))
+      var fl = Physics.Raycast(lowPos, fore, RAYCAST_MAX_DISTANCE, layerMask);
+      var fh = Physics.Raycast(transform.position, fore, RAYCAST_MAX_DISTANCE, layerMask);
+      if (fl || fh)
       {
          caution = true;
-         Debug.DrawRay(transform.position, fore, Color.red, RAYCAST_DRAWTIME);
+         Debug.DrawRay(lowPos, fore, Color.yellow, RAYCAST_DRAWTIME);
+         Debug.DrawRay(transform.position, fore, Color.yellow, RAYCAST_DRAWTIME);
          newSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / newSpeed);
-         raycastSleepTime = Time.time + RAYCAST_FRAME_GAP;
+         raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          lastContact = Time.time;
       }
-      else if (caution)
+      else if (caution) // TODO is this doing what I want it TODO?
       {
          caution = false;
          SetNewRandomSpeed();
       }
 
       // Look left.
-      if (Physics.Raycast(transform.position, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask))
+      var pl = Physics.Raycast(lowPos, port, out hitPortLow, RAYCAST_MAX_DISTANCE, layerMask);
+      var ph = Physics.Raycast(transform.position, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
+      if (pl || ph)
       {
-         Debug.DrawRay(transform.position, port, Color.blue, RAYCAST_DRAWTIME);
-         raycastSleepTime = Time.time + RAYCAST_FRAME_GAP;
+         Debug.DrawRay(lowPos, port, Color.blue, RAYCAST_DRAWTIME);
+         raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
       }
 
       // Look right.
-      if (Physics.Raycast(transform.position, starbord, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask))
+      var sl = Physics.Raycast(lowPos, starbord, out hitStarbordLow, RAYCAST_MAX_DISTANCE, layerMask);
+      var sh = Physics.Raycast(transform.position, starbord, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
+      if (sl || sh)
       {
-         Debug.DrawRay(transform.position, starbord, Color.yellow, RAYCAST_DRAWTIME);
-         raycastSleepTime = Time.time + RAYCAST_FRAME_GAP;
+         Debug.DrawRay(lowPos, starbord, Color.red, RAYCAST_DRAWTIME);
+         raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
       }
    }
 
-   private void DetermineTurn(RaycastHit hitPort, RaycastHit hitStarbord)
+   private void DetermineTurn(RaycastHit hitPort, RaycastHit hitPortLow, RaycastHit hitStarbordLow, RaycastHit hitStarbord)
    {
       // Turn more sharply when a neighbour is detected.
       if (hitPort.distance > 0 || hitStarbord.distance > 0)
@@ -149,7 +159,7 @@ public class FishDrone : MonoBehaviour
       {
          speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
          animator.SetFloat("stateSpeed", speed * scaleFactor * ANIMATION_SPEED_FACTOR);
-         if (enhancedLogging) Debug.Log(speed + " :speed | newSpeed: " + newSpeed);
+         ///if (enhancedLogging) Debug.Log(speed + " :speed | newSpeed: " + newSpeed);
       }
    }
 
@@ -158,7 +168,7 @@ public class FishDrone : MonoBehaviour
       if (!(Mathf.Approximately(correctedTurnRate, lerpTurnRate)))
       {
          lerpTurnRate = Mathf.Lerp(lerpTurnRate, correctedTurnRate, LERP_FACTOR_FOR_TURN);
-         //if (enhancedLogging) Debug.Log(lerpTurnRate + " :lerpTurnRate | correctedTurnRate: " + correctedTurnRate);
+         ///if (enhancedLogging) Debug.Log(lerpTurnRate + " :lerpTurnRate | correctedTurnRate: " + correctedTurnRate);
       }
    }
 
@@ -166,7 +176,7 @@ public class FishDrone : MonoBehaviour
    {
       Vector3 dimensions = Vector3.zero;
       LerpTurn();
-      dimensions.y = Time.deltaTime * lerpTurnRate; // TODO LERP the turnRate? done correctly?
+      dimensions.y = Time.deltaTime * lerpTurnRate;
       transform.Rotate(dimensions, Space.Self); // Turn.
       transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed * speedScaleFactor, Space.Self); // Propel.
       if (changeTime + changeDelay < Time.time) SetNewRandomSpeed();
@@ -184,15 +194,26 @@ public class FishDrone : MonoBehaviour
 
    private void OrientView()
    {
+      // TODO drop 'origin' of these transforms?
+      //Vector3 foreDown = (transform.forward - transform.up).normalized; // 45* down and forward.
+      //Vector3 semiPort = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward; // 23* to port.
+      //Vector3 semiStarbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward; // 23* to starbord.
+      //fore = (foreDown + transform.forward).normalized; // 22.5* down and forward.
+      //port = (semiPort + fore).normalized; // Split the difference.
+      //starbord = (semiStarbord + fore).normalized; // Split the difference. 
+
       fore = transform.forward;
       port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
       starbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
-      //var right45 = (transform.forward + transform.right).normalized; // 45* to the right of fore.
+
+      Vector3 lowPos = transform.position;
+      lowPos.y -= dropOffset;
 
       /// Enable these rays to visualize the wiskers in the scene view (or with gizmos enabled).
-      //Debug.DrawRay(transform.position, fore, Color.magenta, 0);
-      //Debug.DrawRay(transform.position, port, Color.cyan, 0);
-      //Debug.DrawRay(transform.position, starbord, Color.green, 0);
+      //Debug.DrawRay(transform.position, fore, Color.green, 0);
+      //Debug.DrawRay(lowPos, fore, Color.green, 0);
+      //Debug.DrawRay(lowPos, port, Color.cyan, 0);
+      //Debug.DrawRay(lowPos, starbord, Color.magenta, 0);
    }
 
    private void PlanPath()
@@ -201,10 +222,9 @@ public class FishDrone : MonoBehaviour
       if (Time.time > raycastSleepTime)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
-         // TODO work in one or more 'whiskers' from the low plane of the fish for better object avoidance (and ground avoidance).
-         RaycastHit hitPort, hitStarbord;
-         DetectNeighbors(out hitPort, out hitStarbord);
-         DetermineTurn(hitPort, hitStarbord);
+         RaycastHit hitPort, hitPortLow, hitStarbord, hitStarbordLow;
+         DetectNeighbors(out hitPort, out hitPortLow, out hitStarbord, out hitStarbordLow);
+         DetermineTurn(hitPort, hitPortLow, hitStarbord, hitStarbordLow);
       }
    }
 
