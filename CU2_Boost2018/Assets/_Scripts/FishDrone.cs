@@ -2,10 +2,9 @@
 
 public class FishDrone : MonoBehaviour
 {
-   private bool enhancedLogging = true;
-
    private Animator animator;
    private bool caution;
+   private bool enhancedLogging = true;
    private float changeDelay, changeTime;
    private float newSpeed, speed; 
    private float correctedTurnRate, lerpTurnRate, turnRate;
@@ -16,56 +15,39 @@ public class FishDrone : MonoBehaviour
    private float speedScaleFactor;
    private int layerMask;
    private Quaternion startQuat;
-   private Rigidbody thisRigidbody;
-   private Vector3 fore, port, starbord;
-   private Vector3 scale;
    private Vector3 startPos;
 
-   private const float ANIMATION_SCALING_LARGE = 0.4f;
-   private const float ANIMATION_SCALING_MED = 0.7f;
-   private const float ANIMATION_SCALING_SMALL = 1.7f;
    private const float ANIMATION_SPEED_FACTOR = 1.8f;
-   private const float CHANGE_TIME_MAX = 16.0f;
-   private const float CHANGE_TIME_MIN = 4.0f;
-   private const float CHANGE_TURN_DELAY = 5.0f;
-   private const float LERP_FACTOR_FOR_SPEED = 0.09f;
-   private const float LERP_FACTOR_FOR_TURN = 0.18f;
-   private const float MOTIVATION_SCALING_LARGE = 1.0f;
-   private const float MOTIVATION_SCALING_MED = 0.9f;
-   private const float MOTIVATION_SCALING_SMALL = 0.8f;
-   private const float RAYCAST_CORRECTION_FACTOR = 9.0f;
-   private const float RAYCAST_DRAWTIME = 3.0f;
-   private const float RAYCAST_DETECTION_ANGLE = 23.0f;
-   private const float RAYCAST_VERTICAL_OFFSET = 0.08f;
-   private const float RAYCAST_MAX_DISTANCE = 1.33f;
    private const float RAYCAST_SLEEP_DELAY = 0.4f;
-   private const float REVERSE_DELAY = 6f;
-   private const float SCALE_MAX = 1.8f;
-   private const float SCALE_MIN = 0.3f;
-   private const float SIZE_LARGE_BREAK = 3.0f;
-   private const float SIZE_MID_BREAK = 2.0f;
    private const float SPEED_MAX = 1.2f;
    private const float SPEED_MIN = 0.2f;
-   private const float TURNRATE_MAX = 10.0f;
-   private const float TURNRATE_MIN = 5.0f;
 
    private void BeFishy()
    {
-      OrientView();
-      PlanPath();
+      // TODO have drones form into 2 or more groups and offset their raycasts? (might not accomplish much, really, LOWPRI).
+      if (Time.time > raycastSleepTime)
+      {
+         Vector3 fore, port, starbord, lowPos, highPos;
+         SetWhiskerVectors(out fore, out port, out starbord, out lowPos, out highPos);
+         PlanPath(fore, port, starbord, lowPos, highPos);
+      }
       Motivate();
    }
 
-   private void DetectNeighbors(out RaycastHit hitPort, out RaycastHit hitPortLow, out RaycastHit hitStarbord, out RaycastHit hitStarbordLow)
+   private void DetectNeighbors(Vector3[] whiskerVectorSet, out RaycastHit hitPort, out RaycastHit hitPortLow, out RaycastHit hitStarbord, out RaycastHit hitStarbordLow)
    {
-      Vector3 lowPos = transform.position;
-      Vector3 highPos = transform.position;
-      lowPos.y -= RAYCAST_VERTICAL_OFFSET * roughScale;
-      highPos.y += RAYCAST_VERTICAL_OFFSET * roughScale;
+      const float RAYCAST_DRAWTIME = 3.0f;
+      const float RAYCAST_MAX_DISTANCE = 1.33f;
+
+      Vector3 fore = whiskerVectorSet[0];
+      Vector3 port = whiskerVectorSet[1];
+      Vector3 starbord = whiskerVectorSet[2];
+      Vector3 lowPos = whiskerVectorSet[3];
+      Vector3 highPos = whiskerVectorSet[4];
 
       // Look ahead.
-      var fl = Physics.Raycast(lowPos, fore, RAYCAST_MAX_DISTANCE, layerMask);
-      var fh = Physics.Raycast(highPos, fore, RAYCAST_MAX_DISTANCE, layerMask);
+      bool fl = Physics.Raycast(lowPos, fore, RAYCAST_MAX_DISTANCE, layerMask);
+      bool fh = Physics.Raycast(highPos, fore, RAYCAST_MAX_DISTANCE, layerMask);
       if (fl || fh)
       {
          caution = true;
@@ -85,8 +67,8 @@ public class FishDrone : MonoBehaviour
       }
 
       // Look left.
-      var pl = Physics.Raycast(lowPos, port, out hitPortLow, RAYCAST_MAX_DISTANCE, layerMask);
-      var ph = Physics.Raycast(highPos, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
+      bool pl = Physics.Raycast(lowPos, port, out hitPortLow, RAYCAST_MAX_DISTANCE, layerMask);
+      bool ph = Physics.Raycast(highPos, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
       if (pl || ph)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
@@ -98,8 +80,8 @@ public class FishDrone : MonoBehaviour
       }
 
       // Look right.
-      var sl = Physics.Raycast(lowPos, starbord, out hitStarbordLow, RAYCAST_MAX_DISTANCE, layerMask);
-      var sh = Physics.Raycast(highPos, starbord, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
+      bool sl = Physics.Raycast(lowPos, starbord, out hitStarbordLow, RAYCAST_MAX_DISTANCE, layerMask);
+      bool sh = Physics.Raycast(highPos, starbord, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
       if (sl || sh)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
@@ -113,6 +95,9 @@ public class FishDrone : MonoBehaviour
 
    private void DetermineTurn(RaycastHit hitPort, RaycastHit hitPortLow, RaycastHit hitStarbordLow, RaycastHit hitStarbord)
    {
+      const float RAYCAST_CORRECTION_FACTOR = 9.0f;
+      const float REVERSE_DELAY = 6f;
+
       // Turn more sharply when a neighbour is detected.
       if (hitPort.distance > 0 || hitStarbord.distance > 0)
       {
@@ -135,6 +120,8 @@ public class FishDrone : MonoBehaviour
 
    private void DirectionChanger()
    {
+      const float CHANGE_TURN_DELAY = 5.0f;
+
       if (Time.time > lastContact + CHANGE_TURN_DELAY)
       {
          lastContact = Time.time;
@@ -150,7 +137,7 @@ public class FishDrone : MonoBehaviour
 
    private void Init()
    {
-      scale = GetNewScale;
+     Vector3 scale = GetNewScale;
       SetLocalScale(scale);
       TuneAnimationSpeed(scale);
 
@@ -167,6 +154,8 @@ public class FishDrone : MonoBehaviour
 
    private void LerpSpeed()
    {
+      const float LERP_FACTOR_FOR_SPEED = 0.09f;
+
       if (!(Mathf.Approximately(speed, newSpeed)))
       {
          speed = Mathf.Lerp(speed, newSpeed, LERP_FACTOR_FOR_SPEED);
@@ -177,6 +166,8 @@ public class FishDrone : MonoBehaviour
 
    private void LerpTurn()
    {
+      const float LERP_FACTOR_FOR_TURN = 0.18f;
+
       if (!(Mathf.Approximately(correctedTurnRate, lerpTurnRate)))
       {
          lerpTurnRate = Mathf.Lerp(lerpTurnRate, correctedTurnRate, LERP_FACTOR_FOR_TURN);
@@ -186,9 +177,10 @@ public class FishDrone : MonoBehaviour
 
    private void Motivate()
    {
+      Vector3 dimensions = Vector3.zero;
+
       LerpTurn();
       LerpSpeed();
-      Vector3 dimensions = Vector3.zero;
       dimensions.y = Time.deltaTime * lerpTurnRate;
       transform.Rotate(dimensions, Space.Self); // Turn.
       transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed * speedScaleFactor, Space.Self); // Propel.
@@ -205,34 +197,21 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void OrientView()
+   private void PlanPath(Vector3 fore, Vector3 port, Vector3 starbord, Vector3 lowPos, Vector3 highPos)
    {
-      fore = transform.forward;
-      port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
-      starbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
+      Vector3[] whiskerVectorSet = new Vector3[5];
+      whiskerVectorSet[0] = fore;
+      whiskerVectorSet[1] = port;
+      whiskerVectorSet[2] = starbord;
+      whiskerVectorSet[3] = lowPos;
+      whiskerVectorSet[4] = highPos;
 
-      Vector3 lowPos = transform.position;
-      Vector3 highPos = transform.position;
-      lowPos.y -= RAYCAST_VERTICAL_OFFSET * roughScale;
-      highPos.y += RAYCAST_VERTICAL_OFFSET * roughScale;
-
-      /// Enable these rays to visualize the wiskers in the scene view (or with gizmos enabled).
-      //Debug.DrawRay(highPos, fore, Color.green, 0);
-      //Debug.DrawRay(highPos, port, Color.cyan, 0);
-      //Debug.DrawRay(highPos, starbord, Color.magenta, 0);
-      //Debug.DrawRay(lowPos, fore, Color.green, 0);
-      //Debug.DrawRay(lowPos, port, Color.cyan, 0);
-      //Debug.DrawRay(lowPos, starbord, Color.magenta, 0);
-   }
-
-   private void PlanPath()
-   {
       DirectionChanger();
       if (Time.time > raycastSleepTime)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          RaycastHit hitPort, hitPortLow, hitStarbord, hitStarbordLow;
-         DetectNeighbors(out hitPort, out hitPortLow, out hitStarbord, out hitStarbordLow);
+         DetectNeighbors(whiskerVectorSet, out hitPort, out hitPortLow, out hitStarbord, out hitStarbordLow);
          DetermineTurn(hitPort, hitPortLow, hitStarbord, hitStarbordLow);
       }
    }
@@ -247,7 +226,14 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private float Scale { get { return Random.Range(SCALE_MIN, SCALE_MAX); } }
+   private float Scale
+   { get
+      { 
+      const float SCALE_MAX = 1.8f;
+      const float SCALE_MIN = 0.3f;
+      return Random.Range(SCALE_MIN, SCALE_MAX);
+      }
+   }
 
    private void SetNewOrientation()
    {
@@ -260,6 +246,9 @@ public class FishDrone : MonoBehaviour
 
    private void SetNewRandomSpeed()
    {
+      const float CHANGE_TIME_MAX = 16.0f;
+      const float CHANGE_TIME_MIN = 4.0f;
+
       changeTime = Time.time;
       changeDelay = Random.Range(CHANGE_TIME_MIN, CHANGE_TIME_MAX);
       newSpeed = Random.Range(SPEED_MIN, SPEED_MAX);
@@ -267,9 +256,34 @@ public class FishDrone : MonoBehaviour
 
    private void SetNewTurnRate()
    {
+      const float TURNRATE_MAX = 10.0f;
+      const float TURNRATE_MIN = 5.0f;
+
       turnRate = Random.Range(TURNRATE_MIN, TURNRATE_MAX);
       if (FiftyFifty) turnRate = -turnRate;
-      // TODO -- why force this? //correctedTurnRate = turnRate;
+   }
+
+   private void SetWhiskerVectors(out Vector3 fore, out Vector3 port, out Vector3 starbord, out Vector3 lowPos, out Vector3 highPos)
+   {
+      const float RAYCAST_DETECTION_ANGLE = 23.0f;
+      const float RAYCAST_VERTICAL_OFFSET = 0.08f;
+
+      fore = transform.forward;
+      port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
+      starbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
+
+      lowPos = transform.position;
+      highPos = transform.position;
+      lowPos.y -= RAYCAST_VERTICAL_OFFSET * roughScale;
+      highPos.y += RAYCAST_VERTICAL_OFFSET * roughScale;
+
+      /// Enable these rays to visualize the wiskers in the scene view (or with gizmos enabled).
+      //Debug.DrawRay(highPos, fore, Color.green, 0);
+      //Debug.DrawRay(highPos, port, Color.cyan, 0);
+      //Debug.DrawRay(highPos, starbord, Color.magenta, 0);
+      //Debug.DrawRay(lowPos, fore, Color.green, 0);
+      //Debug.DrawRay(lowPos, port, Color.cyan, 0);
+      //Debug.DrawRay(lowPos, starbord, Color.magenta, 0);
    }
 
    private void Start()
@@ -278,13 +292,24 @@ public class FishDrone : MonoBehaviour
       startPos = transform.position;
       startQuat = transform.rotation;    
       int defaultLayer = 0;
-      layerMask = 1 << defaultLayer; // Apply a bitshift to create a mask.
+      layerMask = 1 << defaultLayer; // Applying a bitshift to create a 'mask'.
       Init();
    }
 
-   private void TuneAnimationSpeed(Vector3 scale) // Set dynamic animation speed (~slower for larger fish).
+   // Set dynamic animation speed (~slower for larger fish, ~faster for smaller fish).
+   private void TuneAnimationSpeed(Vector3 scale) 
    {
-      roughScale = scale.x + scale.y + scale.z / 3.0f; // Average the scales of the 3 planes.
+      const float ANIMATION_SCALING_LARGE = 0.4f;
+      const float ANIMATION_SCALING_MED = 0.7f;
+      const float ANIMATION_SCALING_SMALL = 1.7f;
+      const float MOTIVATION_SCALING_LARGE = 1.0f;
+      const float MOTIVATION_SCALING_MED = 0.9f;
+      const float MOTIVATION_SCALING_SMALL = 0.8f;
+      const float SIZE_LARGE_BREAK = 3.0f;
+      const float SIZE_MID_BREAK = 2.0f;
+
+      // Average the scales of the 3 planes; called 'rough' for a reason.
+      roughScale = scale.x + scale.y + scale.z / 3.0f; 
       if (roughScale < SIZE_MID_BREAK)
       {
          scaleFactor = ANIMATION_SCALING_SMALL;
