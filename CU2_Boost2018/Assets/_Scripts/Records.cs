@@ -53,6 +53,18 @@ public class Records : MonoBehaviour
 
    public IEnumerator GetHighScores()
    {
+      // TODO deal w/ empty player names more gracefully
+      // TODO deal with profanity in usernames?
+
+      if (pilot_ID_Field.PilotID.Length <= 2)
+      {
+         pilot_ID_Field.PilotID = "TheUnknownComic";
+         pilot.ID = "FrenchConnection";
+
+      }
+      else if (pilot_ID_Field.PilotID == "BukarooBonzai") pilot.MasterPilot = true;
+      else pilot.MasterPilot = false;
+
       yield return new WaitForSeconds(1.0f); // TODO Optimize this delay?
       highStrings = new string[11];
       int rank = 0;
@@ -86,7 +98,9 @@ public class Records : MonoBehaviour
                highStrings[rank] += " " + record.score + "\n";
             }
          }
-         Debug.Log("Records:GetHighScores() records: " + rank + " playerHigh: " + pilot.HighScore + ", Player Rank #" + pilot.Rank);
+         Debug.Log("Records:GetHighScores() records: " + rank + " playerHigh: " + pilot.HighScore 
+            + ", Player Rank #" + pilot.Rank + ", ID: " + pilot.ID + " fieldID: " 
+            + pilot_ID_Field.PilotID + " Master Pilot: " + pilot.MasterPilot);
          totalRankings = rank;
       }
       else highStrings[0] = "No Global Leader Board\nin WebGL Version";

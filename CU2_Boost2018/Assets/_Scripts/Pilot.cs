@@ -2,6 +2,7 @@
 
 public class Pilot : MonoBehaviour
 {
+   private static bool      masterPilot = false;
    private static int       highScore;
    private static int       rank;
    private static string    id;
@@ -28,6 +29,8 @@ public class Pilot : MonoBehaviour
          id = value;
       }
    }
+
+   public bool MasterPilot { get { return masterPilot; } set { masterPilot = value; } }
 
    public int Rank { get { return rank; } set { rank = value; } }
 

@@ -9,6 +9,7 @@ public class InputHandler : MonoBehaviour
    private FishPool        fishPool;
    private MusicPlayer     musicPlayer;
    private PickupTracker   pickupTracker;
+   private Pilot           pilot;
    private Pilot_ID_Field  pilot_ID_Field;
    private Player          player;
    private Records         records;
@@ -107,6 +108,7 @@ public class InputHandler : MonoBehaviour
       fishPool = FindObjectOfType<FishPool>();
       musicPlayer = FindObjectOfType<MusicPlayer>();
       pickupTracker = FindObjectOfType<PickupTracker>();
+      pilot = FindObjectOfType<Pilot>();
       pilot_ID_Field = FindObjectOfType<Pilot_ID_Field>();
       player = FindObjectOfType<Player>();
       records = FindObjectOfType<Records>();
@@ -114,7 +116,7 @@ public class InputHandler : MonoBehaviour
 
    private void Update()
    {
-      if (Debug.isDebugBuild) DebugControlPoll();
+      if (Debug.isDebugBuild || pilot.MasterPilot) DebugControlPoll();
       PollAutoPower();
       PollPower();
       PollMisc();

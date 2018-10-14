@@ -4,7 +4,7 @@ public class FishDrone : MonoBehaviour
 {
    private Animator animator;
    private bool caution;
-   private bool enhancedLogging = true;
+   private bool enhancedLogging = false;
    private float changeDelay, changeTime;
    private float newSpeed, speed; 
    private float correctedTurnRate, lerpTurnRate, turnRate;
@@ -13,23 +13,22 @@ public class FishDrone : MonoBehaviour
    private float revTime;
    private float roughScale, scaleFactor;
    private float speedScaleFactor;
+   private int group;
    private int layerMask;
    private Quaternion startQuat;
    private Vector3 startPos;
 
    private const float ANIMATION_SPEED_FACTOR = 1.8f;
-   private const float RAYCAST_SLEEP_DELAY = 0.4f;
+   private const float RAYCAST_SLEEP_DELAY = 0.333f / GROUP_MAX; // 0.083325f; // = 0.333f / 4;
    private const float SPEED_MAX = 1.2f;
    private const float SPEED_MIN = 0.2f;
+   private const int GROUP_MAX = 3;
 
    private void BeFishy()
    {
-      // TODO have drones form into 2 or more groups and offset their raycasts? (might not accomplish much, really, LOWPRI).
       if (Time.time > raycastSleepTime)
       {
-         Vector3 fore, port, starbord, lowPos, highPos;
-         SetWhiskerVectors(out fore, out port, out starbord, out lowPos, out highPos);
-         PlanPath(fore, port, starbord, lowPos, highPos);
+         GroupActionCycler();
       }
       Motivate();
    }
@@ -135,6 +134,18 @@ public class FishDrone : MonoBehaviour
 
    private Vector3 GetNewScale { get { return new Vector3(Scale, Scale, Scale); } }
 
+   private void GroupActionCycler()
+   {
+      group++;
+      if (group > GROUP_MAX) group = 0;
+      if (group == 0)
+      {
+         Vector3 fore, port, starbord, lowPos, highPos;
+         SetWhiskerVectors(out fore, out port, out starbord, out lowPos, out highPos);
+         PlanPath(fore, port, starbord, lowPos, highPos);
+      }
+   }
+
    private void Init()
    {
      Vector3 scale = GetNewScale;
@@ -150,6 +161,8 @@ public class FishDrone : MonoBehaviour
       lastContact = 0;
       revTime = 0;
       caution = false;
+
+      SetGroup();
    }
 
    private void LerpSpeed()
@@ -235,14 +248,25 @@ public class FishDrone : MonoBehaviour
       }
    }
 
+   private void SetGroup()
+   {
+      if (FiftyFifty)
+      {
+         if (FiftyFifty) group = 0;
+         else group = 1;
+      }
+      else if (FiftyFifty) group = 2;
+      else group = 3;
+   }
+
+   private void SetLocalScale(Vector3 scale) { transform.localScale = scale; }
+
    private void SetNewOrientation()
    {
       Vector3 thisRotation = Vector3.zero;
       thisRotation.y = Random.Range(0f, 360f);
       transform.Rotate(thisRotation, Space.Self);
    }
-
-   private void SetLocalScale(Vector3 scale) { transform.localScale = scale; }
 
    private void SetNewRandomSpeed()
    {
@@ -266,7 +290,7 @@ public class FishDrone : MonoBehaviour
    private void SetWhiskerVectors(out Vector3 fore, out Vector3 port, out Vector3 starbord, out Vector3 lowPos, out Vector3 highPos)
    {
       const float RAYCAST_DETECTION_ANGLE = 23.0f;
-      const float RAYCAST_VERTICAL_OFFSET = 0.08f;
+      const float RAYCAST_VERTICAL_OFFSET = 0.07f;
 
       fore = transform.forward;
       port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
@@ -278,12 +302,16 @@ public class FishDrone : MonoBehaviour
       highPos.y += RAYCAST_VERTICAL_OFFSET * roughScale;
 
       /// Enable these rays to visualize the wiskers in the scene view (or with gizmos enabled).
-      //Debug.DrawRay(highPos, fore, Color.green, 0);
-      //Debug.DrawRay(highPos, port, Color.cyan, 0);
-      //Debug.DrawRay(highPos, starbord, Color.magenta, 0);
-      //Debug.DrawRay(lowPos, fore, Color.green, 0);
-      //Debug.DrawRay(lowPos, port, Color.cyan, 0);
-      //Debug.DrawRay(lowPos, starbord, Color.magenta, 0);
+      //if (group == 0)
+      //{
+      //   float lineLife = 0.083325f * 3;
+      //   Debug.DrawRay(highPos, fore, Color.green, lineLife);
+      //   Debug.DrawRay(highPos, port, Color.cyan, lineLife);
+      //   Debug.DrawRay(highPos, starbord, Color.magenta, lineLife);
+      //   Debug.DrawRay(lowPos, fore, Color.green, lineLife);
+      //   Debug.DrawRay(lowPos, port, Color.cyan, lineLife);
+      //   Debug.DrawRay(lowPos, starbord, Color.magenta, lineLife);
+      //}
    }
 
    private void Start()

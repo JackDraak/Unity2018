@@ -22,11 +22,7 @@ public class Pilot_ID_Field : MonoBehaviour
 
    public void SetID()
    {
-      // TODO deal w/ empty player names more gracefully
-      // TODO deal with profanity?
-      // TODO need to fix reversion to 'Pilot ID' when changing resolultion?
-      // TODO have a 'backdoor' pilot ID that enables trainer mode? (i.e. debug-tools in regular builds?)
-      if (PilotID == "") PilotID = "TheUnknownComic"; // TODO why doesn't this work?
+      // TODO need to fix reversion to 'Pilot ID' when changing resolultion? LOWPRI
       pilot.ID = PilotID;
       records.Parse();
       Enable = false;
