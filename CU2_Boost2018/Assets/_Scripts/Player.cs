@@ -4,16 +4,11 @@
 //           (bopping fish add fuel in general? bonus-level increases rate?
 //           later levels require fish-bopping to survive?)
 //    
-//    TODO : FIXED - fix audio issue that cropped-up (bubbles not working right: thrust).
-//    TODO : FIXED - fix issue where 'R'esetting player while in a countdown gets a bit messy?
-//    TODO : COMPLETE - Move miniGoal slider to bottom right 
-//    TODO : fix pickups arent despawning all of a sudden... wth?
 //    TODO : setup a NavMesh and use it to help define a "spawn area" (for FishPool) along with the AI boundary 
 //           colliders and scenery colliders?
-//    TODO : setup global "top 5"?
-//    TODO : Casual-mode get's casual music? HUS indicator? both? Something else?
+
+//    TODO : Casual-mode get's casual music? HUD indicator(DONE) Something else?
 //    TODO : Improve tasklist format/content further?
-//    TODO : improve "Records"; make a leaderboard?
 //    TODO : design a way to detroy the player.
 //    TODO : (change upper-left HUD?) Improve timer aesthetics?
 //    TODO : work on Fog / lighting? work on level 2 ideas?

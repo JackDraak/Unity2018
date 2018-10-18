@@ -19,17 +19,16 @@ public class FishDrone : MonoBehaviour
    private Vector3 startPos;
 
    private const float ANIMATION_SPEED_FACTOR = 1.8f;
-   private const float RAYCAST_SLEEP_DELAY = 0.333f / GROUP_MAX; // 0.083325f; // = 0.333f / 4;
+   private const float RAYCAST_SLEEP_DELAY = 0.333f / GROUP_MAX;
    private const float SPEED_MAX = 1.2f;
    private const float SPEED_MIN = 0.2f;
-   private const int GROUP_MAX = 3;
+   private const int GROUP_MAX = 7;
+
+   private static int rayGroup = 0;
 
    private void BeFishy()
    {
-      if (Time.time > raycastSleepTime)
-      {
-         GroupActionCycler();
-      }
+      if (Time.time > raycastSleepTime) GroupActionCycler();
       Motivate();
    }
 
@@ -40,13 +39,13 @@ public class FishDrone : MonoBehaviour
 
       Vector3 fore = whiskerVectorSet[0];
       Vector3 port = whiskerVectorSet[1];
-      Vector3 starbord = whiskerVectorSet[2];
-      Vector3 lowPos = whiskerVectorSet[3];
-      Vector3 highPos = whiskerVectorSet[4];
+      Vector3 starboard = whiskerVectorSet[2];
+      Vector3 lower = whiskerVectorSet[3];
+      Vector3 upper = whiskerVectorSet[4];
 
       // Look ahead.
-      bool fl = Physics.Raycast(lowPos, fore, RAYCAST_MAX_DISTANCE, layerMask);
-      bool fh = Physics.Raycast(highPos, fore, RAYCAST_MAX_DISTANCE, layerMask);
+      bool fl = Physics.Raycast(lower, fore, RAYCAST_MAX_DISTANCE, layerMask);
+      bool fh = Physics.Raycast(upper, fore, RAYCAST_MAX_DISTANCE, layerMask);
       if (fl || fh)
       {
          caution = true;
@@ -55,8 +54,8 @@ public class FishDrone : MonoBehaviour
          lastContact = Time.time;
          if (enhancedLogging)
          {
-            Debug.DrawRay(lowPos, fore, Color.yellow, RAYCAST_DRAWTIME);
-            Debug.DrawRay(highPos, fore, Color.yellow, RAYCAST_DRAWTIME);
+            Debug.DrawRay(lower, fore, Color.yellow, RAYCAST_DRAWTIME);
+            Debug.DrawRay(upper, fore, Color.yellow, RAYCAST_DRAWTIME);
          }
       }
       else if (caution)
@@ -65,29 +64,29 @@ public class FishDrone : MonoBehaviour
          SetNewRandomSpeed();
       }
 
-      // Look left.
-      bool pl = Physics.Raycast(lowPos, port, out hitPortLow, RAYCAST_MAX_DISTANCE, layerMask);
-      bool ph = Physics.Raycast(highPos, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
+      // Look to port.
+      bool pl = Physics.Raycast(lower, port, out hitPortLow, RAYCAST_MAX_DISTANCE, layerMask);
+      bool ph = Physics.Raycast(upper, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
       if (pl || ph)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          if (enhancedLogging)
          {
-            Debug.DrawRay(lowPos, port, Color.blue, RAYCAST_DRAWTIME);
-            Debug.DrawRay(highPos, port, Color.blue, RAYCAST_DRAWTIME);
+            Debug.DrawRay(lower, port, Color.blue, RAYCAST_DRAWTIME);
+            Debug.DrawRay(upper, port, Color.blue, RAYCAST_DRAWTIME);
          }
       }
 
-      // Look right.
-      bool sl = Physics.Raycast(lowPos, starbord, out hitStarbordLow, RAYCAST_MAX_DISTANCE, layerMask);
-      bool sh = Physics.Raycast(highPos, starbord, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
+      // Look to starboard.
+      bool sl = Physics.Raycast(lower, starboard, out hitStarbordLow, RAYCAST_MAX_DISTANCE, layerMask);
+      bool sh = Physics.Raycast(upper, starboard, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
       if (sl || sh)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          if (enhancedLogging)
          {
-            Debug.DrawRay(lowPos, starbord, Color.red, RAYCAST_DRAWTIME);
-            Debug.DrawRay(highPos, starbord, Color.red, RAYCAST_DRAWTIME);
+            Debug.DrawRay(lower, starboard, Color.red, RAYCAST_DRAWTIME);
+            Debug.DrawRay(upper, starboard, Color.red, RAYCAST_DRAWTIME);
          }
       }
    }
@@ -132,17 +131,25 @@ public class FishDrone : MonoBehaviour
 
    private void FixedUpdate() { BeFishy(); }
 
+   private static int GetGroupID()
+   {
+      rayGroup++;
+      if (rayGroup > GROUP_MAX) rayGroup = 0;
+      Debug.Log(rayGroup);
+      return rayGroup;
+   }
+
    private Vector3 GetNewScale { get { return new Vector3(Scale, Scale, Scale); } }
 
    private void GroupActionCycler()
    {
       group++;
-      if (group > GROUP_MAX) group = 0;
-      if (group == 0)
+      if (group > GROUP_MAX)
       {
-         Vector3 fore, port, starbord, lowPos, highPos;
-         SetWhiskerVectors(out fore, out port, out starbord, out lowPos, out highPos);
-         PlanPath(fore, port, starbord, lowPos, highPos);
+         group = 0;
+         Vector3 fore, port, starbord, lower, upper;
+         SetWhiskerVectors(out fore, out port, out starbord, out lower, out upper);
+         PlanPath(fore, port, starbord, lower, upper);
       }
    }
 
@@ -162,7 +169,7 @@ public class FishDrone : MonoBehaviour
       revTime = 0;
       caution = false;
 
-      SetGroup();
+      group = GetGroupID();
    }
 
    private void LerpSpeed()
@@ -210,14 +217,14 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void PlanPath(Vector3 fore, Vector3 port, Vector3 starbord, Vector3 lowPos, Vector3 highPos)
+   private void PlanPath(Vector3 fore, Vector3 port, Vector3 starbord, Vector3 lower, Vector3 upper)
    {
       Vector3[] whiskerVectorSet = new Vector3[5];
       whiskerVectorSet[0] = fore;
       whiskerVectorSet[1] = port;
       whiskerVectorSet[2] = starbord;
-      whiskerVectorSet[3] = lowPos;
-      whiskerVectorSet[4] = highPos;
+      whiskerVectorSet[3] = lower;
+      whiskerVectorSet[4] = upper;
 
       DirectionChanger();
       if (Time.time > raycastSleepTime)
@@ -248,17 +255,6 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void SetGroup()
-   {
-      if (FiftyFifty)
-      {
-         if (FiftyFifty) group = 0;
-         else group = 1;
-      }
-      else if (FiftyFifty) group = 2;
-      else group = 3;
-   }
-
    private void SetLocalScale(Vector3 scale) { transform.localScale = scale; }
 
    private void SetNewOrientation()
@@ -287,30 +283,30 @@ public class FishDrone : MonoBehaviour
       if (FiftyFifty) turnRate = -turnRate;
    }
 
-   private void SetWhiskerVectors(out Vector3 fore, out Vector3 port, out Vector3 starbord, out Vector3 lowPos, out Vector3 highPos)
+   private void SetWhiskerVectors(out Vector3 fore, out Vector3 port, out Vector3 starbord, out Vector3 lower, out Vector3 upper)
    {
-      const float RAYCAST_DETECTION_ANGLE = 23.0f;
+      const float RAYCAST_DETECTION_ANGLE = 28.0f; // prev. 23
       const float RAYCAST_VERTICAL_OFFSET = 0.07f;
 
       fore = transform.forward;
       port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
       starbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
 
-      lowPos = transform.position;
-      highPos = transform.position;
-      lowPos.y -= RAYCAST_VERTICAL_OFFSET * roughScale;
-      highPos.y += RAYCAST_VERTICAL_OFFSET * roughScale;
+      lower = transform.position;
+      upper = transform.position;
+      lower.y -= RAYCAST_VERTICAL_OFFSET * roughScale;
+      upper.y += RAYCAST_VERTICAL_OFFSET * roughScale;
 
       /// Enable these rays to visualize the wiskers in the scene view (or with gizmos enabled).
       //if (group == 0)
       //{
-      //   float lineLife = 0.083325f * 3;
-      //   Debug.DrawRay(highPos, fore, Color.green, lineLife);
-      //   Debug.DrawRay(highPos, port, Color.cyan, lineLife);
-      //   Debug.DrawRay(highPos, starbord, Color.magenta, lineLife);
-      //   Debug.DrawRay(lowPos, fore, Color.green, lineLife);
-      //   Debug.DrawRay(lowPos, port, Color.cyan, lineLife);
-      //   Debug.DrawRay(lowPos, starbord, Color.magenta, lineLife);
+      //   float lineLife = 0.2f;
+      //   Debug.DrawRay(upper, fore, Color.green, lineLife);
+      //   Debug.DrawRay(upper, port, Color.cyan, lineLife);
+      //   Debug.DrawRay(upper, starbord, Color.magenta, lineLife);
+      //   Debug.DrawRay(lower, fore, Color.green, lineLife);
+      //   Debug.DrawRay(lower, port, Color.cyan, lineLife);
+      //   Debug.DrawRay(lower, starbord, Color.magenta, lineLife);
       //}
    }
 

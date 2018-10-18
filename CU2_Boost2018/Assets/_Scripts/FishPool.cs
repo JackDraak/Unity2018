@@ -177,9 +177,9 @@ public class FishPool : MonoBehaviour
    public IEnumerator TunedSpawn()
    {
       // Local setup.
-      float spawnFactor = 1.333f;   // Fudge-factor for spawnrate/framerate conversion ratio.
-      int frameGap = 2;             // Must be 1 or greater. # of frames to skip between samples.
-      int testSamples = 4;          // # of sample framerates to use to calculate averageFrameRate.
+      float spawnFactor = 1.555f;   // Fudge-factor for spawnrate/framerate conversion ratio.
+      int frameGap = 3;             // Must be 1 or greater. # of frames to skip between samples.
+      int testSamples = 5;          // # of sample framerates to use to calculate averageFrameRate.
 
       // Set spawnPercent based on FrameRate.
       int averageFrameRate = 0;
