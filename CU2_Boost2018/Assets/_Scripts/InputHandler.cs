@@ -127,7 +127,14 @@ public static class ApplyColour // RTF helper.
 {
    private static int hudIndex = 1;
    private static int nextIndex = -1;
+
    private static string[] colour = { "#FF7070", "#28B3D1", "#2DE9A8", };
+
+   private static string NextColourString()
+   {
+      nextIndex++; if (nextIndex >= colour.Length) nextIndex = 0;
+      return "<color=" + colour[nextIndex] + ">";
+   }
 
    public static string Blue { get { return "<color=" + colour[1] + ">"; } }
    public static string Close { get { return "</color>"; } }
@@ -136,17 +143,13 @@ public static class ApplyColour // RTF helper.
    public static string Green { get { return "<color=" + colour[2] + ">"; } }
    public static string NextColour {  get { return NextColourString(); } }
    public static string Open { get { return "<color=" + Colour + ">"; } }
+
    public static string RTFify(string text)
    {
       string header = "<color=" + Colour + ">";
       string footer = "</color>";
       return header + text + footer;
    }
-   public static void Toggle() { hudIndex++; if (hudIndex >= colour.Length) hudIndex = 0; }
 
-   private static string NextColourString()
-   {
-      nextIndex++; if (nextIndex >= colour.Length) nextIndex = 0;
-      return "<color=" + colour[nextIndex] + ">";
-   }
+   public static void Toggle() { hudIndex++; if (hudIndex >= colour.Length) hudIndex = 0; }
 }

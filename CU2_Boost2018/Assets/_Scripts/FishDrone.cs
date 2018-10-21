@@ -3,9 +3,20 @@
 public class FishDrone : MonoBehaviour
 {
    private Animator animator;
+
    private bool caution;
-   private bool enhancedLogging = false;
-   private float changeDelay, changeTime;
+   private bool enhancedLogging = true;
+
+   private class WhiskerSet
+   {
+      public Vector3 fore;
+      public Vector3 port;
+      public Vector3 starboard;
+      public Vector3 lower;
+      public Vector3 upper;
+   }
+
+   private float speedChageDelay, speedChangeTime;
    private float newSpeed, speed; 
    private float correctedTurnRate, lerpTurnRate, turnRate;
    private float lastContact;
@@ -13,10 +24,15 @@ public class FishDrone : MonoBehaviour
    private float revTime;
    private float roughScale, scaleFactor;
    private float speedScaleFactor;
+
    private int group;
    private int layerMask;
+
    private Quaternion startQuat;
+
    private Vector3 startPos;
+
+   private WhiskerSet whiskerSet;
 
    private const float ANIMATION_SPEED_FACTOR = 1.8f;
    private const float RAYCAST_SLEEP_DELAY = 0.333f / GROUP_MAX;
@@ -28,24 +44,62 @@ public class FishDrone : MonoBehaviour
 
    private void BeFishy()
    {
-      if (Time.time > raycastSleepTime) GroupActionCycler();
+      if (Time.time > raycastSleepTime) CycleRaycastGroups();
       Motivate();
    }
 
-   private void DetectNeighbors(Vector3[] whiskerVectorSet, out RaycastHit hitPort, out RaycastHit hitPortLow, out RaycastHit hitStarbord, out RaycastHit hitStarbordLow)
+   private bool CheckFlanks(RaycastHit hitPort, RaycastHit hitStarboard)
+   {
+      const float RAYCAST_CORRECTION_FACTOR = 9.0f;
+      const float REVERSE_DELAY = 6f;
+
+      // Turn more sharply when a neighbour is detected.
+      if (hitPort.distance > 0 || hitStarboard.distance > 0)
+      {
+         lastContact = Time.time;
+         correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
+         if (hitPort.distance > 0 && hitStarboard.distance > 0)
+         {
+            // When there are neighbors on both sides, if course is toward closer target then invert course (but not too often).
+            if (((hitPort.distance > hitStarboard.distance && correctedTurnRate > 0)
+               || (hitPort.distance < hitStarboard.distance && correctedTurnRate > 0))
+               && revTime < Time.time)
+            {
+               correctedTurnRate = -correctedTurnRate;
+               revTime = Time.time + REVERSE_DELAY;
+            }
+         }
+         return true;
+      }
+      return false;
+   }
+
+   private void CycleRaycastGroups()
+   {
+      group++;
+      if (group > GROUP_MAX)
+      {
+         group = 0;
+         //Vector3 fore, port, starbord, lower, upper;
+         SetWhiskerVectors(); // (out fore, out port, out starbord, out lower, out upper);
+         PlanPath(); //  (fore, port, starbord, lower, upper);
+      }
+   }
+
+   private void DetectNeighbors(out RaycastHit hitPort, out RaycastHit hitPortLow, out RaycastHit hitStarbord, out RaycastHit hitStarbordLow)
    {
       const float RAYCAST_DRAWTIME = 3.0f;
       const float RAYCAST_MAX_DISTANCE = 1.33f;
 
-      Vector3 fore = whiskerVectorSet[0];
-      Vector3 port = whiskerVectorSet[1];
-      Vector3 starboard = whiskerVectorSet[2];
-      Vector3 lower = whiskerVectorSet[3];
-      Vector3 upper = whiskerVectorSet[4];
+      //Vector3 fore = whiskerVectorSet[0];
+      //Vector3 port = whiskerVectorSet[1];
+      //Vector3 starboard = whiskerVectorSet[2];
+      //Vector3 lower = whiskerVectorSet[3];
+      //Vector3 upper = whiskerVectorSet[4];
 
       // Look ahead.
-      bool fl = Physics.Raycast(lower, fore, RAYCAST_MAX_DISTANCE, layerMask);
-      bool fh = Physics.Raycast(upper, fore, RAYCAST_MAX_DISTANCE, layerMask);
+      bool fl = Physics.Raycast(whiskerSet.lower, whiskerSet.fore, RAYCAST_MAX_DISTANCE, layerMask);
+      bool fh = Physics.Raycast(whiskerSet.upper, whiskerSet.fore, RAYCAST_MAX_DISTANCE, layerMask);
       if (fl || fh)
       {
          caution = true;
@@ -54,8 +108,8 @@ public class FishDrone : MonoBehaviour
          lastContact = Time.time;
          if (enhancedLogging)
          {
-            Debug.DrawRay(lower, fore, Color.yellow, RAYCAST_DRAWTIME);
-            Debug.DrawRay(upper, fore, Color.yellow, RAYCAST_DRAWTIME);
+            Debug.DrawRay(whiskerSet.lower, whiskerSet.fore, Color.yellow, RAYCAST_DRAWTIME);
+            Debug.DrawRay(whiskerSet.upper, whiskerSet.fore, Color.yellow, RAYCAST_DRAWTIME);
          }
       }
       else if (caution)
@@ -65,55 +119,39 @@ public class FishDrone : MonoBehaviour
       }
 
       // Look to port.
-      bool pl = Physics.Raycast(lower, port, out hitPortLow, RAYCAST_MAX_DISTANCE, layerMask);
-      bool ph = Physics.Raycast(upper, port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
+      bool pl = Physics.Raycast(whiskerSet.lower, whiskerSet.port, out hitPortLow, RAYCAST_MAX_DISTANCE, layerMask);
+      bool ph = Physics.Raycast(whiskerSet.upper, whiskerSet.port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
       if (pl || ph)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          if (enhancedLogging)
          {
-            Debug.DrawRay(lower, port, Color.blue, RAYCAST_DRAWTIME);
-            Debug.DrawRay(upper, port, Color.blue, RAYCAST_DRAWTIME);
+            Debug.DrawRay(whiskerSet.lower, whiskerSet.port, Color.blue, RAYCAST_DRAWTIME);
+            Debug.DrawRay(whiskerSet.upper, whiskerSet.port, Color.blue, RAYCAST_DRAWTIME);
          }
       }
 
       // Look to starboard.
-      bool sl = Physics.Raycast(lower, starboard, out hitStarbordLow, RAYCAST_MAX_DISTANCE, layerMask);
-      bool sh = Physics.Raycast(upper, starboard, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
+      bool sl = Physics.Raycast(whiskerSet.lower, whiskerSet.starboard, out hitStarbordLow, RAYCAST_MAX_DISTANCE, layerMask);
+      bool sh = Physics.Raycast(whiskerSet.upper, whiskerSet.starboard, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
       if (sl || sh)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          if (enhancedLogging)
          {
-            Debug.DrawRay(lower, starboard, Color.red, RAYCAST_DRAWTIME);
-            Debug.DrawRay(upper, starboard, Color.red, RAYCAST_DRAWTIME);
+            Debug.DrawRay(whiskerSet.lower, whiskerSet.starboard, Color.red, RAYCAST_DRAWTIME);
+            Debug.DrawRay(whiskerSet.upper, whiskerSet.starboard, Color.red, RAYCAST_DRAWTIME);
          }
       }
    }
 
-   private void DetermineTurn(RaycastHit hitPort, RaycastHit hitPortLow, RaycastHit hitStarbordLow, RaycastHit hitStarbord)
+   private void DetermineTurnRate(RaycastHit hitPortHigh, RaycastHit hitPortLow, RaycastHit hitStarboardHigh, RaycastHit hitStarboardLow)
    {
-      const float RAYCAST_CORRECTION_FACTOR = 9.0f;
-      const float REVERSE_DELAY = 6f;
-
-      // Turn more sharply when a neighbour is detected.
-      if (hitPort.distance > 0 || hitStarbord.distance > 0)
-      {
-         lastContact = Time.time;
-         correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
-         if (hitPort.distance > 0 && hitStarbord.distance > 0)
-         {
-            // When there are neighbors on both sides, if course is toward closer target then invert course (but not too often).
-            if (((hitPort.distance > hitStarbord.distance && correctedTurnRate > 0)
-               || (hitPort.distance < hitStarbord.distance && correctedTurnRate > 0))
-               && revTime < Time.time)
-            {
-               correctedTurnRate = -correctedTurnRate;
-               revTime = Time.time + REVERSE_DELAY;
-            }
-         }
-      }
+      if (CheckFlanks(hitPortHigh, hitStarboardHigh)) { } // Respond to upper raycasts,
+      else if (CheckFlanks(hitPortLow, hitStarboardLow)) { } // or check lower raycasts.
+      // If there are no hits, revert to normal turnRate.
       else correctedTurnRate = turnRate;
+
    }
 
    private void DirectionChanger()
@@ -135,27 +173,14 @@ public class FishDrone : MonoBehaviour
    {
       rayGroup++;
       if (rayGroup > GROUP_MAX) rayGroup = 0;
-      Debug.Log(rayGroup);
       return rayGroup;
    }
 
    private Vector3 GetNewScale { get { return new Vector3(Scale, Scale, Scale); } }
 
-   private void GroupActionCycler()
-   {
-      group++;
-      if (group > GROUP_MAX)
-      {
-         group = 0;
-         Vector3 fore, port, starbord, lower, upper;
-         SetWhiskerVectors(out fore, out port, out starbord, out lower, out upper);
-         PlanPath(fore, port, starbord, lower, upper);
-      }
-   }
-
    private void Init()
    {
-     Vector3 scale = GetNewScale;
+      Vector3 scale = GetNewScale;
       SetLocalScale(scale);
       TuneAnimationSpeed(scale);
 
@@ -170,6 +195,7 @@ public class FishDrone : MonoBehaviour
       caution = false;
 
       group = GetGroupID();
+      whiskerSet = new WhiskerSet();
    }
 
    private void LerpSpeed()
@@ -197,14 +223,13 @@ public class FishDrone : MonoBehaviour
 
    private void Motivate()
    {
-      Vector3 dimensions = Vector3.zero;
-
+      Vector3 vector3 = Vector3.zero;
       LerpTurn();
       LerpSpeed();
-      dimensions.y = Time.deltaTime * lerpTurnRate;
-      transform.Rotate(dimensions, Space.Self); // Turn.
+      vector3.y = Time.deltaTime * lerpTurnRate;
+      transform.Rotate(vector3, Space.Self); // Turn.
       transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed * speedScaleFactor, Space.Self); // Propel.
-      if (changeTime + changeDelay < Time.time) SetNewRandomSpeed();
+      if (speedChangeTime + speedChageDelay < Time.time) SetNewRandomSpeed();
    }
 
    private void OnCollisionEnter(Collision collision)
@@ -217,22 +242,22 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void PlanPath(Vector3 fore, Vector3 port, Vector3 starbord, Vector3 lower, Vector3 upper)
+   private void PlanPath() // (Vector3 fore, Vector3 port, Vector3 starbord, Vector3 lower, Vector3 upper)
    {
-      Vector3[] whiskerVectorSet = new Vector3[5];
-      whiskerVectorSet[0] = fore;
-      whiskerVectorSet[1] = port;
-      whiskerVectorSet[2] = starbord;
-      whiskerVectorSet[3] = lower;
-      whiskerVectorSet[4] = upper;
+      //Vector3[] whiskerVectorSet = new Vector3[5];
+      //whiskerVectorSet[0] = fore;
+      //whiskerVectorSet[1] = port;
+      //whiskerVectorSet[2] = starbord;
+      //whiskerVectorSet[3] = lower;
+      //whiskerVectorSet[4] = upper;
 
       DirectionChanger();
       if (Time.time > raycastSleepTime)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
-         RaycastHit hitPort, hitPortLow, hitStarbord, hitStarbordLow;
-         DetectNeighbors(whiskerVectorSet, out hitPort, out hitPortLow, out hitStarbord, out hitStarbordLow);
-         DetermineTurn(hitPort, hitPortLow, hitStarbord, hitStarbordLow);
+         RaycastHit hitPortHigh, hitPortLow, hitStarbordHigh, hitStarbordLow;
+         DetectNeighbors(out hitPortHigh, out hitPortLow, out hitStarbordHigh, out hitStarbordLow);
+         DetermineTurnRate(hitPortHigh, hitPortLow, hitStarbordHigh, hitStarbordLow);
       }
    }
 
@@ -269,8 +294,8 @@ public class FishDrone : MonoBehaviour
       const float CHANGE_TIME_MAX = 16.0f;
       const float CHANGE_TIME_MIN = 4.0f;
 
-      changeTime = Time.time;
-      changeDelay = Random.Range(CHANGE_TIME_MIN, CHANGE_TIME_MAX);
+      speedChangeTime = Time.time;
+      speedChageDelay = Random.Range(CHANGE_TIME_MIN, CHANGE_TIME_MAX);
       newSpeed = Random.Range(SPEED_MIN, SPEED_MAX);
    }
 
@@ -283,31 +308,31 @@ public class FishDrone : MonoBehaviour
       if (FiftyFifty) turnRate = -turnRate;
    }
 
-   private void SetWhiskerVectors(out Vector3 fore, out Vector3 port, out Vector3 starbord, out Vector3 lower, out Vector3 upper)
+   private void SetWhiskerVectors() // (out Vector3 fore, out Vector3 port, out Vector3 starbord, out Vector3 lower, out Vector3 upper)
    {
-      const float RAYCAST_DETECTION_ANGLE = 28.0f; // prev. 23
+      const float RAYCAST_DETECTION_ANGLE = 28.0f;
       const float RAYCAST_VERTICAL_OFFSET = 0.07f;
 
-      fore = transform.forward;
-      port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
-      starbord = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
+      whiskerSet.fore = transform.forward;
+      whiskerSet.port = Quaternion.Euler(0, -RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
+      whiskerSet.starboard = Quaternion.Euler(0, RAYCAST_DETECTION_ANGLE, 0) * transform.forward;
 
-      lower = transform.position;
-      upper = transform.position;
-      lower.y -= RAYCAST_VERTICAL_OFFSET * roughScale;
-      upper.y += RAYCAST_VERTICAL_OFFSET * roughScale;
+      whiskerSet.lower = transform.position;
+      whiskerSet.upper = transform.position;
+      whiskerSet.lower.y -= RAYCAST_VERTICAL_OFFSET * roughScale;
+      whiskerSet.upper.y += RAYCAST_VERTICAL_OFFSET * roughScale;
 
-      /// Enable these rays to visualize the wiskers in the scene view (or with gizmos enabled).
-      //if (group == 0)
-      //{
-      //   float lineLife = 0.2f;
-      //   Debug.DrawRay(upper, fore, Color.green, lineLife);
-      //   Debug.DrawRay(upper, port, Color.cyan, lineLife);
-      //   Debug.DrawRay(upper, starbord, Color.magenta, lineLife);
-      //   Debug.DrawRay(lower, fore, Color.green, lineLife);
-      //   Debug.DrawRay(lower, port, Color.cyan, lineLife);
-      //   Debug.DrawRay(lower, starbord, Color.magenta, lineLife);
-      //}
+      // Enable these rays to visualize the wiskers in the scene view(or with gizmos enabled).
+      if (group == 0)
+      {
+         float lineLife = 0.2f;
+         Debug.DrawRay(whiskerSet.upper, whiskerSet.fore, Color.green, lineLife);
+         Debug.DrawRay(whiskerSet.upper, whiskerSet.port, Color.cyan, lineLife);
+         Debug.DrawRay(whiskerSet.upper, whiskerSet.starboard, Color.magenta, lineLife);
+         Debug.DrawRay(whiskerSet.lower, whiskerSet.fore, Color.green, lineLife);
+         Debug.DrawRay(whiskerSet.lower, whiskerSet.port, Color.cyan, lineLife);
+         Debug.DrawRay(whiskerSet.lower, whiskerSet.starboard, Color.magenta, lineLife);
+      }
    }
 
    private void Start()
