@@ -26,7 +26,7 @@ public class Pilot_ID_Field : MonoBehaviour
       if (PilotID != pilot.ID)
       {
          Debug.Log("OnRenderObject ID mismatch " + inputField.text + " - " + PilotID + " - " + pilot.ID);
-         //PilotID = pilot.ID;
+         //PilotID = pilot.ID; // too greedy
       }
    }
 

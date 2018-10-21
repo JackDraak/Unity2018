@@ -209,7 +209,7 @@ public class PickupTracker : MonoBehaviour
       timeKeeper = FindObjectOfType<Timekeeper>();
       complete = spawning = false;
       text_tasklist.text = 
-         "Level 1 Goal: Raise Thrust Cap to 60%\n\nMini-Goal: Collect a full set of gas canisters\n" +
+         "Level 1 Goal: Raise Thrust Cap to 45%\n\nMini-Goal: Collect a full set of gas canisters\n" +
          "(for a small boost to Thrust Cap)";
       text_countdown.text = "";
       text_subCountdown.text = "";

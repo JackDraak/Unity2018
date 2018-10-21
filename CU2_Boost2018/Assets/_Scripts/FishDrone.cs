@@ -5,7 +5,7 @@ public class FishDrone : MonoBehaviour
    private Animator animator;
 
    private bool caution;
-   private bool enhancedLogging = true;
+   private bool enhancedLogging = false;
 
    private class WhiskerSet
    {
@@ -16,13 +16,13 @@ public class FishDrone : MonoBehaviour
       public Vector3 upper;
    }
 
-   private float speedChageDelay, speedChangeTime;
-   private float newSpeed, speed; 
-   private float correctedTurnRate, lerpTurnRate, turnRate;
+   private float activeTurnRate, baseCurrentTurnRate, lerpTurnRate;
    private float lastContact;
+   private float newSpeed, speed; 
    private float raycastSleepTime;
    private float revTime;
    private float roughScale, scaleFactor;
+   private float speedChageDelay, speedChangeTime;
    private float speedScaleFactor;
 
    private int group;
@@ -38,6 +38,7 @@ public class FishDrone : MonoBehaviour
    private const float RAYCAST_SLEEP_DELAY = 0.333f / GROUP_MAX;
    private const float SPEED_MAX = 1.2f;
    private const float SPEED_MIN = 0.2f;
+
    private const int GROUP_MAX = 7;
 
    private static int rayGroup = 0;
@@ -51,21 +52,21 @@ public class FishDrone : MonoBehaviour
    private bool CheckFlanks(RaycastHit hitPort, RaycastHit hitStarboard)
    {
       const float RAYCAST_CORRECTION_FACTOR = 9.0f;
-      const float REVERSE_DELAY = 6f;
+      const float REVERSE_DELAY = 6.0f;
 
       // Turn more sharply when a neighbour is detected.
       if (hitPort.distance > 0 || hitStarboard.distance > 0)
       {
          lastContact = Time.time;
-         correctedTurnRate = turnRate * RAYCAST_CORRECTION_FACTOR;
+         activeTurnRate = baseCurrentTurnRate * RAYCAST_CORRECTION_FACTOR;
          if (hitPort.distance > 0 && hitStarboard.distance > 0)
          {
             // When there are neighbors on both sides, if course is toward closer target then invert course (but not too often).
-            if (((hitPort.distance > hitStarboard.distance && correctedTurnRate > 0)
-               || (hitPort.distance < hitStarboard.distance && correctedTurnRate > 0))
+            if (((hitPort.distance > hitStarboard.distance && activeTurnRate > 0)
+               || (hitPort.distance < hitStarboard.distance && activeTurnRate > 0))
                && revTime < Time.time)
             {
-               correctedTurnRate = -correctedTurnRate;
+               activeTurnRate = -activeTurnRate;
                revTime = Time.time + REVERSE_DELAY;
             }
          }
@@ -80,9 +81,8 @@ public class FishDrone : MonoBehaviour
       if (group > GROUP_MAX)
       {
          group = 0;
-         //Vector3 fore, port, starbord, lower, upper;
-         SetWhiskerVectors(); // (out fore, out port, out starbord, out lower, out upper);
-         PlanPath(); //  (fore, port, starbord, lower, upper);
+         SetWhiskerVectors();
+         PlanPath();
       }
    }
 
@@ -90,12 +90,6 @@ public class FishDrone : MonoBehaviour
    {
       const float RAYCAST_DRAWTIME = 3.0f;
       const float RAYCAST_MAX_DISTANCE = 1.33f;
-
-      //Vector3 fore = whiskerVectorSet[0];
-      //Vector3 port = whiskerVectorSet[1];
-      //Vector3 starboard = whiskerVectorSet[2];
-      //Vector3 lower = whiskerVectorSet[3];
-      //Vector3 upper = whiskerVectorSet[4];
 
       // Look ahead.
       bool fl = Physics.Raycast(whiskerSet.lower, whiskerSet.fore, RAYCAST_MAX_DISTANCE, layerMask);
@@ -150,7 +144,7 @@ public class FishDrone : MonoBehaviour
       if (CheckFlanks(hitPortHigh, hitStarboardHigh)) { } // Respond to upper raycasts,
       else if (CheckFlanks(hitPortLow, hitStarboardLow)) { } // or check lower raycasts.
       // If there are no hits, revert to normal turnRate.
-      else correctedTurnRate = turnRate;
+      else activeTurnRate = baseCurrentTurnRate;
 
    }
 
@@ -214,9 +208,9 @@ public class FishDrone : MonoBehaviour
    {
       const float LERP_FACTOR_FOR_TURN = 0.18f;
 
-      if (!(Mathf.Approximately(correctedTurnRate, lerpTurnRate)))
+      if (!(Mathf.Approximately(activeTurnRate, lerpTurnRate)))
       {
-         lerpTurnRate = Mathf.Lerp(lerpTurnRate, correctedTurnRate, LERP_FACTOR_FOR_TURN);
+         lerpTurnRate = Mathf.Lerp(lerpTurnRate, activeTurnRate, LERP_FACTOR_FOR_TURN);
          ///if (enhancedLogging) Debug.Log(lerpTurnRate + " :lerpTurnRate | correctedTurnRate: " + correctedTurnRate);
       }
    }
@@ -242,15 +236,8 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void PlanPath() // (Vector3 fore, Vector3 port, Vector3 starbord, Vector3 lower, Vector3 upper)
+   private void PlanPath()
    {
-      //Vector3[] whiskerVectorSet = new Vector3[5];
-      //whiskerVectorSet[0] = fore;
-      //whiskerVectorSet[1] = port;
-      //whiskerVectorSet[2] = starbord;
-      //whiskerVectorSet[3] = lower;
-      //whiskerVectorSet[4] = upper;
-
       DirectionChanger();
       if (Time.time > raycastSleepTime)
       {
@@ -304,11 +291,11 @@ public class FishDrone : MonoBehaviour
       const float TURNRATE_MAX = 10.0f;
       const float TURNRATE_MIN = 5.0f;
 
-      turnRate = Random.Range(TURNRATE_MIN, TURNRATE_MAX);
-      if (FiftyFifty) turnRate = -turnRate;
+      baseCurrentTurnRate = Random.Range(TURNRATE_MIN, TURNRATE_MAX);
+      if (FiftyFifty) baseCurrentTurnRate = -baseCurrentTurnRate;
    }
 
-   private void SetWhiskerVectors() // (out Vector3 fore, out Vector3 port, out Vector3 starbord, out Vector3 lower, out Vector3 upper)
+   private void SetWhiskerVectors()
    {
       const float RAYCAST_DETECTION_ANGLE = 28.0f;
       const float RAYCAST_VERTICAL_OFFSET = 0.07f;
@@ -322,17 +309,17 @@ public class FishDrone : MonoBehaviour
       whiskerSet.lower.y -= RAYCAST_VERTICAL_OFFSET * roughScale;
       whiskerSet.upper.y += RAYCAST_VERTICAL_OFFSET * roughScale;
 
-      // Enable these rays to visualize the wiskers in the scene view(or with gizmos enabled).
-      if (group == 0)
-      {
-         float lineLife = 0.2f;
-         Debug.DrawRay(whiskerSet.upper, whiskerSet.fore, Color.green, lineLife);
-         Debug.DrawRay(whiskerSet.upper, whiskerSet.port, Color.cyan, lineLife);
-         Debug.DrawRay(whiskerSet.upper, whiskerSet.starboard, Color.magenta, lineLife);
-         Debug.DrawRay(whiskerSet.lower, whiskerSet.fore, Color.green, lineLife);
-         Debug.DrawRay(whiskerSet.lower, whiskerSet.port, Color.cyan, lineLife);
-         Debug.DrawRay(whiskerSet.lower, whiskerSet.starboard, Color.magenta, lineLife);
-      }
+      /// Enable these rays to visualize the wiskers in the scene view (or with gizmos enabled).
+      //if (group == 0)
+      //{
+      //   float lineLife = 0.2f;
+      //   Debug.DrawRay(whiskerSet.upper, whiskerSet.fore, Color.green, lineLife);
+      //   Debug.DrawRay(whiskerSet.upper, whiskerSet.port, Color.cyan, lineLife);
+      //   Debug.DrawRay(whiskerSet.upper, whiskerSet.starboard, Color.magenta, lineLife);
+      //   Debug.DrawRay(whiskerSet.lower, whiskerSet.fore, Color.green, lineLife);
+      //   Debug.DrawRay(whiskerSet.lower, whiskerSet.port, Color.cyan, lineLife);
+      //   Debug.DrawRay(whiskerSet.lower, whiskerSet.starboard, Color.magenta, lineLife);
+      //}
    }
 
    private void Start()
