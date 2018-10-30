@@ -5,15 +5,15 @@ public class UIcontrol : MonoBehaviour
    // UI elements to hide when the game is: launched | paused | reset 
    [SerializeField] GameObject[] UIobjects;
 
-   private bool deltaStatus, status;
+   bool deltaStatus, status;
 
-   private void SetState()
+   void SetState()
    {
       status = deltaStatus;
       foreach (GameObject go in UIobjects) go.SetActive(status);
    }
 
-   private void Start()
+   void Start()
    {
       // pre-emtively deactivate the controlled HUD elements...
       deltaStatus = false;
@@ -21,7 +21,7 @@ public class UIcontrol : MonoBehaviour
       SetState();
    }
 
-   private void Update() { if (status != deltaStatus) SetState(); }
+   void Update() { if (status != deltaStatus) SetState(); }
 
    public bool Visible
    {

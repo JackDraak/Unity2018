@@ -6,19 +6,19 @@ public class InputHandler : MonoBehaviour
    // 'Keys' In use: 
    // B C Ctrl-E F H I J K L M N Q R Z ESC [ ] 0...9 Vertical Horizontal Jump
 
-   private FishPool        fishPool;
-   private MusicPlayer     musicPlayer;
-   private PickupTracker   pickupTracker;
-   private Pilot           pilot;
-   private Pilot_ID_Field  pilot_ID_Field;
-   private Player          player;
-   private Records         records;
+   FishPool        fishPool;
+   MusicPlayer     musicPlayer;
+   PickupTracker   pickupTracker;
+   Pilot           pilot;
+   Pilot_ID_Field  pilot_ID_Field;
+   Player          player;
+   Records         records;
 
-   private const string AXIS_POWER     = "Vertical";
-   private const string AXIS_ROTATION  = "Horizontal";
-   private const string AXIS_THRUST    = "Jump";
+   const string AXIS_POWER     = "Vertical";
+   const string AXIS_ROTATION  = "Horizontal";
+   const string AXIS_THRUST    = "Jump";
 
-   private void DebugControlPoll()
+   void DebugControlPoll()
    {
       // Player: B, F, I.
       if (Input.GetKeyDown(KeyCode.B)) player.BoostMaxPower(0.025f); // 2.5% boost
@@ -38,15 +38,15 @@ public class InputHandler : MonoBehaviour
       if (Input.GetKeyDown(KeyCode.Z)) records.AddRecord(Random.Range(0.9f, 11f));
    }
 
-   private void FixedUpdate() { PlayerPhysicsPoll(); }
+   void FixedUpdate() { PlayerPhysicsPoll(); }
 
-   private void PlayerPhysicsPoll()
+   void PlayerPhysicsPoll()
    {
       PollRotation();
       PollThrust();
    }
 
-   private void PollAutoPower()
+   void PollAutoPower()
    {
       // Player: 0, 1, 2... 9.
       if      (Input.GetKeyDown(KeyCode.Alpha0)) player.SetPower(1.0f);
@@ -61,7 +61,7 @@ public class InputHandler : MonoBehaviour
       else if (Input.GetKeyDown(KeyCode.Alpha1)) player.SetPower(0.1f);
    }
 
-   private void PollMisc()
+   void PollMisc()
    {
       // Misc: C, H, [, ], Ctrl-E.
       if (Input.GetKeyDown(KeyCode.C)) player.CasualMode();
@@ -79,14 +79,14 @@ public class InputHandler : MonoBehaviour
       // TODO pull-in ESC & Q monitoring to this class [low priority].
    }
 
-   private void PollPower()
+   void PollPower()
    {
       // Player: Vertical.
       float power = CrossPlatformInputManager.GetAxis(AXIS_POWER);
       if (power != 0) player.AdjustThrusterPower(power);
    }
 
-   private void PollRotation()
+   void PollRotation()
    {
       // Player: Horizontal.
       float rotation = CrossPlatformInputManager.GetAxis(AXIS_ROTATION);
@@ -94,7 +94,7 @@ public class InputHandler : MonoBehaviour
       else player.DeRotate();
    }
 
-   private void PollThrust()
+   void PollThrust()
    {
       // Player: Jump.
       float thrust = CrossPlatformInputManager.GetAxis(AXIS_THRUST);
@@ -103,7 +103,7 @@ public class InputHandler : MonoBehaviour
       else player.CancelThrustAudio();
    }
 
-   private void Start()
+   void Start()
    {
       fishPool = FindObjectOfType<FishPool>();
       musicPlayer = FindObjectOfType<MusicPlayer>();
@@ -114,7 +114,7 @@ public class InputHandler : MonoBehaviour
       records = FindObjectOfType<Records>();
    }
 
-   private void Update()
+   void Update()
    {
       if (Debug.isDebugBuild || pilot.MasterPilot) DebugControlPoll();
       PollAutoPower();
@@ -125,12 +125,12 @@ public class InputHandler : MonoBehaviour
 
 public static class ApplyColour // RTF helper.
 {
-   private static int hudIndex = 1;
-   private static int nextIndex = -1;
+   static int hudIndex = 1;
+   static int nextIndex = -1;
 
-   private static string[] colour = { "#FF7070", "#28B3D1", "#2DE9A8", };
+   static string[] colour = { "#FF7070", "#28B3D1", "#2DE9A8", };
 
-   private static string NextColourString()
+   static string NextColourString()
    {
       nextIndex++; if (nextIndex >= colour.Length) nextIndex = 0;
       return "<color=" + colour[nextIndex] + ">";

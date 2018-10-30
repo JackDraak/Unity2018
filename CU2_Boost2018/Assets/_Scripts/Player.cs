@@ -23,7 +23,6 @@ public class Player : MonoBehaviour
    #region Exposed Variables
    public bool casualMode, restarting;
 
-   // https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ : bonusSound
    [SerializeField] AudioClip       bonusSound; 
    [SerializeField] AudioClip       collisionSound;
    [SerializeField] AudioClip       thrustSound;
@@ -49,88 +48,88 @@ public class Player : MonoBehaviour
    #endregion
 
    #region Private Variables
-   private const float CLIP_TIME = 0.5f;
-   private const float DAMAGE_VALUE = 35f;
-   private const float DELAY_GOAL_UPDATE = 0.35f;
-   private const float DEROTATION_RATE = 0.2f;
-   private const float EMISSION_RATE_INACTIVE = 1.3f;
-   private const float EMISSION_RATE_ROTATION = 20f;
-   private const float EMISSION_RATE_THRUST = 60f;
-   private const float EXPEL_RATE_ROTATE = 0.5f;
-   private const float EXPEL_RATE_THRUST = 1f;
-   private const float FUEL_GEN_RATE = 25f; // need to find a balance where sinking is inevitable at any power level, based on gen alone
-   private const float FUEL_MAX = 1000f;
-   private const float FUEL_PICKUP_VALUE = 200f;
-   private const float FUEL_POWER_FACTOR = 0.75f;
-   private const float FUEL_USE_RATE = 10000f;
-   private const float FUEL_WARN_LEVEL = 20f;
-   private const float INITIAL_POWER_LEVEL = 0.3f;
-   private const float KILL_TIMER = 4f;
-   private const float POWER_CONTROLLER_FACTOR = 0.008f;
-   private const float ROTATION_FACTOR = 230f;
-   private const float TILT_LIMIT_MAX = 357.5f;
-   private const float TILT_LIMIT_MIN = 2.5f;
-   private const float THRUST_FACTOR = 0.08f;
-   private const float THRUST_FADE_FACTOR = 0.03f;
-   private const float THRUST_LIGHTRANGE_MAX = 2f;
-   private const float THRUST_MAX = 1f;
-   private const float THRUST_MIN = 0f;
-   private const float THRUST_POWER_BASE = 0.15f; 
-   private const float THRUST_POWER_FACTOR = 0.02f;
-   private const float VOLUME_COLLISION = 0.4f;
-   private const float VOLUME_PICKUP = 0.5f;
-   private const float VOLUME_THRUST = 0.2f;
+   const float CLIP_TIME = 0.5f;
+   const float DAMAGE_VALUE = 35f;
+   const float DELAY_GOAL_UPDATE = 0.35f;
+   const float DEROTATION_RATE = 0.2f;
+   const float EMISSION_RATE_INACTIVE = 1.3f;
+   const float EMISSION_RATE_ROTATION = 20f;
+   const float EMISSION_RATE_THRUST = 60f;
+   const float EXPEL_RATE_ROTATE = 0.5f;
+   const float EXPEL_RATE_THRUST = 1f;
+   const float FUEL_GEN_RATE = 25f; // need to find a balance where sinking is inevitable at any power level, based on gen alone
+   const float FUEL_MAX = 1000f;
+   const float FUEL_PICKUP_VALUE = 200f;
+   const float FUEL_POWER_FACTOR = 0.75f;
+   const float FUEL_USE_RATE = 10000f;
+   const float FUEL_WARN_LEVEL = 20f;
+   const float INITIAL_POWER_LEVEL = 0.3f;
+   const float KILL_TIMER = 4f;
+   const float POWER_CONTROLLER_FACTOR = 0.008f;
+   const float ROTATION_FACTOR = 230f;
+   const float TILT_LIMIT_MAX = 357.5f;
+   const float TILT_LIMIT_MIN = 2.5f;
+   const float THRUST_FACTOR = 0.08f;
+   const float THRUST_FADE_FACTOR = 0.03f;
+   const float THRUST_LIGHTRANGE_MAX = 2f;
+   const float THRUST_MAX = 1f;
+   const float THRUST_MIN = 0f;
+   const float THRUST_POWER_BASE = 0.15f; 
+   const float THRUST_POWER_FACTOR = 0.02f;
+   const float VOLUME_COLLISION = 0.4f;
+   const float VOLUME_PICKUP = 0.5f;
+   const float VOLUME_THRUST = 0.2f;
 
-   private const int DELAY_PROGRESS = 6;
-   private const int HALF_ARC = 180;
+   const int DELAY_PROGRESS = 6;
+   const int HALF_ARC = 180;
 
-   private AudioSource[] audioSources;
-   private AudioSource xAudio, thrustAudio;
+   AudioSource[] audioSources;
+   AudioSource xAudio, thrustAudio;
 
-   private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
+   bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
 
-   private FishDrone[] fishDrones;
+   FishDrone[] fishDrones;
 
-   private FishPool fishPool;
+   FishPool fishPool;
 
-   private float deRotationTime, thrustAudioLength, thrustAudioTimer;
-   private float fuelLevel = FUEL_MAX;
-   private float masterVolume = 1.0f;
-   private float maxPower = INITIAL_POWER_LEVEL;
+   float deRotationTime, thrustAudioLength, thrustAudioTimer;
+   float fuelLevel = FUEL_MAX;
+   float masterVolume = 1.0f;
+   float maxPower = INITIAL_POWER_LEVEL;
 
-   private GameObject cockpit;
-   private GameObject thrusterBell;
-   private GameObject thrustLight;
-   private GameObject tutorialText;
+   GameObject cockpit;
+   GameObject thrusterBell;
+   GameObject thrustLight;
+   GameObject tutorialText;
 
-   private GlueCam glueCam;
+   GlueCam glueCam;
 
-   private ParticleSystem thrustParticleSystem;
+   ParticleSystem thrustParticleSystem;
 
-   private ParticleSystem.EmissionModule thrustBubbles;
+   ParticleSystem.EmissionModule thrustBubbles;
 
-   private PickupTracker pickupTracker;
+   PickupTracker pickupTracker;
 
-   private Pilot pilot;
+   Pilot pilot;
 
-   private Quaternion startRotation;
+   Quaternion startRotation;
 
-   private Rigidbody thisRigidbody;
+   Rigidbody thisRigidbody;
 
-   private Slider gasLevelSlider;
-   private Slider thrustPowercapSlider;
-   private Slider thrustPowerSlider;
+   Slider gasLevelSlider;
+   Slider thrustPowercapSlider;
+   Slider thrustPowerSlider;
 
-   private Timekeeper timeKeeper;
+   Timekeeper timeKeeper;
 
-   private UIcontrol uiControl;
+   UIcontrol uiControl;
 
-   private Vector3 baseThrust = new Vector3(0, 13000, 0);
-   private Vector3 localEulers = Vector3.zero;
-   private Vector3 startPosition = Vector3.zero;
+   Vector3 baseThrust = new Vector3(0, 13000, 0);
+   Vector3 localEulers = Vector3.zero;
+   Vector3 startPosition = Vector3.zero;
    #endregion
 
-   private void AdjustEmissionRate(float newRate) { thrustBubbles.rateOverTime = newRate; }
+   void AdjustEmissionRate(float newRate) { thrustBubbles.rateOverTime = newRate; }
 
    public void AdjustThrusterPower(float delta)
    {
@@ -169,7 +168,7 @@ public class Player : MonoBehaviour
       else EndExpulsion();
    }
 
-   private void AutoDeRotate()
+   void AutoDeRotate()
    {
       float assertion = Mathf.Abs(Time.time - deRotationTime) * DEROTATION_RATE;
       localEulers = transform.localRotation.eulerAngles;
@@ -188,7 +187,7 @@ public class Player : MonoBehaviour
       pickupTracker.TriggerCountdown(DELAY_PROGRESS);
    }
 
-   private void Awake()
+   void Awake()
    {
       gasLevelSlider = GameObject.FindGameObjectWithTag("Slider_Gas").GetComponent<Slider>();
       thrustPowercapSlider = GameObject.FindGameObjectWithTag("Slider_Powercap").GetComponent<Slider>();
@@ -230,7 +229,7 @@ public class Player : MonoBehaviour
       }
    }
 
-   private void DoGasUpdate()
+   void DoGasUpdate()
    {
       Color colour;
       float ratio = fuelLevel / FUEL_MAX;
@@ -244,7 +243,7 @@ public class Player : MonoBehaviour
       goalSlideText.text = "Mini-Goal Progress: " + ApplyColour.Green + pickupTracker.PickupPercent + "%" + ApplyColour.Close;
    }
 
-   private void DoPowercapUpdate()
+   void DoPowercapUpdate()
    {
       powercapSlideText.text = "Power Cap: " + ApplyColour.Green + Mathf.FloorToInt(maxPower * 100) + "%" + ApplyColour.Close;
       Color colour;
@@ -253,7 +252,7 @@ public class Player : MonoBehaviour
       thrustcapFill.color = colour;
    }
 
-   private void DoPowerUpdate()
+   void DoPowerUpdate()
    {
       string sliderText;
       thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX;
@@ -272,7 +271,7 @@ public class Player : MonoBehaviour
       powerSlideText.text = sliderText + ApplyColour.Green + currentPercent + "%" + ApplyColour.Close;
    }
 
-   private void EndExpulsion()
+   void EndExpulsion()
    {
       thrustAudio.Stop();
       AdjustEmissionRate(EMISSION_RATE_INACTIVE);
@@ -282,7 +281,7 @@ public class Player : MonoBehaviour
          Vector4.Lerp(thrusterBell.GetComponent<MeshRenderer>().material.color, Color.black, THRUST_FADE_FACTOR);
    }
 
-   private bool ExpelGas(float rate)
+   bool ExpelGas(float rate)
    {
       float expulsionRate = 
          rate * FUEL_USE_RATE * thrustPowerSlider.value * FUEL_POWER_FACTOR * THRUST_POWER_FACTOR * Time.fixedDeltaTime;
@@ -300,18 +299,18 @@ public class Player : MonoBehaviour
       }
    }
 
-   private void FixedUpdate()
+   void FixedUpdate()
    {
       GenerateFuel();
       lockXYrotation();
       LockZposition();
    }
 
-   private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
+   int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
 
-   private int GasPercent { get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); } }
+   int GasPercent { get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); } }
 
-   private void GenerateFuel()
+   void GenerateFuel()
    {
       fuelLevel += Time.deltaTime * FUEL_GEN_RATE;
       if (fuelLevel > FUEL_MAX) fuelLevel = FUEL_MAX;
@@ -319,7 +318,7 @@ public class Player : MonoBehaviour
       DoGasUpdate();
    }
 
-   private void HideTutorial()
+   void HideTutorial()
    {
       timeKeeper.Begin();
       tutorialIsVisible = false;
@@ -327,7 +326,7 @@ public class Player : MonoBehaviour
       uiControl.Visible = true;
    }
 
-   private void IndicateMode()
+   void IndicateMode()
    {
       if (!casualMode)
       {
@@ -341,7 +340,7 @@ public class Player : MonoBehaviour
             ApplyColour.Close;
    }
 
-   private void Init()
+   void Init()
    {
       audioSources            = GetComponents<AudioSource>();
       thisRigidbody           = GetComponent<Rigidbody>();
@@ -397,17 +396,17 @@ public class Player : MonoBehaviour
 
    public void Invulnerable() { invulnerable = !invulnerable; }
 
-   private void LockZposition()
+   void LockZposition()
    {
       transform.position = new Vector3(transform.position.x, transform.position.y, 0.0f); // Lock Z position.
    }
 
-   private void lockXYrotation()
+   void lockXYrotation()
    {
       transform.rotation = Quaternion.Euler(0.0f, 0.0f, transform.rotation.eulerAngles.z); // Lock XY rotation.
    }
 
-   private void OnCollisionEnter(Collision collision)
+   void OnCollisionEnter(Collision collision)
    {
       if (collision.gameObject.tag == "BadObject_01")
       {
@@ -435,12 +434,12 @@ public class Player : MonoBehaviour
       }
    }
 
-   private void OnGUI()
+   void OnGUI()
    {
       if (debugMode) GUI.Label(new Rect(0, 0, 100, 100), "<color=\"Red\">" + FrameRate + "</color>");
    }
 
-   private void OnTriggerEnter(Collider other)
+   void OnTriggerEnter(Collider other)
    {
       if (other.gameObject.tag == "GoodObject_01")
       {
@@ -488,7 +487,7 @@ public class Player : MonoBehaviour
       return paused;
    }
 
-   private void Restart()
+   void Restart()
    {
       fishPool.Reset();
       fuelLevel = FUEL_MAX;
@@ -505,7 +504,7 @@ public class Player : MonoBehaviour
       restarting = false;
    }
 
-   private void Rotate(float direction)
+   void Rotate(float direction)
    {
       transform.Rotate(Vector3.back * ROTATION_FACTOR * Time.fixedDeltaTime * direction);
       SpewRotationBubbles();
@@ -519,7 +518,7 @@ public class Player : MonoBehaviour
       DoPowerUpdate();
    }
 
-   private void SpewRotationBubbles()
+   void SpewRotationBubbles()
    {
       float rotationLightLevel = 0.25f; // minimum 25%
       if (thrustBubbles.rateOverTime.constant < EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_ROTATION);
@@ -527,14 +526,14 @@ public class Player : MonoBehaviour
          thrustLight.GetComponent<Light>().range = THRUST_LIGHTRANGE_MAX * rotationLightLevel;
    }
 
-   private void StopRotationBubbles()
+   void StopRotationBubbles()
    {
       if (thrustBubbles.rateOverTime.constant == EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_INACTIVE);
    }
 
-   private void Start() { Init(); }
+   void Start() { Init(); }
 
-   private void Thrust(float force)
+   void Thrust(float force)
    {
       Vector3 appliedForce = baseThrust * thrustPowerSlider.value * THRUST_FACTOR * Time.deltaTime * force; 
       thisRigidbody.AddRelativeForce(appliedForce);
@@ -554,3 +553,6 @@ public class Player : MonoBehaviour
       }
    }
 }
+
+/// Other license terms:
+// https://freesound.org/people/reinsamba/sounds/35631/ : https://creativecommons.org/licenses/by/3.0/ : bonusSound

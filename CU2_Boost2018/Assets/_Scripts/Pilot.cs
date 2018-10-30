@@ -2,15 +2,15 @@
 
 public class Pilot : MonoBehaviour
 {
-   private static bool      masterPilot = false;
-   private static int       highScore;
-   private static int       rank;
-   private static string    id;
-   private static string    unique;
+   static bool      masterPilot = false;
+   static int       highScore;
+   static int       rank;
+   static string    id;
+   static string    unique;
 
-   private Pilot_ID_Field pilot_ID_Field;
+   Pilot_ID_Field pilot_ID_Field;
 
-   private void Awake()
+   void Awake()
    {
       highScore = 0;
       rank = 0;
@@ -46,7 +46,7 @@ public class Pilot : MonoBehaviour
 
    public int Rank { get { return rank; } set { rank = value; } }
 
-   private void Start() { pilot_ID_Field = FindObjectOfType<Pilot_ID_Field>(); }
+   void Start() { pilot_ID_Field = FindObjectOfType<Pilot_ID_Field>(); }
 
    public string Unique { get { return unique; } }
 }

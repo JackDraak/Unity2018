@@ -5,18 +5,18 @@ public class Pilot_ID_Field : MonoBehaviour
 {
    [SerializeField] TextMeshProUGUI tmpUGUI;
 
-   private Pilot pilot;
-   private Records records;
-   private TMP_InputField inputField;
+   Pilot pilot;
+   Records records;
+   TMP_InputField inputField;
 
-   private void Awake()
+   void Awake()
    {
       inputField = GetComponent<TMP_InputField>();
       records = FindObjectOfType<Records>();
       pilot = FindObjectOfType<Pilot>();
    }
 
-   //private void OnRenderObject()
+   //void OnRenderObject()
    //{
    //   if (PilotID != pilot.ID)
    //   {

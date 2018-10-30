@@ -2,12 +2,12 @@
 
 public class FishDrone : MonoBehaviour
 {
-   private Animator animator;
+   Animator animator;
 
-   private bool enhancedLogging = true;
-   private bool proximityAlert;
+   bool enhancedLogging = true;
+   bool proximityAlert;
 
-   private class WhiskerSet
+   class WhiskerSet
    {
       public Vector3 fore;
       public Vector3 port;
@@ -16,42 +16,42 @@ public class FishDrone : MonoBehaviour
       public Vector3 upper;
    }
 
-   private float suggestedTurnRate, baseCurrentTurnRate, activeTurnRate;
-   private float lastContact;
-   private float newSpeed, speed; 
-   private float raycastSleepTime;
-   private float revTime;
-   private float roughScale, scaleFactor;
-   private float speedChageDelay, speedChangeTime;
-   private float speedScaleFactor;
+   float suggestedTurnRate, baseCurrentTurnRate, activeTurnRate;
+   float lastContact;
+   float newSpeed, speed; 
+   float raycastSleepTime;
+   float revTime;
+   float roughScale, scaleFactor;
+   float speedChageDelay, speedChangeTime;
+   float speedScaleFactor;
 
-   private int group;
-   private int id;
-   private int layerMask;
+   int group;
+   int id;
+   int layerMask;
 
-   private Quaternion startQuaternion;
+   Quaternion startQuaternion;
 
-   private Vector3 startPosition;
+   Vector3 startPosition;
 
-   private WhiskerSet whiskerSet;
+   WhiskerSet whiskerSet;
 
-   private const float ANIMATION_SPEED_FACTOR = 1.8f;
-   private const float RAYCAST_SLEEP_DELAY = 0.333f / GROUP_MAX;
-   private const float SPEED_MAX = 1.2f;
-   private const float SPEED_MIN = 0.2f;
+   const float ANIMATION_SPEED_FACTOR = 1.8f;
+   const float RAYCAST_SLEEP_DELAY = 0.333f / GROUP_MAX;
+   const float SPEED_MAX = 1.2f;
+   const float SPEED_MIN = 0.2f;
 
-   private const int GROUP_MAX = 7;
+   const int GROUP_MAX = 7;
 
-   private static int rayGroup = 0;
+   static int rayGroup = 0;
 
-   private void BeFishy()
+   void BeFishy()
    {
       if (Time.time > raycastSleepTime) CycleRaycastGroups();
       Motivate();
    }
 
    // TODO look into using a NavMesh someday? (It's probably the only realistic way to get a larger number of drones).
-   private bool CheckFlanks(RaycastHit hitPort, RaycastHit hitStarboard)
+   bool CheckFlanks(RaycastHit hitPort, RaycastHit hitStarboard)
    {
       const float RAYCAST_CORRECTION_FACTOR = 9.0f;
       const float REVERSE_DELAY = 6.0f;
@@ -80,7 +80,7 @@ public class FishDrone : MonoBehaviour
       return false;
    }
 
-   private void CycleRaycastGroups()
+   void CycleRaycastGroups()
    {
       group++;
       if (group > GROUP_MAX)
@@ -91,7 +91,7 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void DetectNeighbors(out RaycastHit hitPort, out RaycastHit hitPortLow, out RaycastHit hitStarbord, out RaycastHit hitStarbordLow)
+   void DetectNeighbors(out RaycastHit hitPort, out RaycastHit hitPortLow, out RaycastHit hitStarbord, out RaycastHit hitStarbordLow)
    {
       const float RAYCAST_DRAWTIME = 3.0f;
       const float RAYCAST_MAX_DISTANCE = 1.33f;
@@ -144,14 +144,14 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void DetermineTurnRate(RaycastHit hitPortHigh, RaycastHit hitPortLow, RaycastHit hitStarboardHigh, RaycastHit hitStarboardLow)
+   void DetermineTurnRate(RaycastHit hitPortHigh, RaycastHit hitPortLow, RaycastHit hitStarboardHigh, RaycastHit hitStarboardLow)
    {
       if (CheckFlanks(hitPortHigh, hitStarboardHigh)) { } // Respond to upper raycastHits,
       else if (CheckFlanks(hitPortLow, hitStarboardLow)) { } // or check lower raycastHits.
       else suggestedTurnRate = baseCurrentTurnRate; // If there are no hits, revert to base turnRate.
    }
 
-   private void DirectionChanger()
+   void DirectionChanger()
    {
       const float CHANGE_TURN_DELAY = 5.0f;
 
@@ -162,20 +162,20 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private bool FiftyFifty { get { return (Mathf.FloorToInt(Random.Range(0, 2)) == 1); } }
+   bool FiftyFifty { get { return (Mathf.FloorToInt(Random.Range(0, 2)) == 1); } }
 
-   private void FixedUpdate() { BeFishy(); }
+   void FixedUpdate() { BeFishy(); }
 
-   private static int GetGroupID()
+   static int GetGroupID()
    {
       rayGroup++;
       if (rayGroup > GROUP_MAX) rayGroup = 0;
       return rayGroup;
    }
 
-   private Vector3 GetNewScale { get { return new Vector3(Scale, Scale, Scale); } }
+   Vector3 GetNewScale { get { return new Vector3(Scale, Scale, Scale); } }
 
-   private void Init()
+   void Init()
    {
       Vector3 scale = GetNewScale;
       SetLocalScale(scale);
@@ -195,9 +195,9 @@ public class FishDrone : MonoBehaviour
       whiskerSet = new WhiskerSet();
    }
 
-   private bool IsPositive(float value) { return value > 0; }
+   bool IsPositive(float value) { return value > 0; }
 
-   private void LerpSpeed()
+   void LerpSpeed()
    {
       const float LERP_FACTOR_FOR_SPEED = 0.09f;
 
@@ -209,7 +209,7 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void LerpTurn()
+   void LerpTurn()
    {
       const float LERP_FACTOR_FOR_TURN = 0.18f;
 
@@ -220,7 +220,7 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void Motivate()
+   void Motivate()
    {
       Vector3 vector3 = Vector3.zero;
       LerpTurn();
@@ -231,7 +231,7 @@ public class FishDrone : MonoBehaviour
       if (speedChangeTime + speedChageDelay < Time.time) SetNewRandomSpeed();
    }
 
-   private void OnCollisionEnter(Collision collision)
+   void OnCollisionEnter(Collision collision)
    {
       if (collision.gameObject.tag == "Player")
       {
@@ -241,7 +241,7 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private void PlanPath()
+   void PlanPath()
    {
       DirectionChanger();
       if (Time.time > raycastSleepTime)
@@ -263,7 +263,7 @@ public class FishDrone : MonoBehaviour
       }
    }
 
-   private float Scale
+   float Scale
    { get
       { 
       const float SCALE_MAX = 1.8f;
@@ -274,16 +274,16 @@ public class FishDrone : MonoBehaviour
 
    public void SetID(int _id) { id = _id; } // Simply for debugging output.
 
-   private void SetLocalScale(Vector3 scale) { transform.localScale = scale; }
+   void SetLocalScale(Vector3 scale) { transform.localScale = scale; }
 
-   private void SetNewOrientation()
+   void SetNewOrientation()
    {
       Vector3 thisRotation = Vector3.zero;
       thisRotation.y = Random.Range(0f, 360f);
       transform.Rotate(thisRotation, Space.Self);
    }
 
-   private void SetNewRandomSpeed()
+   void SetNewRandomSpeed()
    {
       const float CHANGE_TIME_MAX = 16.0f;
       const float CHANGE_TIME_MIN = 4.0f;
@@ -293,7 +293,7 @@ public class FishDrone : MonoBehaviour
       newSpeed = Random.Range(SPEED_MIN, SPEED_MAX);
    }
 
-   private void SetNewTurnRate()
+   void SetNewTurnRate()
    {
       const float TURNRATE_MAX = 10.0f;
       const float TURNRATE_MIN = 5.0f;
@@ -302,7 +302,7 @@ public class FishDrone : MonoBehaviour
       if (FiftyFifty) baseCurrentTurnRate = -baseCurrentTurnRate;
    }
 
-   private void SetWhiskerVectors()
+   void SetWhiskerVectors()
    {
       const float RAYCAST_DETECTION_ANGLE = 28.0f;
       const float RAYCAST_VERTICAL_OFFSET = 0.07f;
@@ -329,7 +329,7 @@ public class FishDrone : MonoBehaviour
       //}
    }
 
-   private void Start()
+   void Start()
    {
       animator = GetComponent<Animator>();
       startPosition = transform.position;
@@ -340,7 +340,7 @@ public class FishDrone : MonoBehaviour
    }
 
    // Set dynamic animation speed (~slower for larger fish, ~faster for smaller fish).
-   private void TuneAnimationSpeed(Vector3 scale) 
+   void TuneAnimationSpeed(Vector3 scale) 
    {
       const float ANIMATION_SCALING_LARGE = 0.4f;
       const float ANIMATION_SCALING_MED = 0.7f;

@@ -6,16 +6,16 @@ public class Timekeeper : MonoBehaviour
    public bool Running { get { return started; } }
    public char Splitter { get { return '~'; } }
 
-   private bool finished = false;
-   private bool started = false;
-   private dreamloLeaderBoard leaderboard;
-   private float elapsed = 0f;
-   private float endTime = 0f;
-   private float startTime = 0f;
-   private Pilot pilot;
-   private Player player;
-   private Records records = null;
-   private TextMeshProUGUI timerText = null;
+   bool finished = false;
+   bool started = false;
+   dreamloLeaderBoard leaderboard;
+   float elapsed = 0f;
+   float endTime = 0f;
+   float startTime = 0f;
+   Pilot pilot;
+   Player player;
+   Records records = null;
+   TextMeshProUGUI timerText = null;
 
    public void Begin()
    {
@@ -40,7 +40,7 @@ public class Timekeeper : MonoBehaviour
       records.Parse();
    }
 
-   private void DoTimerUpdate()
+   void DoTimerUpdate()
    {
       if (!started && !finished) timerText.text = 
             "Touching the Controls Will Start the Timer: " + ApplyColour.Green + "0.0 seconds" + ApplyColour.Close;
@@ -69,7 +69,7 @@ public class Timekeeper : MonoBehaviour
       startTime = 0f;
    }
 
-   private void Start()
+   void Start()
    {
       leaderboard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
       pilot = FindObjectOfType<Pilot>();
@@ -79,5 +79,5 @@ public class Timekeeper : MonoBehaviour
       Restart();
    }
 
-   private void Update() { DoTimerUpdate(); }
+   void Update() { DoTimerUpdate(); }
 }

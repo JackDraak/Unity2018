@@ -5,34 +5,34 @@ public class FishPool : MonoBehaviour
 {
    [SerializeField] GameObject fishPrefab; // TODO make this an array, get more fish!? (Low priority).
 
-   private Fish[] fishes;
-   private FishSpawn[] spawnPoints;
-   private int dynamicPoolSize;
-   private int spawnPercent;
-   private int updatedFrameRate;
-   private Transform xform;
+   Fish[] fishes;
+   FishSpawn[] spawnPoints;
+   int dynamicPoolSize;
+   int spawnPercent;
+   int updatedFrameRate;
+   Transform xform;
 
-   private struct Fish
+   struct Fish
    {
       public bool on;
       public float onTime;
       public GameObject fishObject;
    }
 
-   private int Bound(int test)
+   int Bound(int test)
    {
       if (test > 100) test = 100;
       else if (test < 0) test = 0;
       return test;
    }
 
-   private void CorrectPoolSize()
+   void CorrectPoolSize()
    {
       int newTarget = SpawnCap - CountPool;
       if (newTarget > 0) GrowPool(newTarget);
    }
 
-   private int CountActive
+   int CountActive
    {
       get
       {
@@ -42,12 +42,12 @@ public class FishPool : MonoBehaviour
       }
    }
 
-   private bool CountFull { get { return (CountActive == SpawnCap); } }
-   private bool CountOver { get { return (CountPool > SpawnCap); } }
-   private int CountPool { get { return fishes.Length; } }
-   private bool CountUnder { get { return (CountActive < SpawnCap); } }
+   bool CountFull { get { return (CountActive == SpawnCap); } }
+   bool CountOver { get { return (CountPool > SpawnCap); } }
+   int CountPool { get { return fishes.Length; } }
+   bool CountUnder { get { return (CountActive < SpawnCap); } }
 
-   private void CreateFishObject(int index)
+   void CreateFishObject(int index)
    {
       fishes[index].fishObject = Instantiate(fishPrefab, transform.position, Quaternion.identity, transform);
       fishes[index].fishObject.SetActive(false);
@@ -55,9 +55,9 @@ public class FishPool : MonoBehaviour
       fishes[index].onTime = 0;
    }
 
-   private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
+   int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
 
-   private void GrowPool(int delta)
+   void GrowPool(int delta)
    {
       // Place current array in temp storage.
       Fish[] temp = new Fish[dynamicPoolSize];
@@ -95,7 +95,7 @@ public class FishPool : MonoBehaviour
       Debug.Log("FishPool PartialSpawn() pool size: " + CountPool + ". Total active count: " + CountActive);
    }
 
-   private void PlaceFish(Transform xform)
+   void PlaceFish(Transform xform)
    {
       if (SpawnCap == CountActive) return;
 
@@ -108,7 +108,7 @@ public class FishPool : MonoBehaviour
       RecycleFish(xform, poolIndex);
    }
 
-   private Transform RandomFreeTransform()
+   Transform RandomFreeTransform()
    {
       Transform[] emptySpawnPoints = new Transform[spawnPoints.Length];
       int emptyCount = 0;
@@ -137,7 +137,7 @@ public class FishPool : MonoBehaviour
       }
    }
 
-   private void RecycleFish(Transform xform, int poolIndex)
+   void RecycleFish(Transform xform, int poolIndex)
    {
       fishes[poolIndex].on = true;
       fishes[poolIndex].onTime = Time.time;
@@ -155,7 +155,7 @@ public class FishPool : MonoBehaviour
       StartCoroutine(TunedSpawn());
    }
 
-   private void Spawn()
+   void Spawn()
    {
       for (int i = 0; i < SpawnCap; i++)
       {
@@ -165,9 +165,9 @@ public class FishPool : MonoBehaviour
       }
    }
 
-   private int SpawnCap { get { return Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f)); } }
+   int SpawnCap { get { return Mathf.FloorToInt(spawnPoints.Length * (spawnPercent / 100f)); } }
 
-   private void Start()
+   void Start()
    {
       spawnPoints = GetComponentsInChildren<FishSpawn>();
       dynamicPoolSize = SpawnCap;

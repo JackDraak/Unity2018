@@ -3,8 +3,8 @@
 [RequireComponent(typeof(AudioSource))]
 public class MusicPlayer : MonoBehaviour
 {
-   private AudioSource audioSource;
-   private bool paused = false;
+   AudioSource audioSource;
+   bool paused = false;
 
    public void Pause()
    {
@@ -13,7 +13,7 @@ public class MusicPlayer : MonoBehaviour
       else audioSource.Play();
    }
 
-   private void Start()
+   void Start()
    {
       audioSource = GetComponent<AudioSource>();
 	}

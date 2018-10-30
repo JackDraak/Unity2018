@@ -17,24 +17,24 @@ public class PickupTracker : MonoBehaviour
    [SerializeField] TextMeshProUGUI text_countdown;
    [SerializeField] TextMeshProUGUI text_subCountdown;
 
-   private enum Task { _0, _1, _2, _3, _4, _5, _6, _7 }
-   private enum Level { _0, _1, _2, _3, _4, _5, _6, _7, bonusLevel }
+   enum Task { _0, _1, _2, _3, _4, _5, _6, _7 }
+   enum Level { _0, _1, _2, _3, _4, _5, _6, _7, bonusLevel }
 
-   private Task task = Task._0;
-   private Level level = Level._0;
+   Task task = Task._0;
+   Level level = Level._0;
 
-   private bool complete, spawning;
-   private float maxPower, priorPercent;
-   private float pickupPercent = 0;
-   private int count = 0;
-   private int highCount;
-   private GameObject[] pickupsArray;
-   private GameObject[] spawnPointsArray;
-   private List<Collider> claimedPickups;
-   private TextMeshProUGUI text_tracker;
-   private Timekeeper timeKeeper;
+   bool complete, spawning;
+   float maxPower, priorPercent;
+   float pickupPercent = 0;
+   int count = 0;
+   int highCount;
+   GameObject[] pickupsArray;
+   GameObject[] spawnPointsArray;
+   List<Collider> claimedPickups;
+   TextMeshProUGUI text_tracker;
+   Timekeeper timeKeeper;
 
-   private void Awake()
+   void Awake()
    {
       text_tracker = GetComponent<TextMeshProUGUI>();
       spawnPointsArray = GameObject.FindGameObjectsWithTag("Spawn_Good");
@@ -55,7 +55,7 @@ public class PickupTracker : MonoBehaviour
    }
 
    // TODO update this when apropriate
-   private IEnumerator Congratulations()
+   IEnumerator Congratulations()
    {
       int flashCycles = 12;
       float flashPause = 0.666f;
@@ -77,7 +77,7 @@ public class PickupTracker : MonoBehaviour
          if (spawnPoint.transform.childCount != 0) Destroy(spawnPoint.transform.GetChild(0).gameObject); 
    }
 
-   private IEnumerator DoCountdown(int downCount)
+   IEnumerator DoCountdown(int downCount)
    {
       int n = downCount - 1;
       if (player.casualMode) text_subCountdown.text = "...prepare for reset...";
@@ -94,7 +94,7 @@ public class PickupTracker : MonoBehaviour
       text_subCountdown.text = "";
    }
 
-   private IEnumerator DoSpawn()
+   IEnumerator DoSpawn()
    {
       spawning = true;
       DespawnAll();
@@ -108,7 +108,7 @@ public class PickupTracker : MonoBehaviour
       complete = false;
    }
 
-   private void FillPosition(Transform position)
+   void FillPosition(Transform position)
    {
       Vector3 p = position.transform.position;
       Quaternion q = Quaternion.identity;
@@ -119,7 +119,7 @@ public class PickupTracker : MonoBehaviour
 
    public float PickupPercent { get { return pickupPercent; } }
 
-   private GameObject RandomFreePosition()
+   GameObject RandomFreePosition()
    {
       GameObject[] emptySpawnPoints = new GameObject[spawnPointsArray.Length];
       int inCount = 0;
@@ -137,7 +137,7 @@ public class PickupTracker : MonoBehaviour
 
    public void Restart() { StartCoroutine(DoSpawn()); }
 
-   private void ReviewObjectives()
+   void ReviewObjectives()
    {
       if (count == 0)
       {
@@ -163,7 +163,7 @@ public class PickupTracker : MonoBehaviour
       }
    }
 
-   private void SpawnAll()
+   void SpawnAll()
    {
       count = 0;
       do { SpawnRandomSpawnpoint(); count++; }
@@ -171,7 +171,7 @@ public class PickupTracker : MonoBehaviour
       highCount = count;
    }
 
-   private void SpawnPercent(int percent)
+   void SpawnPercent(int percent)
    {
       if (percent < 0) return;
       if (percent > 100) percent = 100;
@@ -184,27 +184,27 @@ public class PickupTracker : MonoBehaviour
       }
    }
 
-   private bool SpawnPointIsEmpty()
+   bool SpawnPointIsEmpty()
    {
       if (RandomFreePosition()) return true;
       else return false;
    }
 
-   private void SpawnRandomSpawnpoint()
+   void SpawnRandomSpawnpoint()
    {
       GameObject freePos = RandomFreePosition();
       if (freePos) FillPosition(freePos.transform);
       else Debug.LogWarning("PickupTracker:SpawnRandomSpawnpoint: unable to find freePos for FillPosition().");
    }
 
-   private int SpawnTally()
+   int SpawnTally()
    {
       int spawnTally = 0;
       foreach (GameObject spawnPoint in spawnPointsArray) if (spawnPoint.transform.childCount > 0) spawnTally++;
       return spawnTally;
    }
 
-   private void Start()
+   void Start()
    {
       timeKeeper = FindObjectOfType<Timekeeper>();
       complete = spawning = false;
@@ -216,7 +216,7 @@ public class PickupTracker : MonoBehaviour
       StartCoroutine(DoSpawn());
    }
 
-   private void TrackPickups()
+   void TrackPickups()
    {
       // While in play, check tasklist objectives:
       if (!complete && !spawning) ReviewObjectives();
@@ -238,9 +238,9 @@ public class PickupTracker : MonoBehaviour
 
    public void TriggerCountdown(int delay) { StartCoroutine(DoCountdown(delay)); }
 
-   private void Update() { TrackPickups(); }
+   void Update() { TrackPickups(); }
 
-   private void WinRound()
+   void WinRound()
    {
       complete = true;
       timeKeeper.Cease(highCount);
