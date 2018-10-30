@@ -58,7 +58,7 @@ public class Player : MonoBehaviour
    private const float EMISSION_RATE_THRUST = 60f;
    private const float EXPEL_RATE_ROTATE = 0.5f;
    private const float EXPEL_RATE_THRUST = 1f;
-   private const float FUEL_GEN_RATE = 25f; // 40 // need to find a balance where sinking is inevitable at any power level, based on gen alone
+   private const float FUEL_GEN_RATE = 25f; // need to find a balance where sinking is inevitable at any power level, based on gen alone
    private const float FUEL_MAX = 1000f;
    private const float FUEL_PICKUP_VALUE = 200f;
    private const float FUEL_POWER_FACTOR = 0.75f;
@@ -90,6 +90,7 @@ public class Player : MonoBehaviour
    private bool debugMode, deRotating, invulnerable, paused, thrustAudioTrack, tutorialIsVisible;
 
    private FishDrone[] fishDrones;
+
    private FishPool fishPool;
 
    private float deRotationTime, thrustAudioLength, thrustAudioTimer;
@@ -205,7 +206,7 @@ public class Player : MonoBehaviour
 
    public void CancelThrustAudio()
    {
-      thrustAudio.Stop();
+      if (thrustAudio.isPlaying) thrustAudio.Stop();
       thrustAudioTimer = Time.time - thrustAudioLength;
    }
 
@@ -264,7 +265,8 @@ public class Player : MonoBehaviour
       thrustFill.color = colour;
       if (fuelLevel > 0 && fuelLevel < FUEL_WARN_LEVEL) colour = Color.red;
       thrusterBell.GetComponent<MeshRenderer>().material.color = thrustLight.GetComponent<Light>().color = colour;
-      if (thrustPowerSlider.value == THRUST_POWER_BASE) sliderText = "Power Level"+ ApplyColour.Blue + "(at minimum)" + ApplyColour.Close + ": ";
+      if (thrustPowerSlider.value == THRUST_POWER_BASE)
+         sliderText = "Power Level"+ ApplyColour.Blue + "(at minimum)" + ApplyColour.Close + ": ";
       else sliderText = "Power Level: ";
       int currentPercent = Mathf.FloorToInt(100 - (100 * ((THRUST_MAX - thrustPowerSlider.value) / THRUST_MAX)));
       powerSlideText.text = sliderText + ApplyColour.Green + currentPercent + "%" + ApplyColour.Close;
@@ -306,6 +308,7 @@ public class Player : MonoBehaviour
    }
 
    private int FrameRate { get { return (int)(1.0f / Time.smoothDeltaTime); } }
+
    private int GasPercent { get { return Mathf.FloorToInt(100 - (100 * ((FUEL_MAX - fuelLevel) / FUEL_MAX))); } }
 
    private void GenerateFuel()
@@ -331,10 +334,14 @@ public class Player : MonoBehaviour
          casualModeIndicatorText.text = "";
          if (pickupTracker.Count == 0 && !restarting && Time.time > 1) AutoRestart();
       }
-      else casualModeIndicatorText.text = ApplyColour.Green + "~" + ApplyColour.Close + " Casual Mode " + ApplyColour.Green + "~" + ApplyColour.Close;
+      else casualModeIndicatorText.text = 
+            ApplyColour.Green + "~" + 
+            ApplyColour.Close + " Casual Mode " + 
+            ApplyColour.Green + "~" + 
+            ApplyColour.Close;
    }
 
-   private void InitVars()
+   private void Init()
    {
       audioSources            = GetComponents<AudioSource>();
       thisRigidbody           = GetComponent<Rigidbody>();
@@ -525,7 +532,7 @@ public class Player : MonoBehaviour
       if (thrustBubbles.rateOverTime.constant == EMISSION_RATE_ROTATION) AdjustEmissionRate(EMISSION_RATE_INACTIVE);
    }
 
-   private void Start() { InitVars(); }
+   private void Start() { Init(); }
 
    private void Thrust(float force)
    {

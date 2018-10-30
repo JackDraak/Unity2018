@@ -4,8 +4,8 @@ public class FishDrone : MonoBehaviour
 {
    private Animator animator;
 
-   private bool caution;
-   private bool enhancedLogging = false;
+   private bool enhancedLogging = true;
+   private bool proximityAlert;
 
    private class WhiskerSet
    {
@@ -16,7 +16,7 @@ public class FishDrone : MonoBehaviour
       public Vector3 upper;
    }
 
-   private float activeTurnRate, baseCurrentTurnRate, lerpTurnRate;
+   private float suggestedTurnRate, baseCurrentTurnRate, activeTurnRate;
    private float lastContact;
    private float newSpeed, speed; 
    private float raycastSleepTime;
@@ -26,11 +26,12 @@ public class FishDrone : MonoBehaviour
    private float speedScaleFactor;
 
    private int group;
+   private int id;
    private int layerMask;
 
-   private Quaternion startQuat;
+   private Quaternion startQuaternion;
 
-   private Vector3 startPos;
+   private Vector3 startPosition;
 
    private WhiskerSet whiskerSet;
 
@@ -49,6 +50,7 @@ public class FishDrone : MonoBehaviour
       Motivate();
    }
 
+   // TODO look into using a NavMesh someday? (It's probably the only realistic way to get a larger number of drones).
    private bool CheckFlanks(RaycastHit hitPort, RaycastHit hitStarboard)
    {
       const float RAYCAST_CORRECTION_FACTOR = 9.0f;
@@ -58,16 +60,19 @@ public class FishDrone : MonoBehaviour
       if (hitPort.distance > 0 || hitStarboard.distance > 0)
       {
          lastContact = Time.time;
-         activeTurnRate = baseCurrentTurnRate * RAYCAST_CORRECTION_FACTOR;
+         suggestedTurnRate = baseCurrentTurnRate * RAYCAST_CORRECTION_FACTOR;
          if (hitPort.distance > 0 && hitStarboard.distance > 0)
          {
             // When there are neighbors on both sides, if course is toward closer target then invert course (but not too often).
-            if (((hitPort.distance > hitStarboard.distance && activeTurnRate > 0)
-               || (hitPort.distance < hitStarboard.distance && activeTurnRate > 0))
+            if (((hitPort.distance > hitStarboard.distance && suggestedTurnRate > 0)
+               || (hitPort.distance < hitStarboard.distance && suggestedTurnRate < 0))
                && revTime < Time.time)
             {
-               activeTurnRate = -activeTurnRate;
                revTime = Time.time + REVERSE_DELAY;
+               suggestedTurnRate = -suggestedTurnRate;
+               // A different way to do an "IF" evaluation.
+               string debugString = "Drone:" + id + " reversing to " + (IsPositive(activeTurnRate) ? "starboard." : "port.");
+               ///Debug.Log(debugString);
             }
          }
          return true;
@@ -93,10 +98,10 @@ public class FishDrone : MonoBehaviour
 
       // Look ahead.
       bool fl = Physics.Raycast(whiskerSet.lower, whiskerSet.fore, RAYCAST_MAX_DISTANCE, layerMask);
-      bool fh = Physics.Raycast(whiskerSet.upper, whiskerSet.fore, RAYCAST_MAX_DISTANCE, layerMask);
-      if (fl || fh)
+      bool fu = Physics.Raycast(whiskerSet.upper, whiskerSet.fore, RAYCAST_MAX_DISTANCE, layerMask);
+      if (fl || fu)
       {
-         caution = true;
+         proximityAlert = true;
          newSpeed = Mathf.Lerp(speed, speed * 0.2f, 1 / newSpeed);
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          lastContact = Time.time;
@@ -106,16 +111,16 @@ public class FishDrone : MonoBehaviour
             Debug.DrawRay(whiskerSet.upper, whiskerSet.fore, Color.yellow, RAYCAST_DRAWTIME);
          }
       }
-      else if (caution)
+      else if (proximityAlert)
       {
-         caution = false;
+         proximityAlert = false;
          SetNewRandomSpeed();
       }
 
       // Look to port.
       bool pl = Physics.Raycast(whiskerSet.lower, whiskerSet.port, out hitPortLow, RAYCAST_MAX_DISTANCE, layerMask);
-      bool ph = Physics.Raycast(whiskerSet.upper, whiskerSet.port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
-      if (pl || ph)
+      bool pu = Physics.Raycast(whiskerSet.upper, whiskerSet.port, out hitPort, RAYCAST_MAX_DISTANCE, layerMask);
+      if (pl || pu)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          if (enhancedLogging)
@@ -127,8 +132,8 @@ public class FishDrone : MonoBehaviour
 
       // Look to starboard.
       bool sl = Physics.Raycast(whiskerSet.lower, whiskerSet.starboard, out hitStarbordLow, RAYCAST_MAX_DISTANCE, layerMask);
-      bool sh = Physics.Raycast(whiskerSet.upper, whiskerSet.starboard, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
-      if (sl || sh)
+      bool su = Physics.Raycast(whiskerSet.upper, whiskerSet.starboard, out hitStarbord, RAYCAST_MAX_DISTANCE, layerMask);
+      if (sl || su)
       {
          raycastSleepTime = Time.time + RAYCAST_SLEEP_DELAY;
          if (enhancedLogging)
@@ -141,11 +146,9 @@ public class FishDrone : MonoBehaviour
 
    private void DetermineTurnRate(RaycastHit hitPortHigh, RaycastHit hitPortLow, RaycastHit hitStarboardHigh, RaycastHit hitStarboardLow)
    {
-      if (CheckFlanks(hitPortHigh, hitStarboardHigh)) { } // Respond to upper raycasts,
-      else if (CheckFlanks(hitPortLow, hitStarboardLow)) { } // or check lower raycasts.
-      // If there are no hits, revert to normal turnRate.
-      else activeTurnRate = baseCurrentTurnRate;
-
+      if (CheckFlanks(hitPortHigh, hitStarboardHigh)) { } // Respond to upper raycastHits,
+      else if (CheckFlanks(hitPortLow, hitStarboardLow)) { } // or check lower raycastHits.
+      else suggestedTurnRate = baseCurrentTurnRate; // If there are no hits, revert to base turnRate.
    }
 
    private void DirectionChanger()
@@ -186,11 +189,13 @@ public class FishDrone : MonoBehaviour
 
       lastContact = 0;
       revTime = 0;
-      caution = false;
+      proximityAlert = false;
 
       group = GetGroupID();
       whiskerSet = new WhiskerSet();
    }
+
+   private bool IsPositive(float value) { return value > 0; }
 
    private void LerpSpeed()
    {
@@ -208,9 +213,9 @@ public class FishDrone : MonoBehaviour
    {
       const float LERP_FACTOR_FOR_TURN = 0.18f;
 
-      if (!(Mathf.Approximately(activeTurnRate, lerpTurnRate)))
+      if (!(Mathf.Approximately(suggestedTurnRate, activeTurnRate)))
       {
-         lerpTurnRate = Mathf.Lerp(lerpTurnRate, activeTurnRate, LERP_FACTOR_FOR_TURN);
+         activeTurnRate = Mathf.Lerp(activeTurnRate, suggestedTurnRate, LERP_FACTOR_FOR_TURN);
          ///if (enhancedLogging) Debug.Log(lerpTurnRate + " :lerpTurnRate | correctedTurnRate: " + correctedTurnRate);
       }
    }
@@ -220,7 +225,7 @@ public class FishDrone : MonoBehaviour
       Vector3 vector3 = Vector3.zero;
       LerpTurn();
       LerpSpeed();
-      vector3.y = Time.deltaTime * lerpTurnRate;
+      vector3.y = Time.deltaTime * activeTurnRate;
       transform.Rotate(vector3, Space.Self); // Turn.
       transform.Translate(Vector3.forward * Time.fixedDeltaTime * speed * speedScaleFactor, Space.Self); // Propel.
       if (speedChangeTime + speedChageDelay < Time.time) SetNewRandomSpeed();
@@ -252,8 +257,8 @@ public class FishDrone : MonoBehaviour
    {
       if (transform != null)
       {
-         transform.position = startPos;
-         transform.rotation = startQuat;
+         transform.position = startPosition;
+         transform.rotation = startQuaternion;
          Init();
       }
    }
@@ -266,6 +271,8 @@ public class FishDrone : MonoBehaviour
       return Random.Range(SCALE_MIN, SCALE_MAX);
       }
    }
+
+   public void SetID(int _id) { id = _id; } // Simply for debugging output.
 
    private void SetLocalScale(Vector3 scale) { transform.localScale = scale; }
 
@@ -325,8 +332,8 @@ public class FishDrone : MonoBehaviour
    private void Start()
    {
       animator = GetComponent<Animator>();
-      startPos = transform.position;
-      startQuat = transform.rotation;    
+      startPosition = transform.position;
+      startQuaternion = transform.rotation;    
       int defaultLayer = 0;
       layerMask = 1 << defaultLayer; // Applying a bitshift to create a 'mask'.
       Init();
@@ -344,7 +351,7 @@ public class FishDrone : MonoBehaviour
       const float SIZE_LARGE_BREAK = 3.0f;
       const float SIZE_MID_BREAK = 2.0f;
 
-      // Average the scales of the 3 planes; called 'rough' for a reason.
+      // Average the scales of the 3 planes; this is called 'roughScale' for a reason.
       roughScale = scale.x + scale.y + scale.z / 3.0f; 
       if (roughScale < SIZE_MID_BREAK)
       {

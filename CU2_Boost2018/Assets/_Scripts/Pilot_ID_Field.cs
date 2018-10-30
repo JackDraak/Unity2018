@@ -16,29 +16,14 @@ public class Pilot_ID_Field : MonoBehaviour
       pilot = FindObjectOfType<Pilot>();
    }
 
-   private void OnWillRenderObject()
-   {
-      Debug.Log("OnWillRenderObject");
-   }
-
-   private void OnRenderObject()
-   {
-      if (PilotID != pilot.ID)
-      {
-         Debug.Log("OnRenderObject ID mismatch " + inputField.text + " - " + PilotID + " - " + pilot.ID);
-         //PilotID = pilot.ID; // too greedy
-      }
-   }
-
-   private void OnBeforeTransformParentChanged()
-   {
-      Debug.Log("OnBeforeTransformParentChanged");
-   }
-
-   private void OnBecameInvisible()
-   {
-      Debug.Log("OnBecameInvisible");
-   }
+   //private void OnRenderObject()
+   //{
+   //   if (PilotID != pilot.ID)
+   //   {
+   //      Debug.Log("OnRenderObject ID mismatch " + inputField.text + " - " + PilotID + " - " + pilot.ID);
+   //      //PilotID = pilot.ID; // too greedy
+   //   }
+   //}
 
    public bool Enable { get { return inputField.interactable; } set { inputField.interactable = value; } }
 

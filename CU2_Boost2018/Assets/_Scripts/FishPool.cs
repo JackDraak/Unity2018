@@ -144,6 +144,7 @@ public class FishPool : MonoBehaviour
       fishes[poolIndex].fishObject.transform.parent = xform;
       fishes[poolIndex].fishObject.transform.position = xform.position;
       fishes[poolIndex].fishObject.SetActive(true);
+      fishes[poolIndex].fishObject.GetComponent<FishDrone>().SetID(poolIndex); // For debugging/interest.
    }
 
    public void Reset() { Respawn(); }

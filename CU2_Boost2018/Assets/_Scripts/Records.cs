@@ -147,11 +147,13 @@ public class Records : MonoBehaviour
       readout = GetComponent<TextMeshProUGUI>();
       timeKeeper = FindObjectOfType<Timekeeper>();
 
-      if (Application.platform == RuntimePlatform.WebGLPlayer) webGL = true;
+      if (WebGL) webGL = true;
       else leaderBoard.LoadScores();
 
       records.Clear();
       pilot_ID_Field.PilotID = pilot.ID;
       pilot_ID_Field.SetID(); // triggers a parse
    }
+
+   private bool WebGL { get { return (Application.platform == RuntimePlatform.WebGLPlayer); } }
 }
