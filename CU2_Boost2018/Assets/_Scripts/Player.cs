@@ -7,7 +7,7 @@
 //    TODO : setup a NavMesh and use it to help define a "spawn area" (for FishPool) along with the AI boundary 
 //           colliders and scenery colliders?
 
-//    TODO : Casual-mode get's casual music? HUD indicator(DONE) Something else?
+//    TODO : Casual-mode get's casual music?(DONE) HUD indicator(DONE) Something else?
 //    TODO : Improve tasklist format/content further?
 //    TODO : design a way to detroy the player.
 //    TODO : (change upper-left HUD?) Improve timer aesthetics?
@@ -103,6 +103,8 @@ public class Player : MonoBehaviour
    GameObject tutorialText;
 
    GlueCam glueCam;
+
+   MusicPlayer musicPlayer;
 
    ParticleSystem thrustParticleSystem;
 
@@ -328,6 +330,7 @@ public class Player : MonoBehaviour
 
    void IndicateMode()
    {
+      musicPlayer.CasualMode(casualMode);
       if (!casualMode)
       {
          casualModeIndicatorText.text = "";
@@ -349,6 +352,7 @@ public class Player : MonoBehaviour
       fishDrones              = FindObjectsOfType<FishDrone>();
       fishPool                = FindObjectOfType<FishPool>();
       glueCam                 = FindObjectOfType<GlueCam>();
+      musicPlayer             = FindObjectOfType<MusicPlayer>();
       pickupTracker           = FindObjectOfType<PickupTracker>();
       pilot                   = FindObjectOfType<Pilot>();
       timeKeeper              = FindObjectOfType<Timekeeper>();

@@ -8,7 +8,7 @@ public class Pilot : MonoBehaviour
    static string    id;
    static string    unique;
 
-   Pilot_ID_Field pilot_ID_Field;
+   Pilot_ID_Field   pilot_ID_Field;
 
    void Awake()
    {

@@ -62,7 +62,7 @@ public class Records : MonoBehaviour
          pilot.ID = "FrenchConnection";
 
       }
-      else if (pilot_ID_Field.PilotID == "BukarooBonzai") pilot.MasterPilot = true;
+      else if (pilot_ID_Field.PilotID.Contains("BukarooBonzai")) pilot.MasterPilot = true;
       else pilot.MasterPilot = false;
 
       yield return new WaitForSeconds(1.0f); // TODO Optimize this delay?
@@ -79,27 +79,27 @@ public class Records : MonoBehaviour
          pilot.Rank = 0;
          foreach (dreamloLeaderBoard.Score record in highScores)
          {
-            string[] temp = record.playerName.Split(timeKeeper.Splitter);
+            string[] userCredentials = record.playerName.Split(timeKeeper.Splitter);
             rank++;
             if (!global)
             {
                GlobalHighScore = record.score;
-               GlobalScorer = temp[0];
+               GlobalScorer = userCredentials[0];
                global = true;
             }
-            if (temp[0] == pilot.ID && temp[1] == pilot.Unique)
+            if (userCredentials[0] == pilot.ID && userCredentials[1] == pilot.Unique)
             {
                pilot.HighScore = record.score;
                pilot.Rank = rank;
             }
             if (rank <= 10)
             {
-               highStrings[rank] = (rank).ToString() + ". " + temp[0];
+               highStrings[rank] = (rank).ToString() + ". " + userCredentials[0];
                highStrings[rank] += " " + record.score + "\n";
             }
          }
-         Debug.Log("Records:GetHighScores() records: " + rank + " playerHigh: " + pilot.HighScore 
-            + ", Player Rank #" + pilot.Rank + ", ID: " + pilot.ID + " fieldID: " 
+         Debug.Log("Records:GetHighScores() # of Records: " + rank + " Player High: " + pilot.HighScore 
+            + ", Player Rank #" + pilot.Rank + ", ID: " + pilot.ID + " Field ID: " 
             + pilot_ID_Field.PilotID + " Master Pilot: " + pilot.MasterPilot);
          totalRankings = rank;
       }
@@ -118,7 +118,6 @@ public class Records : MonoBehaviour
    {
       int count = 0;
       readout.text = "<i><b>Time Records</b></i>\n";
-
       for (int i = 0; i < records.Count; i++)
       {
          if (records[i] != null) readout.text += records[i];
@@ -127,9 +126,11 @@ public class Records : MonoBehaviour
       }
       if (count > 0) readout.text += "<i>(seconds per canister)</i>\n";
       else readout.text += "<i>...gather all canisters to see your first record...</i>\n";
+
       string rankText;
       if (pilot.Rank == 0) rankText = "Unranked";
       else rankText = pilot.Rank.ToString();
+
       if (!webGL)
       {
          readout.text += "Global High Score: " + ApplyColour.Blue + GlobalHighScore + ApplyColour.Close + " by: " + GlobalScorer;
@@ -141,11 +142,11 @@ public class Records : MonoBehaviour
 
    void Start()
    {
-      leaderBoard = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
-      pilot = FindObjectOfType<Pilot>();
+      leaderBoard    = dreamloLeaderBoard.GetSceneDreamloLeaderboard();
+      pilot          = FindObjectOfType<Pilot>();
       pilot_ID_Field = FindObjectOfType<Pilot_ID_Field>();
-      readout = GetComponent<TextMeshProUGUI>();
-      timeKeeper = FindObjectOfType<Timekeeper>();
+      readout        = GetComponent<TextMeshProUGUI>();
+      timeKeeper     = FindObjectOfType<Timekeeper>();
 
       if (WebGL) webGL = true;
       else leaderBoard.LoadScores();

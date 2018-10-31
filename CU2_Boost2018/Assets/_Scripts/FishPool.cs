@@ -179,8 +179,8 @@ public class FishPool : MonoBehaviour
    {
       // Local setup.
       float spawnFactor = 1.222f;   // Fudge-factor for spawnrate/framerate conversion ratio.
-      int frameGap = 3;             // Must be 1 or greater. # of frames to skip between samples.
-      int testSamples = 5;          // # of sample framerates to use to calculate averageFrameRate.
+      int frameGap = 3;             // Must be 1 or greater: # of frames to skip between samples.
+      int testSamples = 5;          // # of samples to collect befor calculating averageFrameRate.
 
       // Set spawnPercent based on FrameRate.
       int averageFrameRate = 0;

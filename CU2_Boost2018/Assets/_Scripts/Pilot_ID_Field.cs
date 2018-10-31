@@ -16,15 +16,6 @@ public class Pilot_ID_Field : MonoBehaviour
       pilot = FindObjectOfType<Pilot>();
    }
 
-   //void OnRenderObject()
-   //{
-   //   if (PilotID != pilot.ID)
-   //   {
-   //      Debug.Log("OnRenderObject ID mismatch " + inputField.text + " - " + PilotID + " - " + pilot.ID);
-   //      //PilotID = pilot.ID; // too greedy
-   //   }
-   //}
-
    public bool Enable { get { return inputField.interactable; } set { inputField.interactable = value; } }
 
    public string PilotID { get { return tmpUGUI.text;  } set { tmpUGUI.text = value; } }
