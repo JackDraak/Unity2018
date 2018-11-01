@@ -4,23 +4,18 @@
 public class MusicPlayer : MonoBehaviour
 {
    [Tooltip("Music Selection needs two music loops (for regular & casual modes, respectively).")]
-   [SerializeField] MusicTrack[] musicSelection;
+   [SerializeField] AudioClip[] musicClips;
 
    AudioSource audioSource;
    bool paused = false;
+   float[] trackPosition;
    int alternateTrack;
-
-   struct MusicTrack
-   {
-      public AudioClip musicClip;
-      public float trackPosition;
-   }
 
    public void AlternateMusic()
    {
-      if (musicSelection.Length > 2)
+      if (musicClips.Length > 2)
       {
-         alternateTrack = (alternateTrack > musicSelection.Length - 1) ? 2 : alternateTrack++;
+         alternateTrack = (alternateTrack > musicClips.Length - 1) ? 2 : alternateTrack++;
          SetTrack(alternateTrack);
       }
    }
@@ -33,14 +28,16 @@ public class MusicPlayer : MonoBehaviour
 
    void SetTrack(int track)
    {
-      for (int i = 0; i < musicSelection.Length; i++)
+      // Remember what the current track position is.
+      for (int i = 0; i < musicClips.Length; i++)
       {
-         if (audioSource.clip == musicSelection[i].musicClip) musicSelection[i].trackPosition = audioSource.time;
+         if (audioSource.clip == musicClips[i]) trackPosition[i] = audioSource.time;
       }
       audioSource.Stop();
 
-      audioSource.clip = musicSelection[track].musicClip;
-      audioSource.time = musicSelection[track].trackPosition;
+      // Set, seek and play 'track'.
+      audioSource.clip = musicClips[track];
+      audioSource.time = trackPosition[track];
       audioSource.Play();
    }
 
@@ -51,7 +48,11 @@ public class MusicPlayer : MonoBehaviour
       else audioSource.Play();
    }
 
-   void Start() { audioSource = GetComponent<AudioSource>(); }
+   void Start()
+   {
+      audioSource = GetComponent<AudioSource>();
+      trackPosition = new float[musicClips.Length];
+   }
 
    public void VolumeDown()
    {
