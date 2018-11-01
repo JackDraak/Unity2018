@@ -4,7 +4,7 @@ using UnityStandardAssets.CrossPlatformInput;
 public class InputHandler : MonoBehaviour
 {
    // 'Keys' In use: 
-   // B C Ctrl-E F H I J K L M N Q R Z ESC [ ] 0...9 Vertical Horizontal Jump
+   // B C Ctrl-E F H I J K L M U Q R Y Z ESC [ ] 0...9 Vertical Horizontal Jump
 
    FishPool        fishPool;
    MusicPlayer     musicPlayer;
@@ -25,9 +25,9 @@ public class InputHandler : MonoBehaviour
       if (Input.GetKeyDown(KeyCode.F)) player.TopFuel();
       if (Input.GetKeyDown(KeyCode.I)) player.Invulnerable();
 
-      // PickupTracker: M, N.
-      if (Input.GetKeyDown(KeyCode.N)) pickupTracker.TriggerSpawn();
-      if (Input.GetKeyDown(KeyCode.M)) pickupTracker.DespawnAll();
+      // PickupTracker: U, Y.
+      if (Input.GetKeyDown(KeyCode.U)) pickupTracker.TriggerSpawn();
+      if (Input.GetKeyDown(KeyCode.Y)) pickupTracker.DespawnAll();
 
       // FishPool: J, K, L.
       if (Input.GetKeyDown(KeyCode.K)) fishPool.ReclaimAllFish();
@@ -63,7 +63,8 @@ public class InputHandler : MonoBehaviour
 
    void PollMisc()
    {
-      // Misc: C, H, [, ], Ctrl-E.
+      // Misc: C, H, M, [, ], Ctrl-E.
+      if (Input.GetKeyDown(KeyCode.M)) musicPlayer.AlternateMusic();
       if (Input.GetKeyDown(KeyCode.C)) player.CasualMode();
       if (Input.GetKeyDown(KeyCode.H)) ApplyColour.Toggle();
       if (Input.GetKey(KeyCode.LeftBracket)) musicPlayer.VolumeDown();
