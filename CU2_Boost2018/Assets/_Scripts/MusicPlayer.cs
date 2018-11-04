@@ -3,7 +3,8 @@
 [RequireComponent(typeof(AudioSource))]
 public class MusicPlayer : MonoBehaviour
 {
-   [Tooltip("Music Selection needs two music loops (for regular & casual modes, respectively).")]
+   [Tooltip("Music Clips needs a minimum of two music clips (for regular & casual modes, respectively)." +
+      "Additional clips will be added to the Alternate queue.")]
    [SerializeField] AudioClip[] musicClips;
 
    AudioSource audioSource;
@@ -15,7 +16,9 @@ public class MusicPlayer : MonoBehaviour
    {
       if (musicClips.Length > 2)
       {
-         alternateTrack = (alternateTrack > musicClips.Length - 1) ? 2 : alternateTrack++;
+         alternateTrack++;
+         if (alternateTrack < 2) alternateTrack = 2;
+         if (alternateTrack > musicClips.Length - 1) alternateTrack = 2;
          SetTrack(alternateTrack);
       }
    }
@@ -28,17 +31,21 @@ public class MusicPlayer : MonoBehaviour
 
    void SetTrack(int track)
    {
-      // Remember what the current track position is.
+      RememberTrackPosition();
+      audioSource.Stop();
+      audioSource.clip = musicClips[track];
+      audioSource.time = trackPosition[track];
+      audioSource.Play();
+
+      Debug.Log("MusicPlayer:SetTrack(" + track + ")");
+   }
+
+   void RememberTrackPosition()
+   {
       for (int i = 0; i < musicClips.Length; i++)
       {
          if (audioSource.clip == musicClips[i]) trackPosition[i] = audioSource.time;
       }
-      audioSource.Stop();
-
-      // Set, seek and play 'track'.
-      audioSource.clip = musicClips[track];
-      audioSource.time = trackPosition[track];
-      audioSource.Play();
    }
 
    public void Pause()
