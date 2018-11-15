@@ -4,10 +4,7 @@
 //           (bopping fish add fuel in general? bonus-level increases rate?
 //           later levels require fish-bopping to survive?)
 //    
-//    TODO : setup a NavMesh and use it to help define a "spawn area" (for FishPool) along with the AI boundary 
-//           colliders and scenery colliders?
-
-//    TODO : Casual-mode get's casual music?(DONE) HUD indicator(DONE) Something else?
+//    TODO : Casual-mode get's casual music?(DONE) HUD indicator(DONE) Something else? MusicGadget?
 //    TODO : Improve tasklist format/content further?
 //    TODO : design a way to detroy the player.
 //    TODO : (change upper-left HUD?) Improve timer aesthetics?

@@ -29,22 +29,12 @@ public class MusicPlayer : MonoBehaviour
       else SetTrack(0);
    }
 
-   void SetTrack(int track)
+   void InitTrackPositions()
    {
-      RememberTrackPosition();
-      audioSource.Stop();
-      audioSource.clip = musicClips[track];
-      audioSource.time = trackPosition[track];
-      audioSource.Play();
-
-      Debug.Log("MusicPlayer:SetTrack(" + track + ")");
-   }
-
-   void RememberTrackPosition()
-   {
-      for (int i = 0; i < musicClips.Length; i++)
+      trackPosition = new float[musicClips.Length];
+      for (int n = 0; n < musicClips.Length; n++)
       {
-         if (audioSource.clip == musicClips[i]) trackPosition[i] = audioSource.time;
+         trackPosition[n] = 0f;
       }
    }
 
@@ -55,10 +45,30 @@ public class MusicPlayer : MonoBehaviour
       else audioSource.Play();
    }
 
+   void RememberTrackPosition()
+   {
+      for (int i = 0; i < musicClips.Length; i++)
+      {
+         if (audioSource.clip == musicClips[i]) trackPosition[i] = audioSource.time;
+      }
+   }
+
+   void SetTrack(int track)
+   {
+      RememberTrackPosition();
+      audioSource.Stop();
+      audioSource.clip = musicClips[track];
+      audioSource.time = trackPosition[track];
+      audioSource.Play();
+
+      Debug.Log("MusicPlayer:SetTrack(" + track + ", " + audioSource.clip.name + ")");
+   }
+
    void Start()
    {
       audioSource = GetComponent<AudioSource>();
-      trackPosition = new float[musicClips.Length];
+      Debug.Log(musicClips.Length);
+      InitTrackPositions();
    }
 
    public void VolumeDown()
