@@ -6,25 +6,41 @@ public class TiltTable : MonoBehaviour
    [SerializeField] float minRotation = -10.0f;
    [SerializeField] float maxRotation = 10.0f;
 
-   Vector3 priorRotation = Vector3.zero;
-
-	void Update ()
+   void Update ()
    {
-      var mouseX = -Input.GetAxis("Mouse X"); // rotZ
-      var mouseY = Input.GetAxis("Mouse Y"); // rotX
+      tiltTable();
+   }
 
-      Vector3 rotation = new Vector3(mouseY, 0.0f, mouseX);
-      rotation.x = mouseY * Time.deltaTime * rotationSpeed;
-      rotation.z = mouseX * Time.deltaTime * rotationSpeed;
+   private void tiltTable()
+   {
+      SimpleRotation(GetMouseInput()); // this is the 'pre-clamp' rotation (rotation-Z and rotation-X, respectively from X & Y of mouse)
+      ClampRotation(transform.rotation.eulerAngles); // half-broken attempt to clamp rotation to min/maxRotation degrees.
+      /// moving left and/or up on mouse results in smooth roll into 10 degreee limits...
+      /// moving right and/or down on mouse eventually results in a sudden 'reset' to a nominal position... 
+      /// but why?
+   }
 
-      var tempRot = rotation;
-      rotation.x += priorRotation.x;
-      rotation.z += priorRotation.z;
-      priorRotation = tempRot;
+   private void ClampRotation(Vector3 tempEulers)
+   {
+      tempEulers.x = Mathf.Clamp(tempEulers.x, minRotation, maxRotation);
+      tempEulers.y = Mathf.Clamp(tempEulers.y, minRotation, maxRotation);
+      tempEulers.z = Mathf.Clamp(tempEulers.z, minRotation, maxRotation);
+      transform.rotation = Quaternion.Euler(tempEulers);
+   }
 
-      rotation.x = Mathf.Clamp(rotation.x, minRotation, maxRotation);
-      rotation.z = Mathf.Clamp(rotation.z, minRotation, maxRotation);
+   Vector2 GetMouseInput()
+   {
+      Vector2 mouseXY;
+      mouseXY.x = -Input.GetAxis("Mouse X"); // rotZ
+      mouseXY.y = Input.GetAxis("Mouse Y"); // rotX
+      return mouseXY;
+   }
 
-      transform.Rotate(rotation, Space.World);
+   void SimpleRotation(Vector2 mouseXY)
+   {
+      Vector3 rotation = Vector3.zero;
+      rotation.x = mouseXY.y * Time.deltaTime * rotationSpeed;
+      rotation.z = mouseXY.x * Time.deltaTime * rotationSpeed;
+      transform.Rotate(rotation, Space.Self); 
    }
 }
