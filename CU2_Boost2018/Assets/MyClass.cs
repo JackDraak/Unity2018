@@ -66,7 +66,6 @@ public class MyClass : MonoBehaviour
       }
    }
 
-
    string randomLossString()
    {
       string[] lossStrings = { "string one. ", "string two. ", "string three. " };

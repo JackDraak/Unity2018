@@ -9,6 +9,7 @@
 //    TODO : design a way to detroy the player.
 //    TODO : (change upper-left HUD?) Improve timer aesthetics?
 //    TODO : work on Fog / lighting? work on level 2 ideas?
+//    TODO : make an 'intro' or 'tutorial' level? (explain low thrust? start at base?)
 //
 using EZCameraShake;
 using TMPro;
