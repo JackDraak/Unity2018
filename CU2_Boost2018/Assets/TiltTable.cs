@@ -17,12 +17,14 @@ public class TiltTable : MonoBehaviour
       rotation.x = mouseY * Time.deltaTime * rotationSpeed;
       rotation.z = mouseX * Time.deltaTime * rotationSpeed;
 
+      var tempRot = rotation;
       rotation.x += priorRotation.x;
       rotation.z += priorRotation.z;
+      priorRotation = tempRot;
 
       rotation.x = Mathf.Clamp(rotation.x, minRotation, maxRotation);
       rotation.z = Mathf.Clamp(rotation.z, minRotation, maxRotation);
 
-      transform.Rotate(rotation, Space.Self);
+      transform.Rotate(rotation, Space.World);
    }
 }
