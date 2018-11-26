@@ -25,7 +25,7 @@ public class TiltTable : MonoBehaviour
    {
       tempEulers.x = ClampPlane(tempEulers.x);
       tempEulers.z = ClampPlane(tempEulers.z);
-      tempEulers.y = 0.0f; // ClampPlane(tempEulers.y); // *See GIST note below...
+      tempEulers.y = nullArc; // ClampPlane(tempEulers.y);
       transform.rotation = Quaternion.Euler(tempEulers);
       ///Debug.Log(tempEulers);
    }
