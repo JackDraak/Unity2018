@@ -40,7 +40,7 @@ public class FishDrone : MonoBehaviour
    const float SPEED_MAX = 1.2f;
    const float SPEED_MIN = 0.2f;
 
-   const int GROUP_MAX = 7;
+   const int GROUP_MAX = 4; // Was 7 (1-12-2018)
 
    static int rayGroup = 0;
 

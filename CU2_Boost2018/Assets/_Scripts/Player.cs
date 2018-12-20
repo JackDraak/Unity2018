@@ -10,6 +10,7 @@
 //    TODO : (change upper-left HUD?) Improve timer aesthetics?
 //    TODO : work on Fog / lighting? work on level 2 ideas?
 //    TODO : make an 'intro' or 'tutorial' level? (explain low thrust? start at base?)
+//           start with powerl level at lowest, give on-screen text hints to pilot craft, etc.
 //
 using EZCameraShake;
 using TMPro;
@@ -438,8 +439,9 @@ public class Player : MonoBehaviour
 
    void OnGUI()
    {
-      if (debugMode) GUI.Label(new Rect(0, 0, 100, 100), "<color=\"Red\">" + FrameRate + "</color>");
-   }
+      // TODO: revert to debugMode: if (debugMode) GUI.Label(new Rect(0, 0, 100, 100), "<color=\"Red\">" + FrameRate + "</color>");
+      GUI.Label(new Rect(0, 0, 100, 100), "<color=\"Red\">" + FrameRate + "</color>");
+    }
 
    void OnTriggerEnter(Collider other)
    {
